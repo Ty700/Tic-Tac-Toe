@@ -6,12 +6,16 @@
         1. User side needs to work.
             a. Update board when the user enters where they want to place their x. - DONE 
                 Ex: When the user enters "5", the board replaces 5 with an x, thus the board will have an X in the middle with 1-4, and 6-9 surrounding it in their respected field.
-            b. Winning Outcomes
-                1. Logic behind this is gonna be intense. 123, 456, 789, 147, 258, and 369, are all wining pairs. 
-                    Thinking about setting up a user vector. pushing back the user entries into the vector. after the user has their max of 5 turns, sorting the entries from least to greatest and 
-                    computing if the index to the left and right of indexs 1 and 4 are of a winning pattern described above.
-                    This will also be later updated to check after each entry of the user (and then CPU) so that if a user wins prior to 5 turns it ends game
-            c. 
+        2. Winning Outcomes
+            a. Logic behind this is gonna be intense. 123, 456, 789, 147, 258, and 369, are all wining pairs. 
+                Thinking about setting up a user vector. pushing back the user entries into the vector. after the user has their max of 5 turns, sorting the entries from least to greatest and 
+                computing if the index to the left and right of indexs 1 and 4 are of a winning pattern described above.
+                This will also be later updated to check after each entry of the user (and then CPU) so that if a user wins prior to 5 turns it ends game
+            b. 
+        3. After User and Winning Outcomes, CPU will be made.
+            a. Updates the board where CPU places their 'o's.
+            b. Generates valid entries.
+        3. Add a validity check for inputs since right now user and CPU can each other's pieces.
 *
 *
 */
@@ -21,7 +25,8 @@
 #include <vector>
 //Function Declaration
 void printBoard();
-std::string updateBoard(int userInput);
+std::string updateBoardUser(int userInput);
+std::string updateBoardCPU(int cpuInput);
 
 //Global Vars
 const int ROWS = 3;
@@ -33,40 +38,58 @@ int main(){
 //Main Vars
     int userInput;
     int cpuInput;
-    std::vector<int> userChoice;
+    std::vector<int> userChoice; //User choices only
+    std::vector<int> cpuChoice; //CPU Choice only
+    std::vector<int> choices; //Both User and CPU choices combined
+    int i = 0;
+    int counter = 0;
 
 //Board without any entires
     printBoard();
 
-// while(int x = 0 < 9){ --Debug for testing 
+while(counter < 9){ 
 //User Input
     std::cout << "Where would you like to place your X?";
         std::cin >> userInput;
+//Validity check for user
+
 //Appends input to userInput Vector
     userChoice.push_back(userInput);
+    choices.push_back(userInput);
+
 //Updates board
-    updateBoard(userInput);
+    updateBoardUser(userInput);
+
 //Checks for winning pairs using userInput Vector
 
 //Outputs the updated board
     printBoard();
 
-//If no winning pairs found - cpu Does turn
+//If no winning pairs found - CPU completes turn
 
 //Generate CPU entry
-//Check and make sure CPU entry is not already taken. If it is "reroll" the input until a vallid one is generated.
+    std::cout << "Where would you like to place your O?";
+        std::cin >> cpuInput;
+        choices.push_back(cpuInput);
+
+//Validty check for CPU
+
+
 //Append CPU entry to CPU vector
+    cpuChoice.push_back(cpuInput);
+    choices.push_back(cpuInput);
 //Updates board
+    updateBoardCPU(cpuInput);
 //Checks for winning pairs
 //Outputs the updated board
+    printBoard();
 
 //Repeat -- End of While loop
-//}
-    return 0;
+}
 }
 
-//Updates array
-std::string updateBoard(int userInput){
+//Updates array for User
+std::string updateBoardUser(int userInput){
     switch (userInput){
         case 1: 
             return board[0][0] = 'X';
@@ -96,9 +119,41 @@ std::string updateBoard(int userInput){
             return board[2][2] = 'X';
             break;
     }
-
-
 }
+
+//Updates array
+std::string updateBoardCPU(int cpuInput){
+    switch (cpuInput){
+        case 1: 
+            return board[0][0] = 'O';
+            break;
+        case 2: 
+            return board[0][1] = 'O';
+            break;
+        case 3: 
+            return board[0][2] = 'O';
+            break;
+        case 4: 
+            return board[1][0] = 'O';
+            break;
+        case 5: 
+            return board[1][1] = 'O';
+            break;
+        case 6: 
+            return board[1][2] = 'O';
+            break;
+        case 7: 
+            return board[2][0] = 'O';
+            break;
+        case 8: 
+            return board[2][1] = 'O';
+            break;
+        case 9: 
+            return board[2][2] = 'O';
+            break;
+    }
+}
+
 
 //Prints the board
 void printBoard(){
