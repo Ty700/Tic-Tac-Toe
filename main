@@ -1,0 +1,115 @@
+/*
+*   Author: Tyler Scotti
+*   Description: This is a simple Tic Tac Toe game that a user can play against the CPU. The user will always go first, and will always be the letter 'x'.
+*   
+*   To Do: 
+        1. User side needs to work.
+            a. Update board when the user enters where they want to place their x. - DONE 
+                Ex: When the user enters "5", the board replaces 5 with an x, thus the board will have an X in the middle with 1-4, and 6-9 surrounding it in their respected field.
+            b. Winning Outcomes
+                1. Logic behind this is gonna be intense. 123, 456, 789, 147, 258, and 369, are all wining pairs. 
+                    Thinking about setting up a user vector. pushing back the user entries into the vector. after the user has their max of 5 turns, sorting the entries from least to greatest and 
+                    computing if the index to the left and right of indexs 1 and 4 are of a winning pattern described above.
+                    This will also be later updated to check after each entry of the user (and then CPU) so that if a user wins prior to 5 turns it ends game
+            c. 
+*
+*
+*/
+#include <vector>
+#include <iostream>
+#include <string>
+#include <vector>
+//Function Declaration
+void printBoard();
+std::string updateBoard(int userInput);
+
+//Global Vars
+const int ROWS = 3;
+const int COLS = 3;
+std::string board[ROWS][COLS] = {{"1","2","3"}, {"4","5","6"}, {"7","8","9"}};
+
+int main(){
+
+//Main Vars
+    int userInput;
+    int cpuInput;
+    std::vector<int> userChoice;
+
+//Board without any entires
+    printBoard();
+
+// while(int x = 0 < 9){ --Debug for testing 
+//User Input
+    std::cout << "Where would you like to place your X?";
+        std::cin >> userInput;
+//Appends input to userInput Vector
+    userChoice.push_back(userInput);
+//Updates board
+    updateBoard(userInput);
+//Checks for winning pairs using userInput Vector
+
+//Outputs the updated board
+    printBoard();
+
+//If no winning pairs found - cpu Does turn
+
+//Generate CPU entry
+//Check and make sure CPU entry is not already taken. If it is "reroll" the input until a vallid one is generated.
+//Append CPU entry to CPU vector
+//Updates board
+//Checks for winning pairs
+//Outputs the updated board
+
+//Repeat -- End of While loop
+//}
+    return 0;
+}
+
+//Updates array
+std::string updateBoard(int userInput){
+    switch (userInput){
+        case 1: 
+            return board[0][0] = 'X';
+            break;
+        case 2: 
+            return board[0][1] = 'X';
+            break;
+        case 3: 
+            return board[0][2] = 'X';
+            break;
+        case 4: 
+            return board[1][0] = 'X';
+            break;
+        case 5: 
+            return board[1][1] = 'X';
+            break;
+        case 6: 
+            return board[1][2] = 'X';
+            break;
+        case 7: 
+            return board[2][0] = 'X';
+            break;
+        case 8: 
+            return board[2][1] = 'X';
+            break;
+        case 9: 
+            return board[2][2] = 'X';
+            break;
+    }
+
+
+}
+
+//Prints the board
+void printBoard(){
+    std::cout << "  |   |   \n";
+    std::cout << board[0][0] << " | " << board[0][1] <<  " | "  << board[0][2] << "\n";
+    std::cout << "__|___|___\n";
+    std::cout << "  |   |   \n";
+    std::cout << board[1][0] << " | " << board[1][1] <<  " | "  << board[1][2] << "\n";
+    std::cout << "__|___|___\n";
+    std::cout << "  |   |   \n";
+    std::cout << board[2][0] << " | " << board[2][1] <<  " | "  << board[2][2] << "\n";
+    std::cout << "  |   |   \n";
+
+}
