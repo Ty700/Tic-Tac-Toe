@@ -11,9 +11,9 @@
                 Thinking about setting up a user vector. pushing back the user entries into the vector. after the user has their max of 5 turns, sorting the entries from least to greatest and 
                 computing if the index to the left and right of indexs 1 and 4 are of a winning pattern described above.
                 This will also be later updated to check after each entry of the user (and then CPU) so that if a user wins prior to 5 turns it ends game
-            b. 
-        3. After User and Winning Outcomes, CPU will be made.
-            a. Updates the board where CPU places their 'o's.
+            b. Valid Entries - DONE
+        3. After User and Winning Outcomes, CPU will be made. 
+            a. Updates the board where CPU places their 'O's. - DONE
             b. Generates valid entries.
         3. Add a validity check for inputs since right now user and CPU can each other's pieces.
 *
@@ -23,10 +23,14 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <time.h>
+#include <stdio.h>
+
 //Function Declaration
 void printBoard();
 std::string updateBoardUser(int userInput);
 std::string updateBoardCPU(int cpuInput);
+void blank(int num);
 
 //Global Vars
 const int ROWS = 3;
@@ -35,23 +39,49 @@ std::string board[ROWS][COLS] = {{"1","2","3"}, {"4","5","6"}, {"7","8","9"}};
 
 int main(){
 
+srand(time(NULL));
+
 //Main Vars
     int userInput;
     int cpuInput;
+    int cpuInputReroll;
     std::vector<int> userChoice; //User choices only
     std::vector<int> cpuChoice; //CPU Choice only
-    std::vector<int> choices; //Both User and CPU choices combined
+    std::vector<int> choices(9); //Both User and CPU choices combined
     int i = 0;
     int counter = 0;
+
+//Clears screen
+    blank(10);
+
 
 //Board without any entires
     printBoard();
 
-while(counter < 9){ 
+while(counter < 5){ 
 //User Input
-    std::cout << "Where would you like to place your X?";
+    std::cout << "Where would you like to place your X? \n";
         std::cin >> userInput;
+
 //Validity check for user
+    int counterOfTries = 2;
+    for(i=0; i < choices.size(); i++){
+        while(userInput == choices.at(i)){
+            std::cout << "Looks like that spot is taken. Try again.\n";
+            std::cout << "\nWhere would you like to place your O?\n";
+            std::cin >> userInput;
+            counterOfTries--;
+            if(counterOfTries <= 1){
+                std::cout << "\nWarning: " << counterOfTries << " tries left before it will skip your turn.\n";
+                if(counterOfTries == 0){
+                    break;
+                }
+            }
+        }
+    }
+
+//Clears screen
+    blank(10);
 
 //Appends input to userInput Vector
     userChoice.push_back(userInput);
@@ -68,25 +98,55 @@ while(counter < 9){
 //If no winning pairs found - CPU completes turn
 
 //Generate CPU entry
-    std::cout << "Where would you like to place your O?";
-        std::cin >> cpuInput;
-        choices.push_back(cpuInput);
+    cpuInput = (rand() % 9) + 1;
+    _sleep(1000);
 
-//Validty check for CPU
-
+//Validty check for CPU - Broken
+    for(i=0; i < choices.size(); i++){
+        if(cpuInput == choices.at(i)){
+            int temp = (rand() % 9) + 1;
+            if(temp != cpuInput){
+                break;
+            } else{
+                cpuInput = temp;
+            }
+                      
+        }
+    }
 
 //Append CPU entry to CPU vector
     cpuChoice.push_back(cpuInput);
     choices.push_back(cpuInput);
+
+//Displays where CPU went
+    int temp = (rand() % 3);
+
+    switch (temp){
+        case 0:
+            std::cout << "Ah yes... " << cpuInput << " appears to be the best choice.\n";
+            break;
+        case 1:
+            std::cout << "Hmmm... well-played. I choose " << cpuInput << " as my choice.\n";
+            break;
+        case 2:
+            std::cout << "Have I won yet? I choose " << cpuInput << " by the way.\n";
+            break;
+    }
+
+    
 //Updates board
     updateBoardCPU(cpuInput);
 //Checks for winning pairs
+
 //Outputs the updated board
     printBoard();
 
 //Repeat -- End of While loop
+counter++;
 }
 }
+
+
 
 //Updates array for User
 std::string updateBoardUser(int userInput){
@@ -167,4 +227,13 @@ void printBoard(){
     std::cout << board[2][0] << " | " << board[2][1] <<  " | "  << board[2][2] << "\n";
     std::cout << "  |   |   \n";
 
+}
+
+
+//Cheeky blank cmd line clear to get rid of simon says entry. User can just scroll up and see the entry again but hopefully they don't realize and just think the screen clears.
+void blank(int num){
+   int i;
+   for(i=0; i<num; i++){
+      std::cout << ("\n");
+   }
 }
