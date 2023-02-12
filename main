@@ -3,19 +3,18 @@
 *   Description: This is a simple Tic Tac Toe game that a user can play against the CPU. The user will always go first, and will always be the letter 'x'.
 *   
 *   To Do: 
-        1. User side needs to work.
-            a. Update board when the user enters where they want to place their x. - DONE 
-                Ex: When the user enters "5", the board replaces 5 with an x, thus the board will have an X in the middle with 1-4, and 6-9 surrounding it in their respected field.
-        2. Winning Outcomes
-            a. Logic behind this is gonna be intense. 123, 456, 789, 147, 258, and 369, are all wining pairs. 
-                Thinking about setting up a user vector. pushing back the user entries into the vector. after the user has their max of 5 turns, sorting the entries from least to greatest and 
-                computing if the index to the left and right of indexs 1 and 4 are of a winning pattern described above.
-                This will also be later updated to check after each entry of the user (and then CPU) so that if a user wins prior to 5 turns it ends game
-            b. Valid Entries - DONE
-        3. After User and Winning Outcomes, CPU will be made. 
-            a. Updates the board where CPU places their 'O's. - DONE
-            b. Generates valid entries.
-        3. Add a validity check for inputs since right now user and CPU can each other's pieces.
+*       1. User - DONE
+*           a. Update board when the user enters where they want to place their x. - DONE 
+*           b. Valid Entries - DONE
+*       2. Winning Outcomes - 1/2 DONE - For some reason it doesn't work when checking CPU
+*
+*       3. CPU - DONE -  Doesn't compute whenn CPU wins for some reason. Worked earlier but not now.
+*           a. Updates the board where CPU places their 'O's. - DONE
+*           b. Generates valid entries. - DONE
+*       
+*       4. Add a validity check for inputs since right now user and CPU can each other's pieces. - DONE
+*       
+*       5. Make CPU Harder to play against.
 *
 *
 */
@@ -28,192 +27,194 @@
 
 //Function Declaration
 void printBoard();
-std::string updateBoardUser(int userInput);
-std::string updateBoardCPU(int cpuInput);
 void blank(int num);
+std::string choosenSpot(int choice);
+std::string updateBoard(int choice, std::string turn);
+bool gameOver();
+int playerTurn();
+int cpuTurn();
+void cpuTrashTalk();
+bool isTie();
 
 //Global Vars
 const int ROWS = 3;
 const int COLS = 3;
 std::string board[ROWS][COLS] = {{"1","2","3"}, {"4","5","6"}, {"7","8","9"}};
+int choice;
 
 int main(){
 
-srand(time(NULL));
-
-//Main Vars
-    int userInput;
-    int cpuInput;
-    int cpuInputReroll;
-    std::vector<int> userChoice; //User choices only
-    std::vector<int> cpuChoice; //CPU Choice only
-    std::vector<int> choices(9); //Both User and CPU choices combined
-    int i = 0;
-    int counter = 0;
-
+int round = 0;
 //Clears screen
-    blank(10);
-
-
+blank(10);
 //Board without any entires
-    printBoard();
+printBoard();
 
-while(counter < 5){ 
-//User Input
-    std::cout << "Where would you like to place your X? \n";
-        std::cin >> userInput;
-
-//Validity check for user
-    int counterOfTries = 2;
-    for(i=0; i < choices.size(); i++){
-        while(userInput == choices.at(i)){
-            std::cout << "Looks like that spot is taken. Try again.\n";
-            std::cout << "\nWhere would you like to place your O?\n";
-            std::cin >> userInput;
-            counterOfTries--;
-            if(counterOfTries <= 1){
-                std::cout << "\nWarning: " << counterOfTries << " tries left before it will skip your turn.\n";
-                if(counterOfTries == 0){
-                    break;
-                }
-            }
-        }
-    }
-
-//Clears screen
-    blank(10);
-
-//Appends input to userInput Vector
-    userChoice.push_back(userInput);
-    choices.push_back(userInput);
-
-//Updates board
-    updateBoardUser(userInput);
-
-//Checks for winning pairs using userInput Vector
-
-//Outputs the updated board
-    printBoard();
-
-//If no winning pairs found - CPU completes turn
-
-//Generate CPU entry
-    cpuInput = (rand() % 9) + 1;
-    _sleep(1000);
-
-//Validty check for CPU - Broken
-    for(i=0; i < choices.size(); i++){
-        if(cpuInput == choices.at(i)){
-            int temp = (rand() % 9) + 1;
-            if(temp != cpuInput){
-                break;
-            } else{
-                cpuInput = temp;
-            }
-                      
-        }
-    }
-
-//Append CPU entry to CPU vector
-    cpuChoice.push_back(cpuInput);
-    choices.push_back(cpuInput);
-
+while(gameOver()){
+//Cpu Turn
+    cpuTurn();
 //Displays where CPU went
-    int temp = (rand() % 3);
+    cpuTrashTalk();
+//Updates board
+    updateBoard(choice, "CPU");
+//Prints updated board
+    printBoard();
+//Checks for winning pairs
+    if(gameOver() == false){
+        std::cout << "As I predicted... You lose.\nBetter luck next time!";
+        break;
+    }
+//Tie?
 
+//Player Turn
+    playerTurn();
+//Updates Board
+    updateBoard(choice, "User");
+//Updates board
+    printBoard();
+//Checks for winning pairs
+    if(gameOver() == false){
+        std::cout << "Gah! You beat me! Good job I guess.";
+        break;
+    }
+  }
+}
+
+//CPU Turn
+int cpuTurn(){
+    //Randomizes numbers a bit for CPU
+    srand(time(NULL));
+
+    //Slows CPU down so it isn't instant. Gives off the illusion that CPU thinks before it acts.
+    _sleep(1500);
+
+    //Generate CPU entry and a validty check for CPU
+    choice = (rand() % 9) + 1;
+    while(choosenSpot(choice) == "X" || choosenSpot(choice) == "O"){
+        choice = (rand() % 9) + 1;
+    }
+    return choice;
+}
+
+void cpuTrashTalk(){
+    //Displays where CPU went
+    int temp = (rand() % 3);
     switch (temp){
         case 0:
-            std::cout << "Ah yes... " << cpuInput << " appears to be the best choice.\n";
+            std::cout << "Ah yes... " << choice << " appears to be the best choice.\n";
             break;
         case 1:
-            std::cout << "Hmmm... well-played. I choose " << cpuInput << " as my choice.\n";
+            std::cout << "Hmmm... well-played. I choose " << choice << " as my choice.\n";
             break;
         case 2:
-            std::cout << "Have I won yet? I choose " << cpuInput << " by the way.\n";
+            std::cout << "Have I won yet? I choose " << choice << " by the way.\n";
             break;
     }
-
-    
-//Updates board
-    updateBoardCPU(cpuInput);
-//Checks for winning pairs
-
-//Outputs the updated board
-    printBoard();
-
-//Repeat -- End of While loop
-counter++;
-}
 }
 
+bool isTie(){
+    int round = 0;
+    round +=1;
+    if(round == 5){
+        return true;
+    } else {
+        return false;
+    }
+}
 
+//Player Turn
+int playerTurn(){
+    //User Input
+    std::cout << "Where would you like to place your X? \n";
+        std::cin >> choice;
 
-//Updates array for User
-std::string updateBoardUser(int userInput){
-    switch (userInput){
+    while((choice < 1 || choice > 9 )){
+      std::cout << "Invalid move. Try again.\n";
+      std::cin >> choice;
+   }
+
+    //Validity check for user
+    while(choosenSpot(choice) == "X" || choosenSpot(choice) == "O"){
+        std::cout << "That spot is taken... Try again\n";
+            std::cin >> choice;
+    }
+    return choice;
+}
+
+//Returns the spot the User/CPU has chosen
+std::string choosenSpot(int choice){
+    switch (choice){
         case 1: 
-            return board[0][0] = 'X';
+            return board[0][0];
             break;
         case 2: 
-            return board[0][1] = 'X';
+            return board[0][1];
             break;
-        case 3: 
-            return board[0][2] = 'X';
+        case 3:
+            return board[0][2];
             break;
-        case 4: 
-            return board[1][0] = 'X';
+        case 4:
+            return board[1][0];
             break;
-        case 5: 
-            return board[1][1] = 'X';
+        case 5:
+            return board[1][1];
             break;
-        case 6: 
-            return board[1][2] = 'X';
+        case 6:
+            return board[1][2];
             break;
-        case 7: 
-            return board[2][0] = 'X';
+        case 7:
+            return board[2][0];
             break;
-        case 8: 
-            return board[2][1] = 'X';
+        case 8:
+            return board[2][1];
             break;
-        case 9: 
-            return board[2][2] = 'X';
+        case 9:
+            return board[2][2];
             break;
     }
 }
 
-//Updates array
-std::string updateBoardCPU(int cpuInput){
-    switch (cpuInput){
+//Updates board with User/CPU entries
+std::string updateBoard(int choice, std::string turn){
+    switch (choice){
         case 1: 
-            return board[0][0] = 'O';
+        board[0][0] = (turn == "User") ? "X" : "O";
+            return board[0][0];
             break;
-        case 2: 
-            return board[0][1] = 'O';
+        case 2:
+         board[0][1] = (turn == "User") ? "X" : "O";
+            return board[0][1];
             break;
-        case 3: 
-            return board[0][2] = 'O';
+        case 3:
+            board[0][2] = (turn == "User") ? "X" : "O"; 
+            return board[0][2];
             break;
-        case 4: 
-            return board[1][0] = 'O';
+        case 4:
+            board[1][0] = (turn == "User") ? "X" : "O";
+            return board[1][0];
             break;
-        case 5: 
-            return board[1][1] = 'O';
+        case 5:
+            board[1][1] = (turn == "User") ? "X" : "O";
+            return board[1][1];
             break;
-        case 6: 
-            return board[1][2] = 'O';
+        case 6:
+            board[1][2] = (turn == "User") ? "X" : "O";
+            return board[1][2];
             break;
-        case 7: 
-            return board[2][0] = 'O';
+        case 7:
+            board[2][0] = (turn == "User") ? "X" : "O";
+            return board[2][0];
             break;
-        case 8: 
-            return board[2][1] = 'O';
+        case 8:
+            board[2][1] = (turn == "User") ? "X" : "O";
+            return board[2][1];
             break;
-        case 9: 
-            return board[2][2] = 'O';
+        case 9:
+            board[2][2] = (turn == "User") ? "X" : "O";
+            return board[2][2];
             break;
     }
 }
-
 
 //Prints the board
 void printBoard(){
@@ -229,6 +230,24 @@ void printBoard(){
 
 }
 
+//Checks if User/CPU has won
+bool gameOver(){
+    for(int i = 0; i < 3; i++){
+        //Checks Row
+        if(board[i][0] == board[i][1] && board[i][1] == board[i][2]){
+            return false;
+        //Check Columns
+        } else if(board[0][i] == board[1][i] &&  board[1][i] == board[2][i]){
+            return false;
+        //Check Diagonal
+        } else if (board[0][0] == board[1][1] && board[1][1] == board[2][2] || board[0][2] == board[1][1] && board[1][1] == board[2][0]){
+            return false;
+        //No winners. Continues game.
+        } else {
+            return true;
+        }
+    }
+}
 
 //Cheeky blank cmd line clear to get rid of simon says entry. User can just scroll up and see the entry again but hopefully they don't realize and just think the screen clears.
 void blank(int num){
