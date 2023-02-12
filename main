@@ -1,6 +1,6 @@
 /*
 *   Author: Tyler Scotti
-*   Description: This is a simple Tic Tac Toe game that a user can play against the CPU. The user will always go first, and will always be the letter 'x'.
+*   Description: This is a simple Tic Tac Toe game that a user can play against the CPU. The CPU will always go first
 *   
 *   To Do: 
 *       1. User - DONE
@@ -15,8 +15,10 @@
 *       4. Add a validity check for inputs since right now user and CPU can each other's pieces. - DONE
 *       
 *       5. Make CPU Harder to play against.
+*       
+*       6. Added a check for ties
 *
-*
+*       7. Randomize who goes first.
 */
 #include <vector>
 #include <iostream>
