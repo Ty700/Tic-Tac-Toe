@@ -6,24 +6,22 @@
 *       1. User - DONE
 *           a. Update board when the user enters where they want to place their x. - DONE 
 *           b. Valid Entries - DONE
-*       2. Winning Outcomes - 1/2 DONE - For some reason it doesn't work when checking CPU
+*       2. Winning Outcomes - DONE
 *
-*       3. CPU - DONE -  Doesn't compute whenn CPU wins for some reason. Worked earlier but not now.
+*       3. CPU - DONE 
 *           a. Updates the board where CPU places their 'O's. - DONE
 *           b. Generates valid entries. - DONE
 *       
-*       4. Add a validity check for inputs since right now user and CPU can each other's pieces. - DONE
+*       4. Check if choice user/cpu made is open, if so it continues, if not it asks for a different spot. - DONE
 *       
-*       5. Make CPU Harder to play against.
-*       
-*       6. Added a check for ties
+*       5. Make CPU Harder to play against. - Next
+*           a. Rand num generates 1-3. Switch case based on random num and it follows the certain algorithm to win. 
 *
-*       7. Randomize who goes first.
+*       6. Added a check for ties - DONE     
+*
 */
-#include <vector>
 #include <iostream>
 #include <string>
-#include <vector>
 #include <time.h>
 #include <stdio.h>
 
@@ -36,7 +34,7 @@ bool gameOver();
 int playerTurn();
 int cpuTurn();
 void cpuTrashTalk();
-bool isTie();
+bool isTie(int round);
 
 //Global Vars
 const int ROWS = 3;
@@ -47,11 +45,8 @@ int choice;
 int main(){
 
 int round = 0;
-//Clears screen
-blank(10);
-//Board without any entires
-printBoard();
-
+blank(10); //Clears screen
+printBoard(); //Board without any entires
 while(gameOver()){
 //Cpu Turn
     cpuTurn();
@@ -67,7 +62,11 @@ while(gameOver()){
         break;
     }
 //Tie?
-
+    round += 1;
+    if(isTie(round) == true){
+        std::cout << "It's a draw then.";
+        break;
+    }
 //Player Turn
     playerTurn();
 //Updates Board
@@ -114,9 +113,7 @@ void cpuTrashTalk(){
     }
 }
 
-bool isTie(){
-    int round = 0;
-    round +=1;
+bool isTie(int round){
     if(round == 5){
         return true;
     } else {
