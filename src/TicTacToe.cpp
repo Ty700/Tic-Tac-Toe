@@ -6,7 +6,6 @@
 int main(void){
 
     class GameConfig* gameConfiguration = new GameConfig();
-
     gameConfiguration->setupGame();
 
     /* Players */

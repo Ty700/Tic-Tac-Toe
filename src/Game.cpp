@@ -73,7 +73,7 @@ void TicTacToe::updateSlot(struct Player *p, int slotToUpdate){
  * PARAMS:      VOID
  * RETURNS:     An int value (1 - 9), that corresponds with a place on the TicTacToe board
  */
-int TicTacToe::captureMove(void){
+int TicTacToe::getPlayerMove(void){
     int userIn{-1};
 
     std::cout << "Enter in where to move: ";
@@ -147,7 +147,7 @@ void TicTacToe::playGame(){
 
             std::cout << currentPlayer->playerName << "'s Turn!" << std::endl;
 
-            currentPlayerMove = captureMove();
+            currentPlayerMove = getPlayerMove();
             updateSlot(currentPlayer, currentPlayerMove);
             
             /* Did someone win? */

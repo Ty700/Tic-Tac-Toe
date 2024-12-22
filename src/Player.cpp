@@ -4,8 +4,6 @@
 #include <random>
 #include <string>
 
-#define NPC_NAME_AMOUNT 15
-
 /**
  * FUNCTION: Allows user to input their name
  * PARAMS: Void
@@ -60,6 +58,8 @@ std::string generateAIName(){
         I could track the user's skill rating in a file (maybe even encrypt it so the user can't mess with it)
         and assign the opp via that way 
     */
+
+   constexpr int NPC_NAME_AMOUNT = 15;
 
    std::string NPCNames[NPC_NAME_AMOUNT] = { 
                         "Akira", "Alex", "Andy", 

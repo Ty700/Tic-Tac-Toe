@@ -3,8 +3,13 @@
 #include <iostream>
 #include <string>
 
+/**
+ * FUNCTION: Sets up the game 
+ */
 void GameConfig::setupGame(){
-    while(menuOption != 4){
+    constexpr int FINISH_BUTTON = 4;
+
+    while(menuOption != FINISH_BUTTON){
             /* Clear console screen */
             for(int i = 0; i < 50; i++) std::cout << std::endl; 
             
@@ -68,7 +73,7 @@ void GameConfig::setupGame(){
 
                 break;
 
-            case(4):
+            case(FINISH_BUTTON):
                 /* Starting game */
                 break;
 

@@ -30,7 +30,7 @@ public:
     void printGameBoard(void);
 
     /* Captures where the current player wants to place their symbol */
-    int captureMove(void);
+    int getPlayerMove(void);
 
     /* Updates the slots array with the symbol of the current player's turn */
     void updateSlot(struct Player *p, int slotToUpdate); 
@@ -52,9 +52,7 @@ public:
 
 /* Constructor */
     TicTacToe(struct Player* playerOne, struct Player* playerTwo)
-        : playerOne(playerOne), playerTwo(playerTwo) {
-            std::cout << "Calling constructor!" << std::endl;
-        }
+        : playerOne(playerOne), playerTwo(playerTwo) {}
 };
 
 
