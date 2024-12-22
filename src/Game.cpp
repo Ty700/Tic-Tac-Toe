@@ -8,6 +8,10 @@
  * RETURNS: VOID
  */
 void TicTacToe::printGameBoard(void){
+    for(int i = 0; i < 50; i++){
+        std::cout << std::endl;
+    }
+
     std::cout << " " << TicTacToe::slots[0] << " | " << slots[1] << " | " << slots[2] << std::endl
               << "---+---+---" << std::endl
               << " " << slots[3] << " | " << slots[4] << " | " << slots[5] << std::endl
@@ -16,12 +20,26 @@ void TicTacToe::printGameBoard(void){
               << std::endl;
 }
 
-/** 
- * FUNCTION: Determines who (Player 1 or 2) goes first
- * PARAMS: List of players
- * RETURNS: int value (0 or 1)
+/**
+ * FUNCTION: Prints the the player one's name vs player two's name
+ * PARAMS: Pointers to both the player objects
+ * RETURNS: VOID
  */
-int TicTacToe::determineWhoMovesFirst(struct Player** players){
+void TicTacToe::printTitle(){
+    for(int i = 0; i < 50; i++){
+        std::cout << std::endl;
+    }
+
+    /* Title */
+    std::cout << playerOne->playerName << " vs. " << playerTwo->playerName << std::endl;
+}
+
+/** 
+ * FUNCTION:    Determines who (Player 1 or 2) goes first
+ * PARAMS:      List of players
+ * RETURNS:     int value (0 or 1)
+ */
+int TicTacToe::determineWhoMovesFirst(){
     int userIn{-1};
 
     std::cout << "Which player goes first?\n";
@@ -43,8 +61,8 @@ int TicTacToe::determineWhoMovesFirst(struct Player** players){
 
 /**
  * FUNCTION: Given a slot number, updates the slot to the current player's symbol
- * PARAMS: current player, p, and the slot number they chose
- * RETURNS: VOID
+ * PARAMS:   current player, p, and the slot number they chose
+ * RETURNS:  VOID
  */
 void TicTacToe::updateSlot(struct Player *p, int slotToUpdate){
     slots[slotToUpdate - 1] = p->playerSymbol;
@@ -76,8 +94,8 @@ int TicTacToe::captureMove(void){
 
 /** 
  * FUNCTION: Determins if there is a winner 
- * PARAMS: VOID
- * RETURNS: 1 -> Winner detected | 0 -> Winner not detected
+ * PARAMS:   VOID
+ * RETURNS:  1 -> Winner detected | 0 -> Winner not detected
  */
 int TicTacToe::determineWinner(void) {
     // Horizontals
@@ -98,20 +116,65 @@ int TicTacToe::determineWinner(void) {
     return 0;
 }
 
-// /**
-//  * FUNCTION:
-//  * PARAMS:
-//  * RETURNS:
-//  */
-// bool TicTacToe::determineTie(){
+/**
+ * FUNCTION: Determines if there is a tie. After all moves are exhausted, thus 9 moves have been made, there must be a tie.
+ * PARAMS:   Current rount
+ * RETURNS:  True or false, depending if there is a tie or not.
+ */
+bool TicTacToe::determineTie(){
+    if(++currentRound == 9){
+        return true;
+    } else {
+        return false;
+    }
+}
 
-// }
+/**
+ * FUNCTION: Main function for playing the game
+ * PARAMS:   Pointers to both player objects
+ * RETURNS:  VOID
+ */
+void TicTacToe::playGame(){
+    /* Tracks the current player's (NPC | Player) move */
+    int currentPlayerMove{-1};
 
-// /**
-//  * FUNCTION:
-//  * PARAMS:
-//  * RETURNS:
-//  */
-// bool TicTacToe::determineIfPlayingAgainstAI(){
-      
-// }
+    /* Player that will move first */
+    int currentPlayerIndex = determineWhoMovesFirst();
+    struct Player* currentPlayer = players[currentPlayerIndex];
+
+    while(gameOn){
+            printGameBoard();
+
+            std::cout << currentPlayer->playerName << "'s Turn!" << std::endl;
+
+            currentPlayerMove = captureMove();
+            updateSlot(currentPlayer, currentPlayerMove);
+            
+            /* Did someone win? */
+            if(determineWinner()){
+                printGameBoard();
+                std::cout << currentPlayer->playerName << " won!" << std::endl;
+                gameOn = 0;
+            
+            } else if (determineTie()){
+                printGameBoard();
+                std::cout << "TIE" << std::endl;
+                gameOn = 0;
+
+            /* No winner, nor tie, keep going*/
+            } else {
+                /* Other player's turn */
+                currentPlayerIndex = (currentPlayerIndex + 1) % 2;
+                currentPlayer = players[currentPlayerIndex];
+            }
+
+            #ifdef DEBUG
+                std::cout << "==========================================================" << std::endl;
+                std::cout << currentPlayerIndex << std::endl;
+                std::cout << currentPlayer->playerName << std::endl; 
+                std::cout << currentRound << std::endl;
+                std::cout << "==========================================================" << std::endl;
+            #endif
+
+        }
+}

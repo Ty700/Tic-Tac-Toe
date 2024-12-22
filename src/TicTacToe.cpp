@@ -3,8 +3,6 @@
 #include <iostream>
 
 int main(void){
-    /* Game */
-    class TicTacToe* currentGame = new TicTacToe();
 
     std::string playerOneName {""};
     char        playerOneSymbol {'X'};
@@ -63,7 +61,6 @@ int main(void){
                 break;
             
             case(2):
-                /* 5 = avaibleColors array size */
                 if(playerOneSymbol == 'X'){
                     playerOneSymbol = 'O';
                 } else {
@@ -75,8 +72,7 @@ int main(void){
                 playingAgaistAI = !playingAgaistAI;
 
                 if(!playingAgaistAI){
-                    std::cout << "Enter Player Two's Name: ";
-                    std::cin >> playerTwoName;
+                    playerTwoName = capturePlayerName();    
                 } else {
                     playerTwoName = generateAIName();
                 }
@@ -96,67 +92,17 @@ int main(void){
     /* Players */
     struct Player* playerOne = new Player(playerOneName, playerOneSymbol);
     struct Player* playerTwo = new Player(playerTwoName, playerTwoSymbol);
-    
-    /** 
-     * Used for determining who's turn it is.
-    */
-    struct Player* players[] = {playerOne, playerTwo};
+
+    /* Game */
+    class TicTacToe* currentGame = new TicTacToe(playerOne, playerTwo);
 
     /* Title */
-    std::cout << playerOne->playerName << " vs. " << playerTwo->playerName << std::endl;
+    currentGame->printTitle();
     
-    /* Tracks the current player's (NPC | Player) move */
-    int currentPlayerMove{-1};
+    /* Main game function. Will return only after a win or tie */
+    currentGame->playGame();
 
-    /* Player that will move first */
-    int currentPlayerIndex = currentGame->determineWhoMovesFirst(players);
-    struct Player* currentPlayer = players[currentPlayerIndex];
-
-    /**
-     *  Players setup completed. Play game.
-     * TODO: MOVE THIS TO GAME.CPP and call it via currentGame->playGame() function.
-    */
-
-    while(currentGame->gameOn){
-        currentGame->printGameBoard();
-
-        std::cout << currentPlayer->playerName << "'s Turn!" << std::endl;
-
-        currentPlayerMove = currentGame->captureMove();
-        currentGame->updateSlot(currentPlayer, currentPlayerMove);
-        
-        /* Did someone win? */
-        if(currentGame->determineWinner()){
-            currentGame->printGameBoard();
-            std::cout << currentPlayer->playerName << " won!" << std::endl;
-            currentGame->gameOn = 0;
-        
-        /**
-         * Is there a tie? 
-         * TODO: CLEAN THIS UP 
-         */
-        } else if (++currentGame->currentRound == 9){
-            currentGame->printGameBoard();
-            std::cout << "TIE" << std::endl;
-            currentGame->gameOn = 0;
-
-        /* No winner, nor tie, keep going*/
-        } else {
-            /* Other player's turn */
-            currentPlayerIndex = (currentPlayerIndex + 1) % 2;
-            currentPlayer = players[currentPlayerIndex];
-        }
-
-        #ifdef DEBUG
-            std::cout << "==========================================================" << std::endl;
-            std::cout << currentPlayerIndex << std::endl;
-            std::cout << currentPlayer->playerName << std::endl; 
-            std::cout << currentGame->currentRound << std::endl;
-            std::cout << "==========================================================" << std::endl;
-        #endif
-
-    }
-    
+    /* Memory clean up */
     delete playerOne;
     delete playerTwo;
     delete currentGame;

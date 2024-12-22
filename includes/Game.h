@@ -5,6 +5,27 @@
 class TicTacToe {
 
 public:
+
+/* Members */
+    
+    /* Board */
+    char slots[9] = {'1', '2', '3', '4', '5', '6', '7', '8', '9'};
+    
+    /* 1 = Game is in-progress. 0 = Game is not in-progress. */
+    bool gameOn {1};
+
+    /* Tracks the current round of the game. Used for determining if there is a tie */
+    int currentRound {0};
+
+    /* Place holder player objs */
+    struct Player* playerOne {NULL};
+    struct Player* playerTwo {NULL};
+
+    /* Keeps track of which player's turn it is*/
+    struct Player* players[2] = {playerOne, playerTwo};
+
+/* Methods */
+
     /* Prints the game board */
     void printGameBoard(void);
 
@@ -18,19 +39,20 @@ public:
     int determineWinner(void);
 
     /* Determine which player goes first in the game */
-    int determineWhoMovesFirst(struct Player** players);
+    int determineWhoMovesFirst();
+
+    /* Prints p1's name vs p2's name */
+    void printTitle();
 
     /* Determines if there aren't any more moves to make, thus a tie*/
-    // bool determineTie(void);
+    bool determineTie(void);
 
-    /* Determines if player one is playing against an AI or not */
-    // bool determineIfPlayingAgainstAI();
+    /* Main game function */
+    void playGame();
 
-    /* Board */
-    char slots[9] = {'1', '2', '3', '4', '5', '6', '7', '8', '9'};
-    bool gameOn {1};
-    int currentRound {0};
-    bool playerOneFacingAI {true};
+/* Constructor */
+    TicTacToe(struct Player* playerOne, struct Player* playerTwo)
+        : playerOne(playerOne), playerTwo(playerTwo) {}
 };
 
 
