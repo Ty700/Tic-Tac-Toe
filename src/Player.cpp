@@ -108,11 +108,11 @@ void setupPlayerTwo(struct Player *p, const char opposingSymbol){
 }
 
 /**
- * FUNCTION: If player chooses to play against an AI, this function is called to set AI up.
- * PARAMS: player object to setup and the opponent's symbol 
- * RETURNS: Void
+ * FUNCTION:    If player chooses to play against an AI, this function is called to pick a random AI name.
+ * PARAMS:      VOID
+ * RETURNS:     AI Name of type string
  */
-void setupNPC(struct Player* p, char opposingSymbol){
+std::string generateAIName(){
     /*  
         I would like to eventually assign NPC names based on the Player's skill level 
         I could track the user's skill rating in a file (maybe even encrypt it so the user can't mess with it)
@@ -131,7 +131,5 @@ void setupNPC(struct Player* p, char opposingSymbol){
     std::random_device rd;    
     unsigned int randNum = rd();
 
-    p->playerName = NPCNames[randNum % NPC_NAME_AMOUNT];
-    p->playerSymbol = (opposingSymbol == 'X') ? 'O' : 'X';
-    p->isAI = 1;
+    return NPCNames[randNum % NPC_NAME_AMOUNT];
 }

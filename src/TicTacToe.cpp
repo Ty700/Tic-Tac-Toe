@@ -15,6 +15,99 @@ int main(void){
     */
     struct Player* players[] = {playerOne, playerTwo};
 
+    std::string avaliableColors[4] = {"Red", "Green", "Blue", "Yellow"};
+
+    std::string playerOneName {""};
+    std::string playerTWoName {""};
+    std::string aiName {generateAIName()};
+
+    bool playingAgaistAI {true};
+
+    int playerOneColor{0};
+    int playerTwoColor{0};
+    
+    int menuOption{-1};
+    
+    while(menuOption != 5){
+        for(int i = 0; i < 50; i++){
+            std::cout << std::endl;
+        }
+
+        std::cout << "1. Player Name: " << playerOneName << std::endl;
+        std::cout << "2. Player 1 Color: " << avaliableColors[playerOneColor] << std::endl;
+
+        std::cout << "3. Playing Against: ";
+
+        if(playingAgaistAI){
+            std::cout << "AI" << std::endl;
+            std:: cout << "   AI's Name: " << aiName << std::endl;
+
+            std::cout << "4. AI Player Color: ";
+        } else {
+            std::cout << "Player" << std::endl;
+            std::cout << "   Player Two's Name: " << playerTWoName << std::endl;
+            std::cout << "4. Player Two Color: ";
+        }
+        std::cout << avaliableColors[playerTwoColor] << std::endl;
+
+        std::cout << "5. Start" << std::endl;
+
+        std::cin >> menuOption;
+
+        switch (menuOption)
+        {
+            case (1):
+                std::cout << "Enter Player One Name: ";
+                std::cin >> playerOneName;
+                break;
+            
+            case(2):
+                /* 5 = avaibleColors array size */
+                playerOneColor = ++playerOneColor % 4;
+                break;
+
+            case(3):
+                playingAgaistAI = !playingAgaistAI;
+
+                if(!playingAgaistAI){
+                    std::cout << "Enter Player Two's Name: ";
+                    std::cin >> playerTWoName;
+                }
+
+                break;
+
+            case(4):
+                playerTwoColor = ++playerTwoColor % 4;
+                break;
+            
+            case(5):
+                /* starting game */
+                break;
+
+            default:    
+                std::cout << "Invalid Option." << std::endl;
+        }
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     /* Sets up the player one */
     setupMainPlayer(playerOne);
 
@@ -31,7 +124,7 @@ int main(void){
     
     if(amountOfPlayers == 1){
         /* Sets up the NPC player */
-        setupNPC(playerTwo, playerOne->playerSymbol);
+        // setupNPC(playerTwo, playerOne->playerSymbol);
 
         #ifdef DEBUG
             std::cout << "Setting up an NPC." << std::endl;
