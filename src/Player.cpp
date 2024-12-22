@@ -7,14 +7,16 @@
 #define NPC_NAME_AMOUNT 15
 
 /**
- * FUNCTION: Allows user to input their name - Helper of "setupPlayer()
+ * FUNCTION: Allows user to input their name
  * PARAMS: Void
  * RETURNS: A string value that represents the player's name
  */
-static std::string capturePlayerName(void){
+std::string capturePlayerName(void){
     std::string userIn{};
 
     while(1){
+        std::cin.ignore(INT32_MAX, '\n');
+        
         std::cout << "Enter in your name: ";
         std::getline(std::cin, userIn);
         
@@ -45,66 +47,6 @@ static std::string capturePlayerName(void){
     }
 
     return userIn;
-}
-
-/**
- * FUNCTION: Allows user to determine if they want to be Xs or Os - Helper of "setupPlayer()"
- * PARAMS: VOID
- * RETURNS: A character, either 'X' or 'O'
- */
-static char capturePlayerSymbol(void){
-    char userIn{};
-
-    std::cout << "X or O? ";
-    std::cin >> userIn;
-
-    userIn = toupper(userIn);
-
-    while(userIn != 'X' && userIn != 'O'){
-        std::cout << "Invalid Option. Enter 'X' or 'O': ";
-        std::cin >> userIn;
-    }
-
-    return userIn;
-}
-
-/**
- * FUNCTION: Called by main to setup a given player's name and symbol
- * PARAMS:  Player object
- * RETURNS: Void
- */
-void setupMainPlayer(struct Player *p){
-    p->playerName = capturePlayerName();
-
-    #ifdef DEBUG
-        std::cout << "Player's name: " << p->playerName << std::endl;
-    #endif
-
-    p->playerSymbol = capturePlayerSymbol(); 
-
-    #ifdef DEBUG
-        std::cout << "Player chose: " << p->playerSymbol << std::endl;
-    #endif
-}
-
-/**
- * FUNCTION: Called by main to setup a player two's name and symbol
- * PARAMS:  Player object and player one's symbol
- * RETURNS: Void
- */
-void setupPlayerTwo(struct Player *p, const char opposingSymbol){
-    p->playerName = capturePlayerName();
-
-    #ifdef DEBUG
-        std::cout << "Player's name: " << p->playerName << std::endl;
-    #endif
-
-    /* Auto assigns player two's symbol based off player one's symbol */
-    p->playerSymbol = (opposingSymbol == 'X') ? 'O' : 'X';
-
-    #ifdef DEBUG
-        std::cout << "Player chose: " << p->playerSymbol << std::endl;
-    #endif
 }
 
 /**

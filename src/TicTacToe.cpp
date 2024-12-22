@@ -6,64 +6,69 @@ int main(void){
     /* Game */
     class TicTacToe* currentGame = new TicTacToe();
 
-    /* Players */
-    struct Player* playerOne = new Player();
-    struct Player* playerTwo = new Player();
-    
-    /** 
-     * Used for determining who's turn it is.
-    */
-    struct Player* players[] = {playerOne, playerTwo};
-
-    std::string avaliableColors[4] = {"Red", "Green", "Blue", "Yellow"};
-
     std::string playerOneName {""};
-    std::string playerTWoName {""};
-    std::string aiName {generateAIName()};
+    char        playerOneSymbol {'X'};
 
-    bool playingAgaistAI {true};
+    std::string playerTwoName {generateAIName()};
+    char        playerTwoSymbol{'O'};
 
-    int playerOneColor{0};
-    int playerTwoColor{0};
-    
+    bool playingAgaistAI {true};    
     int menuOption{-1};
     
-    while(menuOption != 5){
+    while(menuOption != 4){
         for(int i = 0; i < 50; i++){
             std::cout << std::endl;
         }
 
-        std::cout << "1. Player Name: " << playerOneName << std::endl;
-        std::cout << "2. Player 1 Color: " << avaliableColors[playerOneColor] << std::endl;
+        std::cout << "1. Player One's Name: " << playerOneName << std::endl;
+        std::cout << "2. Player One's Symbol: " << playerOneSymbol << std::endl;
 
         std::cout << "3. Playing Against: ";
 
         if(playingAgaistAI){
             std::cout << "AI" << std::endl;
-            std:: cout << "   AI's Name: " << aiName << std::endl;
+            std:: cout << "   AI's Name: " << playerTwoName << std::endl;
+            std::cout <<  "   AI's Symbol: ";
 
-            std::cout << "4. AI Player Color: ";
+            if(playerOneSymbol == 'X'){
+                playerTwoSymbol = 'O';
+                std::cout << playerTwoSymbol << std::endl;
+            } else {
+                playerTwoSymbol = 'X';
+                std::cout << playerTwoSymbol << std::endl;
+            }
+
         } else {
             std::cout << "Player" << std::endl;
-            std::cout << "   Player Two's Name: " << playerTWoName << std::endl;
-            std::cout << "4. Player Two Color: ";
-        }
-        std::cout << avaliableColors[playerTwoColor] << std::endl;
+            std::cout << "   Player Two's Name: " << playerTwoName << std::endl;
+            std::cout << "   Player Two's Symbol: ";
 
-        std::cout << "5. Start" << std::endl;
+            if(playerOneSymbol == 'X'){
+                playerTwoSymbol = 'O';
+                std::cout << playerTwoSymbol << std::endl;
+            } else {
+                playerTwoSymbol = 'X';
+                std::cout << playerTwoSymbol << std::endl;
+            }
+        }
+
+        std::cout << "4. Start" << std::endl;
 
         std::cin >> menuOption;
 
         switch (menuOption)
         {
             case (1):
-                std::cout << "Enter Player One Name: ";
-                std::cin >> playerOneName;
+                playerOneName = capturePlayerName();
                 break;
             
             case(2):
                 /* 5 = avaibleColors array size */
-                playerOneColor = ++playerOneColor % 4;
+                if(playerOneSymbol == 'X'){
+                    playerOneSymbol = 'O';
+                } else {
+                    playerOneSymbol = 'X';
+                }
                 break;
 
             case(3):
@@ -71,17 +76,15 @@ int main(void){
 
                 if(!playingAgaistAI){
                     std::cout << "Enter Player Two's Name: ";
-                    std::cin >> playerTWoName;
+                    std::cin >> playerTwoName;
+                } else {
+                    playerTwoName = generateAIName();
                 }
 
                 break;
 
             case(4):
-                playerTwoColor = ++playerTwoColor % 4;
-                break;
-            
-            case(5):
-                /* starting game */
+                /* Starting game */
                 break;
 
             default:    
@@ -90,52 +93,14 @@ int main(void){
 
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    /* Sets up the player one */
-    setupMainPlayer(playerOne);
-
-    // currentGame->determineIfPlayingAgainstAI();
+    /* Players */
+    struct Player* playerOne = new Player(playerOneName, playerOneSymbol);
+    struct Player* playerTwo = new Player(playerTwoName, playerTwoSymbol);
     
     /** 
-     * Determines if player is playing against AI or not 
-     * TODO: MOVE THIS TO A FUNCTION
+     * Used for determining who's turn it is.
     */
-    int amountOfPlayers = 0;
-    std::cout << "How many players: ";
-    std::cin >> amountOfPlayers;
-    std::cin.ignore(INT16_MAX, '\n');
-    
-    if(amountOfPlayers == 1){
-        /* Sets up the NPC player */
-        // setupNPC(playerTwo, playerOne->playerSymbol);
-
-        #ifdef DEBUG
-            std::cout << "Setting up an NPC." << std::endl;
-        #endif /* DEBUG */
-    
-    } else {
-        #ifdef DEBUG
-            std::cout << "Setting up a player." << std::endl;
-        #endif /* DEBUG */
-        setupPlayerTwo(playerTwo, playerOne->playerSymbol);
-    }
+    struct Player* players[] = {playerOne, playerTwo};
 
     /* Title */
     std::cout << playerOne->playerName << " vs. " << playerTwo->playerName << std::endl;

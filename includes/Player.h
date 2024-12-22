@@ -10,6 +10,5 @@ struct Player{
         {}
 };
 
-void setupMainPlayer(struct Player *p);
-std::string generateAIName();
-void setupPlayerTwo(struct Player *p, const char opposingSymbol);
+std::string capturePlayerName(void);
+std::string generateAIName(void);
