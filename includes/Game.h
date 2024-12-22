@@ -52,7 +52,9 @@ public:
 
 /* Constructor */
     TicTacToe(struct Player* playerOne, struct Player* playerTwo)
-        : playerOne(playerOne), playerTwo(playerTwo) {}
+        : playerOne(playerOne), playerTwo(playerTwo) {
+            std::cout << "Calling constructor!" << std::endl;
+        }
 };
 
 
