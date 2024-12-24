@@ -8,7 +8,7 @@ PROGNAME="TicTacToe"
 OUTPUT="$BIN_DIR/$PROGNAME"
 
 CXX=g++
-CXXFLAGS="-I$INCLUDE_DIR -Wall -Wextra -std=c++17"
+CXXFLAGS="-I$INCLUDE_DIR -DDEBUG -Wall -Wextra -std=c++17"
 
 mkdir -p $BIN_DIR
 

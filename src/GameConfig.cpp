@@ -7,6 +7,7 @@
  * FUNCTION: Sets up the game 
  */
 void GameConfig::setupGame(){
+
     constexpr int FINISH_BUTTON = 4;
 
     while(menuOption != FINISH_BUTTON){
@@ -75,6 +76,13 @@ void GameConfig::setupGame(){
 
             case(FINISH_BUTTON):
                 /* Starting game */
+                playerOne = new Player(playerOneName, playerOneSymbol, false);
+                
+                if(playingAgaistAI){
+                    playerTwo = new Player(playerTwoName, playerTwoSymbol, true);
+                } else {
+                    playerTwo = new Player(playerTwoName, playerTwoSymbol, false);
+                }
                 break;
 
             default:    

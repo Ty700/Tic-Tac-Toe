@@ -1,6 +1,9 @@
 #include "Player.h"
 #include "Game.h"
 #include <iostream>
+#include <random>
+#include <thread>
+#include <chrono>
 
 /**
  * FUNCTION: Prints the game board
@@ -8,9 +11,11 @@
  * RETURNS: VOID
  */
 void TicTacToe::printGameBoard(void){
-    for(int i = 0; i < 50; i++){
-        std::cout << std::endl;
-    }
+    #ifndef DEBUG
+        for(int i = 0; i < 50; i++){
+            std::cout << std::endl;
+        }
+    #endif 
 
     std::cout << " " << TicTacToe::slots[0] << " | " << slots[1] << " | " << slots[2] << std::endl
               << "---+---+---" << std::endl
@@ -48,15 +53,21 @@ int TicTacToe::determineWhoMovesFirst(){
 
     std::cin >> userIn;
 
-    while(userIn != 1 && userIn != 2 && std::cin.fail()){
-        std::cin.clear();
-        std::cin.ignore(INT32_MAX, '\n');
+    while(true){
+        
+        if(userIn == 1 || userIn == 2){
+            return userIn - 1;
+        }
+
+        if(std::cin.fail()){
+            std::cin.clear();
+            std::cin.ignore(INT32_MAX, '\n');
+        }
 
         std::cout << "Invalid Option." << std::endl;
         std::cin >> userIn;
     }
-
-    return userIn - 1;
+    
 }
 
 /**
@@ -90,6 +101,36 @@ int TicTacToe::getPlayerMove(void){
     }
 
     return userIn;
+}
+
+/**
+ * FUNCTION:    Determines where the AI will move
+ * PARAMS:      VOID
+ * RETURNS:     Int value representing the slot where the AI is moving
+ */
+int TicTacToe::getAIMove(void){ 
+    std::random_device rd;    
+    unsigned int AIMove = rd();
+    
+    constexpr int MAX_SLEEP = 4; 
+    int sleepTime = (AIMove % MAX_SLEEP) + 1; 
+    std::this_thread::sleep_for(std::chrono::seconds(sleepTime));
+
+    do{
+        AIMove = rd();
+        AIMove %= boardSize;
+
+        #ifdef DEBUG
+            std::cout << "AI Rolled: " << AIMove << std::endl;
+        #endif
+
+    }while((AIMove < 1 || AIMove > 10) || slots[AIMove - 1] == 'X' || slots[AIMove - 1] == 'O');
+
+    #ifdef DEBUG
+        std::cout << "AI MOVING TO: " << AIMove << std::endl;
+    #endif 
+    
+    return AIMove;
 }
 
 /** 
@@ -135,6 +176,13 @@ bool TicTacToe::determineTie(){
  * RETURNS:  VOID
  */
 void TicTacToe::playGame(){
+
+    #ifdef DEBUG
+        if(playerTwo->isPlayerAI){
+            std::cout << "Player Two is AI." << std::endl;
+        }
+    #endif 
+
     /* Tracks the current player's (NPC | Player) move */
     int currentPlayerMove{-1};
 
@@ -143,38 +191,42 @@ void TicTacToe::playGame(){
     struct Player* currentPlayer = players[currentPlayerIndex];
 
     while(gameOn){
+        printGameBoard();
+
+        /* Lets the players know who's turn it is */
+        std::cout << currentPlayer->playerName << "'s Turn!" << std::endl;
+
+        /* Branch depending if character is AI or not */
+        currentPlayerMove = (currentPlayer->isPlayerAI) ? getAIMove() : getPlayerMove();
+
+        updateSlot(currentPlayer, currentPlayerMove);
+        
+        /* Did someone win? */
+        if(determineWinner()){
             printGameBoard();
+            std::cout << currentPlayer->playerName << " won!" << std::endl;
+            gameOn = 0;
+        
+        /* Are all moves exhausted, thus a tie> */
+        } else if (determineTie()){
+            printGameBoard();
+            std::cout << "TIE" << std::endl;
+            gameOn = 0;
 
-            std::cout << currentPlayer->playerName << "'s Turn!" << std::endl;
+        /* No winner, nor tie, keep going*/
+        } else {
 
-            currentPlayerMove = getPlayerMove();
-            updateSlot(currentPlayer, currentPlayerMove);
-            
-            /* Did someone win? */
-            if(determineWinner()){
-                printGameBoard();
-                std::cout << currentPlayer->playerName << " won!" << std::endl;
-                gameOn = 0;
-            
-            } else if (determineTie()){
-                printGameBoard();
-                std::cout << "TIE" << std::endl;
-                gameOn = 0;
-
-            /* No winner, nor tie, keep going*/
-            } else {
-                /* Other player's turn */
-                currentPlayerIndex = (currentPlayerIndex + 1) % 2;
-                currentPlayer = players[currentPlayerIndex];
-            }
-
-            #ifdef DEBUG
-                std::cout << "==========================================================" << std::endl;
-                std::cout << currentPlayerIndex << std::endl;
-                std::cout << currentPlayer->playerName << std::endl; 
-                std::cout << currentRound << std::endl;
-                std::cout << "==========================================================" << std::endl;
-            #endif
-
+            /* Other player's turn */
+            currentPlayerIndex = (currentPlayerIndex + 1) % 2;
+            currentPlayer = players[currentPlayerIndex];
         }
+
+        #ifdef DEBUG
+            std::cout << "==========================================================" << std::endl;
+            std::cout << currentPlayerIndex << std::endl;
+            std::cout << currentPlayer->playerName << std::endl; 
+            std::cout << currentRound << std::endl;
+            std::cout << "==========================================================" << std::endl;
+        #endif
+    }
 }

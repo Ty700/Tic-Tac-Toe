@@ -6,10 +6,14 @@ class TicTacToe {
 
 public:
 
+/* Constructor */
+    TicTacToe(struct Player* playerOne, struct Player* playerTwo)
+        : playerOne(playerOne), playerTwo(playerTwo) {}
+
 /* Members */
-    
     /* Board */
-    char slots[9] = {'1', '2', '3', '4', '5', '6', '7', '8', '9'};
+    static constexpr int boardSize = 9;
+    char slots[boardSize] = {'1', '2', '3', '4', '5', '6', '7', '8', '9'};
     
     /* 1 = Game is in-progress. 0 = Game is not in-progress. */
     bool gameOn {1};
@@ -24,13 +28,22 @@ public:
     /* Keeps track of which player's turn it is*/
     struct Player* players[2] = {playerOne, playerTwo};
 
-/* Methods */
+    /* Main game function */
+    void playGame();
 
+    /* Prints p1's name vs p2's name */
+    void printTitle();
+
+/* Methods */
+private:
     /* Prints the game board */
     void printGameBoard(void);
 
     /* Captures where the current player wants to place their symbol */
     int getPlayerMove(void);
+
+    /* Captures where the AI wants to place their symbol */
+    int getAIMove(void);
 
     /* Updates the slots array with the symbol of the current player's turn */
     void updateSlot(struct Player *p, int slotToUpdate); 
@@ -41,18 +54,9 @@ public:
     /* Determine which player goes first in the game */
     int determineWhoMovesFirst();
 
-    /* Prints p1's name vs p2's name */
-    void printTitle();
-
     /* Determines if there aren't any more moves to make, thus a tie*/
     bool determineTie(void);
 
-    /* Main game function */
-    void playGame();
-
-/* Constructor */
-    TicTacToe(struct Player* playerOne, struct Player* playerTwo)
-        : playerOne(playerOne), playerTwo(playerTwo) {}
 };
 
 

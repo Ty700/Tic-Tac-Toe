@@ -17,6 +17,9 @@ public:
     
     int menuOption              {-1};
 
+    struct Player* playerOne {NULL};
+    struct Player* playerTwo {NULL};
+    
 /* Methods */
     void setupGame();
 };
