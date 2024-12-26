@@ -17,12 +17,28 @@ void TicTacToe::printGameBoard(void){
         }
     #endif 
 
-    std::cout << " " << TicTacToe::slots[0] << " | " << slots[1] << " | " << slots[2] << std::endl
-              << "---+---+---" << std::endl
-              << " " << slots[3] << " | " << slots[4] << " | " << slots[5] << std::endl
-              << "---+---+---" << std::endl
-              << " " << slots[6] << " | " << slots[7] << " | " << slots[8] << std::endl
-              << std::endl;
+    const std::string RESET = "\033[0m";
+    const std::string RED = "\033[31m"; // Red color for X
+    const std::string BLUE = "\033[34m"; // Blue color for O
+
+    for (int i = 0; i < 9; i++) {
+        if (slots[i] == 'X') {
+            std::cout << RED << " X " << RESET;
+        } else if (slots[i] == 'O') {
+            std::cout << BLUE << " O " << RESET;
+        } else {
+            std::cout << " " << slots[i] << " " ;
+        }
+        // Print dividers
+        if ((i + 1) % 3 == 0){
+            std::cout << std::endl;
+            if (i != 8) {          
+                std::cout << "---+---+---" << std::endl;
+            }
+        } else {
+            std::cout << "|";
+        }      
+    }
 }
 
 /**
@@ -107,6 +123,7 @@ int TicTacToe::getPlayerMove(void){
  * FUNCTION:    Determines where the AI will move
  * PARAMS:      VOID
  * RETURNS:     Int value representing the slot where the AI is moving
+ * TODO:        Add algorithms so the AI is choosing slots that aren't at random
  */
 int TicTacToe::getAIMove(void){ 
     std::random_device rd;    
@@ -194,7 +211,7 @@ void TicTacToe::playGame(){
         printGameBoard();
 
         /* Lets the players know who's turn it is */
-        std::cout << currentPlayer->playerName << "'s Turn!" << std::endl;
+        std::cout << std::endl << currentPlayer->playerName << "'s Turn!" << std::endl;
 
         /* Branch depending if character is AI or not */
         currentPlayerMove = (currentPlayer->isPlayerAI) ? getAIMove() : getPlayerMove();
@@ -204,10 +221,10 @@ void TicTacToe::playGame(){
         /* Did someone win? */
         if(determineWinner()){
             printGameBoard();
-            std::cout << currentPlayer->playerName << " won!" << std::endl;
+            std::cout << std::endl << currentPlayer->playerName << " won!" << std::endl;
             gameOn = 0;
         
-        /* Are all moves exhausted, thus a tie> */
+        /* Are all moves exhausted, thus a tie? */
         } else if (determineTie()){
             printGameBoard();
             std::cout << "TIE" << std::endl;
