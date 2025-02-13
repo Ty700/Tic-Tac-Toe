@@ -16,7 +16,7 @@ void TicTacToe::printGameBoard(void){
             std::cout << std::endl;
         }
     #endif 
-
+    printTitle();
     const std::string RESET = "\033[0m";
     const std::string RED = "\033[31m"; // Red color for X
     const std::string BLUE = "\033[34m"; // Blue color for O
@@ -206,6 +206,9 @@ void TicTacToe::playGame(){
     /* Player that will move first */
     int currentPlayerIndex = determineWhoMovesFirst();
     struct Player* currentPlayer = players[currentPlayerIndex];
+
+    /* Title */
+    
 
     while(gameOn){
         printGameBoard();

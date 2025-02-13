@@ -1,14 +1,16 @@
 #pragma once
 #include "Player.h"
+#include <memory>
 #include <iostream>
+#include <GameConfig.h>
 
 class TicTacToe {
 
 public:
 
 /* Constructor */
-    TicTacToe(struct Player* playerOne, struct Player* playerTwo)
-        : playerOne(playerOne), playerTwo(playerTwo) {}
+    TicTacToe(const std::unique_ptr<GameConfig>& gameConfig)
+        : playerOne(gameConfig->playerOne), playerTwo(gameConfig->playerTwo) {}
 
 /* Members */
     /* Board */
