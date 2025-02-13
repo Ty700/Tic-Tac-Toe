@@ -5,11 +5,18 @@
 #include <thread>
 #include <chrono>
 
+
+/* Yeah yeah... static global variables YUCK. Whatever... */
+static const std::string RESET = "\033[0m";
+static const std::string RED = "\033[31m"; // Red color for X
+static const std::string BLUE = "\033[34m"; // Blue color for O
+
 /**
  * FUNCTION: Prints the game board
  * PARAMS: VOID
  * RETURNS: VOID
  */
+
 void TicTacToe::printGameBoard(void){
     #ifndef DEBUG
         for(int i = 0; i < 50; i++){
@@ -17,9 +24,6 @@ void TicTacToe::printGameBoard(void){
         }
     #endif 
     printTitle();
-    const std::string RESET = "\033[0m";
-    const std::string RED = "\033[31m"; // Red color for X
-    const std::string BLUE = "\033[34m"; // Blue color for O
 
     for (int i = 0; i < 9; i++) {
         if (slots[i] == 'X') {
@@ -52,7 +56,11 @@ void TicTacToe::printTitle(){
     }
 
     /* Title */
-    std::cout << playerOne->playerName << " vs. " << playerTwo->playerName << std::endl;
+    if(playerOne->playerSymbol == 'X'){
+        std::cout << RED << playerOne->playerName << RESET << " vs. " << BLUE << playerTwo->playerName << RESET << std::endl;
+    } else {
+        std::cout << BLUE << playerOne->playerName << RESET << " vs. " << RED << playerTwo->playerName << RESET << std::endl;
+    }
 }
 
 /** 

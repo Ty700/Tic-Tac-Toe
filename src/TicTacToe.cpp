@@ -6,13 +6,12 @@
 
 int main(void){
 
+    /* Game settings */
     auto gameConfiguration = std::make_unique<GameConfig>();
-    gameConfiguration->setupGame();  
 
     /* Game */
     auto currentGame = std::make_unique<TicTacToe>(gameConfiguration);
     
-    /* Main game function. Will return only after a win or tie */
+    /* Main game loop. Will return only after a win or tie */
     currentGame->playGame();
-    return 0;
 }
