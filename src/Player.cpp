@@ -6,8 +6,8 @@
 
 /**
  * FUNCTION: Allows user to input their name
- * PARAMS: Void
- * RETURNS: A string value that represents the player's name
+ * PARAMS:   Void
+ * RETURNS:  A string value that represents the player's name
  */
 std::string capturePlayerName(void){
     std::string userIn{};
@@ -52,7 +52,7 @@ std::string capturePlayerName(void){
  * PARAMS:      VOID
  * RETURNS:     AI Name of type string
  */
-std::string generateAIName(){
+std::string generateAIName(void){
     /*  
         I would like to eventually assign NPC names based on the Player's skill level 
         I could track the user's skill rating in a file (maybe even encrypt it so the user can't mess with it)

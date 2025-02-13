@@ -4,9 +4,11 @@
 #include <string>
 
 /**
- * FUNCTION: Sets up the game 
+ * FUNCTION: Sets up the game. When calling game loop, will use this config as settings
+ * PARAMS:   VOID
+ * RETURNS:  VOID
  */
-void GameConfig::setupGame(){
+void GameConfig::setupGame(void){
 
     constexpr int FINISH_BUTTON = 4;
 

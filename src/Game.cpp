@@ -13,10 +13,9 @@ static const std::string BLUE = "\033[34m"; // Blue color for O
 
 /**
  * FUNCTION: Prints the game board
- * PARAMS: VOID
- * RETURNS: VOID
+ * PARAMS:   VOID
+ * RETURNS:  VOID
  */
-
 void TicTacToe::printGameBoard(void){
     #ifndef DEBUG
         for(int i = 0; i < 50; i++){
@@ -47,10 +46,10 @@ void TicTacToe::printGameBoard(void){
 
 /**
  * FUNCTION: Prints the the player one's name vs player two's name
- * PARAMS: Pointers to both the player objects
- * RETURNS: VOID
+ * PARAMS:   VOID
+ * RETURNS:  VOID
  */
-void TicTacToe::printTitle(){
+void TicTacToe::printTitle(void){
     for(int i = 0; i < 50; i++){
         std::cout << std::endl;
     }
@@ -64,11 +63,11 @@ void TicTacToe::printTitle(){
 }
 
 /** 
- * FUNCTION:    Determines who (Player 1 or 2) goes first
- * PARAMS:      List of players
- * RETURNS:     int value (0 or 1)
+ * FUNCTION: Determines who (Player 1 or 2) goes first
+ * PARAMS:   VOID
+ * RETURNS:  int value (0 or 1)
  */
-int TicTacToe::determineWhoMovesFirst(){
+int TicTacToe::determineWhoMovesFirst(void){
     int userIn{-1};
 
     std::cout << "Which player goes first?\n";
@@ -184,10 +183,10 @@ int TicTacToe::determineWinner(void) {
 
 /**
  * FUNCTION: Determines if there is a tie. After all moves are exhausted, thus 9 moves have been made, there must be a tie.
- * PARAMS:   Current rount
+ * PARAMS:   VOID
  * RETURNS:  True or false, depending if there is a tie or not.
  */
-bool TicTacToe::determineTie(){
+bool TicTacToe::determineTie(void){
     if(++currentRound == 9){
         return true;
     } else {
@@ -197,7 +196,7 @@ bool TicTacToe::determineTie(){
 
 /**
  * FUNCTION: Main function for playing the game
- * PARAMS:   Pointers to both player objects
+ * PARAMS:   VOID
  * RETURNS:  VOID
  */
 void TicTacToe::playGame(){
