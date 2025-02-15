@@ -10,7 +10,7 @@ int main(void){
     auto gameConfiguration = std::make_unique<GameConfig>();
 
     /* Game */
-    auto currentGame = std::make_unique<TicTacToe>(gameConfiguration);
+    auto currentGame = std::make_unique<Game>(gameConfiguration);
     
     /* Main game loop. Will return only after a win or tie */
     currentGame->playGame();

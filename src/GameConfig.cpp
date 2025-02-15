@@ -1,5 +1,6 @@
 #include "GameConfig.h"
 #include "Player.h"
+
 #include <iostream>
 #include <string>
 
@@ -13,9 +14,13 @@ void GameConfig::setupGame(void){
     constexpr int FINISH_BUTTON = 4;
 
     while(menuOption != FINISH_BUTTON){
-            /* Clear console screen */
-            for(int i = 0; i < 50; i++) std::cout << std::endl; 
-            
+            #ifdef _WIN32
+                system("cls");
+            #else 
+                system("clear");
+            #endif /* _WIN32 */
+
+
             std::cout << "1. Player One's Name: " << playerOneName << std::endl;
             std::cout << "2. Player One's Symbol: " << playerOneSymbol << std::endl;
             std::cout << "3. Playing Against: ";

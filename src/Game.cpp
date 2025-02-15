@@ -1,5 +1,6 @@
 #include "Player.h"
 #include "Game.h"
+
 #include <iostream>
 #include <random>
 #include <thread>
@@ -16,12 +17,12 @@ static const std::string BLUE = "\033[34m"; // Blue color for O
  * PARAMS:   VOID
  * RETURNS:  VOID
  */
-void TicTacToe::printGameBoard(void){
-    #ifndef DEBUG
-        for(int i = 0; i < 50; i++){
-            std::cout << std::endl;
-        }
-    #endif 
+void Game::printGameBoard(void){
+    #ifdef _WIN32
+            system("cls");
+    #else 
+            system("clear");
+    #endif /* _WIN32 */ 
     printTitle();
 
     for (int i = 0; i < 9; i++) {
@@ -49,7 +50,7 @@ void TicTacToe::printGameBoard(void){
  * PARAMS:   VOID
  * RETURNS:  VOID
  */
-void TicTacToe::printTitle(void){
+void Game::printTitle(void){
     for(int i = 0; i < 50; i++){
         std::cout << std::endl;
     }
@@ -67,7 +68,7 @@ void TicTacToe::printTitle(void){
  * PARAMS:   VOID
  * RETURNS:  int value (0 or 1)
  */
-int TicTacToe::determineWhoMovesFirst(void){
+int Game::determineWhoMovesFirst(void){
     int userIn{-1};
 
     std::cout << "Which player goes first?\n";
@@ -98,7 +99,7 @@ int TicTacToe::determineWhoMovesFirst(void){
  * PARAMS:   current player, p, and the slot number they chose
  * RETURNS:  VOID
  */
-void TicTacToe::updateSlot(struct Player *p, int slotToUpdate){
+void Game::updateSlot(const struct Player* p, const int& slotToUpdate){
     slots[slotToUpdate - 1] = p->playerSymbol;
 }
 
@@ -107,7 +108,7 @@ void TicTacToe::updateSlot(struct Player *p, int slotToUpdate){
  * PARAMS:      VOID
  * RETURNS:     An int value (1 - 9), that corresponds with a place on the TicTacToe board
  */
-int TicTacToe::getPlayerMove(void){
+int Game::getPlayerMove(void){
     int userIn{-1};
 
     std::cout << "Enter in where to move: ";
@@ -132,7 +133,7 @@ int TicTacToe::getPlayerMove(void){
  * RETURNS:     Int value representing the slot where the AI is moving
  * TODO:        Add algorithms so the AI is choosing slots that aren't at random
  */
-int TicTacToe::getAIMove(void){ 
+int Game::getAIMove(void){ 
     std::random_device rd;    
     unsigned int AIMove = rd();
     
@@ -162,7 +163,7 @@ int TicTacToe::getAIMove(void){
  * PARAMS:   VOID
  * RETURNS:  1 -> Winner detected | 0 -> Winner not detected
  */
-int TicTacToe::determineWinner(void) {
+int Game::determineWinner(void) {
     // Horizontals
     if ((slots[0] == slots[1] && slots[1] == slots[2]) ||
         (slots[3] == slots[4] && slots[4] == slots[5]) ||
@@ -186,7 +187,7 @@ int TicTacToe::determineWinner(void) {
  * PARAMS:   VOID
  * RETURNS:  True or false, depending if there is a tie or not.
  */
-bool TicTacToe::determineTie(void){
+bool Game::determineTie(void){
     if(++currentRound == 9){
         return true;
     } else {
@@ -199,10 +200,10 @@ bool TicTacToe::determineTie(void){
  * PARAMS:   VOID
  * RETURNS:  VOID
  */
-void TicTacToe::playGame(){
+void Game::playGame(void){
 
     #ifdef DEBUG
-        if(playerTwo->isPlayerAI){
+        if(playerTwo.isPlayerAI){
             std::cout << "Player Two is AI." << std::endl;
         }
     #endif 
@@ -212,7 +213,7 @@ void TicTacToe::playGame(){
 
     /* Player that will move first */
     int currentPlayerIndex = determineWhoMovesFirst();
-    struct Player* currentPlayer = players[currentPlayerIndex];
+    const struct Player* currentPlayer = players[currentPlayerIndex];
 
     /* Title */
     
@@ -251,7 +252,7 @@ void TicTacToe::playGame(){
         #ifdef DEBUG
             std::cout << "==========================================================" << std::endl;
             std::cout << currentPlayerIndex << std::endl;
-            std::cout << currentPlayer->playerName << std::endl; 
+            std::cout << currentPlayer.playerName << std::endl; 
             std::cout << currentRound << std::endl;
             std::cout << "==========================================================" << std::endl;
         #endif
