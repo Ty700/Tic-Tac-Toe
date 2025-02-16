@@ -18,11 +18,13 @@ static const std::string BLUE = "\033[34m"; // Blue color for O
  * RETURNS:  VOID
  */
 void Game::printGameBoard(void){
-    #ifdef _WIN32
-            system("cls");
-    #else 
-            system("clear");
-    #endif /* _WIN32 */ 
+    #ifndef DEBUG
+        #ifdef _WIN32
+                system("cls");
+        #else 
+                system("clear");
+        #endif /* _WIN32 */
+    #endif /* DEBUG */ 
     printTitle();
 
     for (int i = 0; i < 9; i++) {
@@ -51,10 +53,6 @@ void Game::printGameBoard(void){
  * RETURNS:  VOID
  */
 void Game::printTitle(void){
-    for(int i = 0; i < 50; i++){
-        std::cout << std::endl;
-    }
-
     /* Title */
     if(playerOne->playerSymbol == 'X'){
         std::cout << RED << playerOne->playerName << RESET << " vs. " << BLUE << playerTwo->playerName << RESET << std::endl;
@@ -98,8 +96,8 @@ int Game::determineWhoMovesFirst(void){
  * FUNCTION: Given a slot number, updates the slot to the current player's symbol
  * PARAMS:   current player, p, and the slot number they chose
  * RETURNS:  VOID
- */
-void Game::updateSlot(const struct Player* p, const int& slotToUpdate){
+ */ 
+void Game::updateSlot(const std::shared_ptr<Player>  p, const int& slotToUpdate){
     slots[slotToUpdate - 1] = p->playerSymbol;
 }
 
@@ -137,13 +135,13 @@ int Game::getAIMove(void){
     std::random_device rd;    
     unsigned int AIMove = rd();
     
-    constexpr int MAX_SLEEP = 4; 
+    constexpr int MAX_SLEEP = 2; 
     int sleepTime = (AIMove % MAX_SLEEP) + 1; 
     std::this_thread::sleep_for(std::chrono::seconds(sleepTime));
 
     do{
         AIMove = rd();
-        AIMove %= boardSize;
+        AIMove %= boardSize + 1;
 
         #ifdef DEBUG
             std::cout << "AI Rolled: " << AIMove << std::endl;
@@ -203,20 +201,10 @@ bool Game::determineTie(void){
 void Game::playGame(void){
 
     #ifdef DEBUG
-        if(playerTwo.isPlayerAI){
+        if(playerTwo->isPlayerAI){
             std::cout << "Player Two is AI." << std::endl;
         }
     #endif 
-
-    /* Tracks the current player's (NPC | Player) move */
-    int currentPlayerMove{-1};
-
-    /* Player that will move first */
-    int currentPlayerIndex = determineWhoMovesFirst();
-    const struct Player* currentPlayer = players[currentPlayerIndex];
-
-    /* Title */
-    
 
     while(gameOn){
         printGameBoard();
@@ -228,22 +216,15 @@ void Game::playGame(void){
         currentPlayerMove = (currentPlayer->isPlayerAI) ? getAIMove() : getPlayerMove();
 
         updateSlot(currentPlayer, currentPlayerMove);
-        
-        /* Did someone win? */
+        printGameBoard();
+
         if(determineWinner()){
-            printGameBoard();
             std::cout << std::endl << currentPlayer->playerName << " won!" << std::endl;
-            gameOn = 0;
-        
-        /* Are all moves exhausted, thus a tie? */
+            gameOn = false;
         } else if (determineTie()){
-            printGameBoard();
             std::cout << "TIE" << std::endl;
-            gameOn = 0;
-
-        /* No winner, nor tie, keep going*/
+            gameOn = false;
         } else {
-
             /* Other player's turn */
             currentPlayerIndex = (currentPlayerIndex + 1) % 2;
             currentPlayer = players[currentPlayerIndex];
@@ -251,9 +232,9 @@ void Game::playGame(void){
 
         #ifdef DEBUG
             std::cout << "==========================================================" << std::endl;
-            std::cout << currentPlayerIndex << std::endl;
-            std::cout << currentPlayer.playerName << std::endl; 
-            std::cout << currentRound << std::endl;
+            std::cout << "Current Player Index: " << currentPlayerIndex << std::endl;
+            std::cout << "Current Player Name:  " << currentPlayer->playerName << std::endl; 
+            std::cout << "Current Round:        " << currentRound << std::endl;
             std::cout << "==========================================================" << std::endl;
         #endif
     }

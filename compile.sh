@@ -12,6 +12,11 @@ CXXFLAGS="-I$INCLUDE_DIR -Wall -Wextra -std=c++17"
 
 mkdir -p $BIN_DIR
 
+if [ "$1" == "DEBUG" ] || [ "$1" == "debug" ]; then
+    echo "DEBUG MODE"
+    CXXFLAGS="$CXXFLAGS -DDEBUG"
+fi
+
 CPP_FILES=$(find $SRC_DIR -type f -name "*.cpp")
 
 echo "Compiling..."

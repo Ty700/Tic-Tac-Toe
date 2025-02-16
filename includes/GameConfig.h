@@ -2,6 +2,7 @@
 #include "Player.h"
 
 #include <string>
+#include <memory>
 
 class GameConfig{
 
@@ -9,8 +10,8 @@ public:
     GameConfig(){
         setupGame();
     }
-    struct Player* playerOne {NULL};
-    struct Player* playerTwo {NULL};
+    std::shared_ptr<Player> playerOne {nullptr};
+    std::shared_ptr<Player> playerTwo {nullptr};
     
 private:
     int menuOption              {-1};
@@ -19,7 +20,7 @@ private:
     char        playerOneSymbol {'X'};
     std::string playerTwoName   {generateAIName()};
     char        playerTwoSymbol {'O'};
-    bool playingAgaistAI        {true};    
+    bool        playingAgainstAI{true};    
     
 };
 

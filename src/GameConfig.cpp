@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string>
+#include <memory>
 
 /**
  * FUNCTION: Sets up the game. When calling game loop, will use this config as settings
@@ -14,18 +15,20 @@ void GameConfig::setupGame(void){
     constexpr int FINISH_BUTTON = 4;
 
     while(menuOption != FINISH_BUTTON){
-            #ifdef _WIN32
-                system("cls");
-            #else 
-                system("clear");
-            #endif /* _WIN32 */
+            #ifndef DEBUG
+                #ifdef _WIN32
+                    system("cls");
+                #else 
+                    system("clear");
+                #endif /* _WIN32 */
+            #endif /* DEBUG */
 
 
             std::cout << "1. Player One's Name: " << playerOneName << std::endl;
             std::cout << "2. Player One's Symbol: " << playerOneSymbol << std::endl;
             std::cout << "3. Playing Against: ";
 
-            if(playingAgaistAI){
+            if(playingAgainstAI){
                 std::cout << "AI" << std::endl;
                 std:: cout << "   AI's Name: " << playerTwoName << std::endl;
                 std::cout <<  "   AI's Symbol: ";
@@ -71,9 +74,9 @@ void GameConfig::setupGame(void){
                 break;
 
             case(3):
-                playingAgaistAI = !playingAgaistAI;
+                playingAgainstAI = !playingAgainstAI;
 
-                if(!playingAgaistAI){
+                if(!playingAgainstAI){
                     playerTwoName = capturePlayerName();    
                 } else {
                     playerTwoName = generateAIName();
@@ -83,12 +86,12 @@ void GameConfig::setupGame(void){
 
             case(FINISH_BUTTON):
                 /* Starting game */
-                playerOne = new Player(playerOneName, playerOneSymbol, false);
+                playerOne = std::make_unique<Player>(playerOneName, playerOneSymbol, false);
                 
-                if(playingAgaistAI){
-                    playerTwo = new Player(playerTwoName, playerTwoSymbol, true);
+                if(playingAgainstAI){
+                    playerTwo = std::make_unique<Player>(playerTwoName, playerTwoSymbol, true);
                 } else {
-                    playerTwo = new Player(playerTwoName, playerTwoSymbol, false);
+                    playerTwo = std::make_unique<Player>(playerTwoName, playerTwoSymbol, false);
                 }
                 break;
 

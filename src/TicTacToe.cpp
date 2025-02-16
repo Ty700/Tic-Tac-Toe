@@ -7,10 +7,10 @@
 int main(void){
 
     /* Game settings */
-    auto gameConfiguration = std::make_unique<GameConfig>();
+    auto gameConfiguration = std::make_shared<GameConfig>();
 
     /* Game */
-    auto currentGame = std::make_unique<Game>(gameConfiguration);
+    auto currentGame = std::make_shared<Game>(gameConfiguration);
     
     /* Main game loop. Will return only after a win or tie */
     currentGame->playGame();

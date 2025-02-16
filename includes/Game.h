@@ -8,8 +8,16 @@
 class Game {
 
 public:
-    Game(const std::unique_ptr<GameConfig>& gameConfig)
-        : playerOne(gameConfig->playerOne), playerTwo(gameConfig->playerTwo) {}
+    Game(const std::shared_ptr<GameConfig>& gameConfig)
+        : playerOne(gameConfig->playerOne),
+          playerTwo(gameConfig->playerTwo)
+    {   
+        players[0] = playerOne;
+        players[1] = playerTwo;
+        /* Determines who goes first */
+        currentPlayerIndex = determineWhoMovesFirst();
+        currentPlayer = players[currentPlayerIndex];
+    }
 
     void playGame(void);
 
@@ -18,18 +26,21 @@ private:
     void    printGameBoard(void);
     int     getPlayerMove(void);
     int     getAIMove(void);
-    void    updateSlot(const struct Player* p, const int& slotToUpdate);
+    void    updateSlot(const std::shared_ptr<Player>  p, const int& slotToUpdate);
     int     determineWinner(void);
     int     determineWhoMovesFirst();
     bool    determineTie(void);
 
-    const struct Player* playerOne {nullptr};
-    const struct Player* playerTwo {nullptr};
-    const struct Player* players[2] = {playerOne, playerTwo};
+    const std::shared_ptr<Player> playerOne       {nullptr};
+    const std::shared_ptr<Player> playerTwo       {nullptr};
+    std::shared_ptr<Player> currentPlayer         {nullptr};
+    std::shared_ptr<Player> players[2];
     
     static constexpr int boardSize = 9;
     char slots[boardSize] = {'1', '2', '3', '4', '5', '6', '7', '8', '9'};
-    
+    int currentPlayerMove   {-1};
+    int currentPlayerIndex  {-1};
+
     bool gameOn {true};
     
     int currentRound {0};
