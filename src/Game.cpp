@@ -99,7 +99,7 @@ int Game::determineWhoMovesFirst(void){
  * RETURNS:  VOID
  */ 
 void Game::updateSlot(const std::shared_ptr<Player>  p, const int& slotToUpdate){
-    slots[slotToUpdate - 1] = p->playerSymbol;
+    slots[slotToUpdate] = p->playerSymbol;
 }
 
 /**
@@ -123,7 +123,7 @@ int Game::getPlayerMove(void){
         std::cin >> userIn;
     }
 
-    return userIn;
+    return --userIn;
 }
 
 /**
@@ -158,10 +158,9 @@ int Game::getAIMove(void){
             AIMove = randomAIMove(slots); 
         break;
         
-        /* TODO: IMPLEMENT */
         case MEDIUM:
-            // AIMove = TODO
-            // break;
+            AIMove = makePlayerOneCrySlightlyLess(slots, playerOne->playerSymbol, playerTwo->playerSymbol);
+            break;
 
         /* Minmax */
         case HARD:
@@ -256,6 +255,10 @@ void Game::playGame(void){
             std::cout << "Current Player Index: " << currentPlayerIndex << std::endl;
             std::cout << "Current Player Name:  " << currentPlayer->playerName << std::endl; 
             std::cout << "Current Round:        " << currentRound << std::endl;
+            for (int i = 0; i < 9; i++) {
+                std::cout << "slots[" << i << "] = " << slots[i] << " ";
+            }
+            std::cout << "\n";
             std::cout << "==========================================================" << std::endl;
         #endif
     }
