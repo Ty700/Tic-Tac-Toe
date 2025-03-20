@@ -8,12 +8,13 @@
  * FUNCTION: Allows user to input their name
  * PARAMS:   Void
  * RETURNS:  A string value that represents the player's name
+ * TODO: FIX WHEN INVALID STRING IS TYPED IN. USER HAS TO PRESS ENTER TO RETYPE NAME
  */
 std::string capturePlayerName(void){
     std::string userIn{};
 
     while(1){
-        std::cin.ignore(INT32_MAX, '\n');
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         
         std::cout << "Enter in your name: ";
         std::getline(std::cin, userIn);
@@ -74,4 +75,27 @@ std::string generateAIName(void){
     unsigned int randNum = rd();
 
     return NPCNames[randNum % NPC_NAME_AMOUNT];
+}
+
+
+/**
+ * FUNCTION: Generates AI Difficulty randomly (Will change in the future to be determined by player ranking)
+ * PARAMS: VOID
+ * RETURNS: unsigned int 1 - 3
+ * TODO: Add a ranking and difficulty is determined on that ranking
+ *       Change return to an enum so it's easier to read               
+ */
+AiDiff getAIDifficulty(void){
+    std::random_device rd;
+    unsigned int AIDifficultyGenerator {rd()};
+    unsigned int MAX_DIFF {3};
+
+    /* Holy hell this is ugly... why did I do it this way? To make it easier to read???*/
+    AiDiff AIDifficulty {static_cast<AiDiff>((AIDifficultyGenerator) % MAX_DIFF)};
+    
+    #ifdef DEBUG
+        std::cout << "AI Difficulty: " << AIDifficulty << std::endl;
+    #endif 
+    
+    return AIDifficulty;
 }

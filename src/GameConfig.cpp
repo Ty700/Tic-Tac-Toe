@@ -9,6 +9,7 @@
  * FUNCTION: Sets up the game. When calling game loop, will use this config as settings
  * PARAMS:   VOID
  * RETURNS:  VOID
+ * TODO: CHANGE TO ENUM (NOT AGAIN!!!!)
  */
 void GameConfig::setupGame(void){
 
@@ -22,7 +23,6 @@ void GameConfig::setupGame(void){
                     system("clear");
                 #endif /* _WIN32 */
             #endif /* DEBUG */
-
 
             std::cout << "1. Player One's Name: " << playerOneName << std::endl;
             std::cout << "2. Player One's Symbol: " << playerOneSymbol << std::endl;
@@ -66,26 +66,21 @@ void GameConfig::setupGame(void){
                 break;
             
             case(2):
-                if(playerOneSymbol == 'X'){
-                    playerOneSymbol = 'O';
-                } else {
-                    playerOneSymbol = 'X';
-                }
+                playerOneSymbol = (playerOneSymbol == 'X') ? 'O' : 'X';
                 break;
 
             case(3):
-                playingAgainstAI = !playingAgainstAI;
-
-                if(!playingAgainstAI){
-                    playerTwoName = capturePlayerName();    
-                } else {
-                    playerTwoName = generateAIName();
-                }
-
+                playingAgainstAI ^= 1;
+                playerTwoName = playingAgainstAI ? generateAIName() : capturePlayerName();
                 break;
 
             case(FINISH_BUTTON):
                 /* Starting game */
+                while(playerOneName.empty()){
+                    std::cout << "Can't start game without player one's name!" << std::endl;
+                    playerOneName = capturePlayerName();
+                }
+
                 playerOne = std::make_unique<Player>(playerOneName, playerOneSymbol, false);
                 
                 if(playingAgainstAI){

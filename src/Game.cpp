@@ -1,5 +1,6 @@
 #include "Player.h"
 #include "Game.h"
+#include "AIMoves.h"
 
 #include <iostream>
 #include <random>
@@ -115,7 +116,7 @@ int Game::getPlayerMove(void){
     /* Determine if input is valid and not already used */
     while((userIn < 1 || userIn > 9) || (std::cin.fail()) || (slots[userIn - 1] == 'X' || slots[userIn - 1] == 'O')){
         std::cin.clear();
-        std::cin.ignore(INT32_MAX, '\n');
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         
         std::cout << "Invalid Slot." << std::endl;
         std::cout << "Enter in where to move: ";
@@ -126,33 +127,53 @@ int Game::getPlayerMove(void){
 }
 
 /**
+ * FUNCTION:    Generates a random number 1 - 2
+ * PARAMS:      VOID
+ * RETURNS:     unsigned int value of 1 - 2
+ */
+static unsigned int AISleepTime(void){
+    /* 
+     * Why is this here?
+     *      So the AI doesn't respond instantly... 
+     *      Illusion of it "thinking." Silly me... robots don't think... right??? o. O
+     *      
+     * Sleeps for either 1 or two seconds
+     */
+
+    return (std::random_device{}() % 2) + 1;
+}
+
+/**
  * FUNCTION:    Determines where the AI will move
  * PARAMS:      VOID
  * RETURNS:     Int value representing the slot where the AI is moving
  * TODO:        Add algorithms so the AI is choosing slots that aren't at random
  */
-int Game::getAIMove(void){ 
-    std::random_device rd;    
-    unsigned int AIMove = rd();
-    
-    constexpr int MAX_SLEEP = 2; 
-    int sleepTime = (AIMove % MAX_SLEEP) + 1; 
-    std::this_thread::sleep_for(std::chrono::seconds(sleepTime));
+int Game::getAIMove(void){
+    unsigned int AIMove {0};
+    std::this_thread::sleep_for(std::chrono::seconds(AISleepTime()));
+    switch (playerTwo->AIDifficulty){
+        /* Random */
+        case EASY:   
+            AIMove = randomAIMove(slots); 
+        break;
+        
+        /* TODO: IMPLEMENT */
+        case MEDIUM:
+            // AIMove = TODO
+            // break;
 
-    do{
-        AIMove = rd();
-        AIMove %= boardSize + 1;
+        /* Minmax */
+        case HARD:
+            AIMove = makePlayerOneCry(slots, playerOne->playerSymbol, playerTwo->playerSymbol);
+            break;
+        
+        default:
+            /* Easy */
+            std::cout << "ERROR: AI DIFFICULTY" << std::endl;
+            throw std::runtime_error("Invalid AI difficulty level");
+    }
 
-        #ifdef DEBUG
-            std::cout << "AI Rolled: " << AIMove << std::endl;
-        #endif
-
-    }while((AIMove < 1 || AIMove > 10) || slots[AIMove - 1] == 'X' || slots[AIMove - 1] == 'O');
-
-    #ifdef DEBUG
-        std::cout << "AI MOVING TO: " << AIMove << std::endl;
-    #endif 
-    
     return AIMove;
 }
 
@@ -162,12 +183,12 @@ int Game::getAIMove(void){
  * RETURNS:  1 -> Winner detected | 0 -> Winner not detected
  */
 int Game::determineWinner(void) {
-    // Horizontals
+        // Rows
     if ((slots[0] == slots[1] && slots[1] == slots[2]) ||
         (slots[3] == slots[4] && slots[4] == slots[5]) ||
         (slots[6] == slots[7] && slots[7] == slots[8]) ||
         
-        // Verticals
+        // Cols
         (slots[0] == slots[3] && slots[3] == slots[6]) ||
         (slots[1] == slots[4] && slots[4] == slots[7]) ||
         (slots[2] == slots[5] && slots[5] == slots[8]) ||
@@ -186,7 +207,7 @@ int Game::determineWinner(void) {
  * RETURNS:  True or false, depending if there is a tie or not.
  */
 bool Game::determineTie(void){
-    if(++currentRound == 9){
+    if(++currentRound == MAX_ROUNDS){
         return true;
     } else {
         return false;
@@ -206,7 +227,7 @@ void Game::playGame(void){
         }
     #endif 
 
-    while(gameOn){
+    while(gameOn){ 
         printGameBoard();
 
         /* Lets the players know who's turn it is */
