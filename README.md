@@ -1,7 +1,11 @@
 
 # TicTacToe vs CPU
 
-A command-line implementation of the classic Tic-Tac-Toe game where players can play against an AI opponent with multiple difficulty settings.  
+A command-line implementation of the classic Tic-Tac-Toe game where players can play against an AI opponent with multiple difficulty settings.
+
+## Back Story
+
+This was my first "big" project when I was learning C++ and programming fundamentals. I decided to revisit it and enhance it with some new features. If you're curious about the original version, switch to the [TicTacToe2023 branch](https://github.com/Ty700/TicTacToeVsCPU/tree/TicTacToe2023) and prepare your eyes for that monstrosity. This was prior to my knowledge of git, so I straight up copied and pasted the code into GitHub, forgetting to add the .cpp extension for color formatting. Hence, the latest commit is only a few months old (at the time of this writing).
 
 ## Features
 
@@ -26,7 +30,11 @@ A command-line implementation of the classic Tic-Tac-Toe game where players can 
 
 ### Prerequisites  
 
+- A Linux-based operating system
+
 - C++ compiler with C++17 or later support
+
+- Python 3.6 or later
 
 ### Compilation
 
@@ -71,7 +79,7 @@ You can also clean the binaries and CMake files via:
 
 3. The game ends when either:
 
-- A player gets three of their ssymbols in a row, column, or diagonal
+- A player gets three of their symbols in a row, column, or diagonal
 
 - All positions are filled, resulting in a tie
 
