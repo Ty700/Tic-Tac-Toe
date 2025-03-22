@@ -1,15 +1,9 @@
 
 # TicTacToe vs CPU
 
-  
-
-A command-line implementation of the classic Tic-Tac-Toe game where players can play against an AI opponent with multiple difficulty settings.
-
-  
+A command-line implementation of the classic Tic-Tac-Toe game where players can play against an AI opponent with multiple difficulty settings.  
 
 ## Features
-
-  
 
 - Player vs. AI gameplay
 
@@ -27,63 +21,32 @@ A command-line implementation of the classic Tic-Tac-Toe game where players can 
 
 - Option to select which player goes first
 
-  
-
 ## Building the Game
 
-  
 
-### Prerequisites
+### Prerequisites  
 
-  
-
-- C++ compiler with C++11 or later support
-
-- Standard library
-
-  
+- C++ compiler with C++17 or later support
 
 ### Compilation
 
-  
+You can build the game using the python build script: build.py
 
-You can compile the game using the included shell script:
+#### Production Version
 
-  
+```python3 build.py```
 
-```bash
+#### Debug Version 
 
-./compile.sh
+```python3 build.py -d```
 
-```
+You can also clean the binaries and CMake files via:
 
-  
+```python3 build.py -c```
 
-For debug mode with additional output:
+## Gameplay  
 
-  
-
-```bash
-
-./compile.sh  DEBUG
-
-```
-
-  
-
-## Gameplay
-
-  
-
-1. Start the game by running:
-
-```bash
-
-./TicTacToe
-
-```
-
-2. Configure the game through the setup menu:
+1. Configure the game through the setup menu:
 
 - Set your name
 
@@ -93,9 +56,7 @@ For debug mode with additional output:
 
 - Decide who goes first
 
-  
-
-3. During the game
+2. During the game
 
 - Enter a number 1 - 9 to select where to place your symbol
 
@@ -108,7 +69,7 @@ For debug mode with additional output:
 	7 | 8 | 9
 ```
 
-4. The game ends when either:
+3. The game ends when either:
 
 - A player gets three of their ssymbols in a row, column, or diagonal
 
@@ -135,18 +96,12 @@ For debug mode with additional output:
 - Player.cpp/h: Defines player attributes and behaviors
 
 - AIMoves.cpp/h: Contains AI algorithms for different difficulty levels
-
-  
-
-## AI Implementation
-
-  
+ 
+## AI Implementation  
 
 ### Easy Mode
 
-- Makes a completely random moves with no strategy.
-
-  
+- Makes a completely random moves with no strategy.  
 
 ### Medium Mode
 
@@ -162,17 +117,12 @@ For debug mode with additional output:
 
 5. Makes a random move if none of the above applies
 
-  
-
 ### Hard Mode
 
 - Implements the Minimax algorithm to make optimal moves, resulting in an unbeatable gameplay. The AI with either win or force a draw.
-
   
 
 ## Future Improvements
-
-- Change ./compile to CMake
 
 - Game statistics Tracking
 

@@ -18,9 +18,17 @@ void GameConfig::setupGame(void){
     while(menuOption != FINISH_BUTTON){
             #ifndef DEBUG
                 #ifdef _WIN32
-                    system("cls");
+                    int clrStatus = system("cls");
+
+                    if(!clrStatus){
+                        std::cout << "Error: system(\"cls\")" << std::endl;
+                    }
                 #else 
-                    system("clear");
+                    int clrStatus = system("clear");
+
+                    if(clrStatus != 0){
+                        std::cout << "Error: system(\"clear\")" << std::endl;
+                    }
                 #endif /* _WIN32 */
             #endif /* DEBUG */
 

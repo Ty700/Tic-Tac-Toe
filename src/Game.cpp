@@ -21,11 +21,20 @@ static const std::string BLUE = "\033[34m"; // Blue color for O
 void Game::printGameBoard(void){
     #ifndef DEBUG
         #ifdef _WIN32
-                system("cls");
+            int clrStatus = system("cls");
+
+            if(!clrStatus){
+                std::cout << "Error: system(\"cls\")" << std::endl;
+            }
         #else 
-                system("clear");
+            int clrStatus = system("clear");
+
+            if(clrStatus != 0){
+                std::cout << "Error: system(\"clear\")" << std::endl;
+            }
         #endif /* _WIN32 */
-    #endif /* DEBUG */ 
+    #endif /* DEBUG */
+
     printTitle();
 
     for (int i = 0; i < 9; i++) {
