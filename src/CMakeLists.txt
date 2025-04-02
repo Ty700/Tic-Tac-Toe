@@ -3,6 +3,7 @@ set(TICTACTOE_SRC
     "Game.cpp"
     "GameConfig.cpp"
     "Player.cpp"
+    "GameStats.cpp"
 )
 
 target_sources(${EXE_NAME} PRIVATE ${TICTACTOE_SRC})

@@ -245,6 +245,7 @@ void Game::playGame(void){
         currentPlayerMove = (currentPlayer->isPlayerAI) ? getAIMove() : getPlayerMove();
 
         updateSlot(currentPlayer, currentPlayerMove);
+        
         printGameBoard();
 
         if(determineWinner()){

@@ -23,6 +23,7 @@ public:
     void playGame(void);
 
 private:
+    /* Look for function desc in Game.cpp */
     void    printTitle(void);
     void    printGameBoard(void);
     int     getPlayerMove(void);
@@ -32,22 +33,37 @@ private:
     int     determineWhoMovesFirst();
     bool    determineTie(void);
 
+    /* Player pointers */
     const std::shared_ptr<Player> playerOne       {nullptr};
     const std::shared_ptr<Player> playerTwo       {nullptr};
+    
+    /* Tracks the current player */
     std::shared_ptr<Player> currentPlayer         {nullptr};
+    
+    /* Used to swap between who the current player is */
     std::shared_ptr<Player> players[2];
     
+    /* Max rounds of standard TicTacToe. Used to track ties */
     static constexpr int MAX_ROUNDS {9};
 
     static constexpr int boardSize  {9};
     char slots[boardSize] = {'1', '2', '3', '4', '5', '6', '7', '8', '9'};
 
+    /* Tracks which slot the player wants to place their symbol on */
     int currentPlayerMove   {-1};
+
+    /* Flips between 0 & 1 which corresponds to a different player in players array */
     int currentPlayerIndex  {-1};
 
+    /* Used to determine if the game continues to the next round*/
     bool gameOn {true};
-    
+
+    /* Tracks the current round */
     unsigned int currentRound {0};
+
+    /* Game Stats */
+public: 
+    std::shared_ptr<Player> winner;
 };
 
 

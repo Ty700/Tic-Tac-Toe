@@ -1,6 +1,8 @@
 #include "Player.h"
 #include "Game.h"
 #include "GameConfig.h"
+#include "GameStats.h"
+
 #include <iostream>
 #include <memory>
 
@@ -14,4 +16,6 @@ int main(void){
     
     /* Main game loop. Will return only after a win or tie */
     currentGame->playGame();
+
+    updateOngoingGameStats(currentGame);    
 }
