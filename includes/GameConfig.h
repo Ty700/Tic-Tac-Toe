@@ -17,9 +17,9 @@ private:
     int menuOption              {-1};
     void setupGame();
     std::string playerOneName   {""};
-    char        playerOneSymbol {'X'};
+    std::string playerOneSymbol {"X"};
     std::string playerTwoName   {generateAIName()};
-    char        playerTwoSymbol {'O'};
+    std::string playerTwoSymbol {"O"};
     bool        playingAgainstAI{true};    
     
 };

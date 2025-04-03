@@ -38,9 +38,9 @@ void Game::printGameBoard(void){
     printTitle();
 
     for (int i = 0; i < 9; i++) {
-        if (slots[i] == 'X') {
+        if (slots[i] == "X") {
             std::cout << RED << " X " << RESET;
-        } else if (slots[i] == 'O') {
+        } else if (slots[i] == "O") {
             std::cout << BLUE << " O " << RESET;
         } else {
             std::cout << " " << slots[i] << " " ;
@@ -64,7 +64,7 @@ void Game::printGameBoard(void){
  */
 void Game::printTitle(void){
     /* Title */
-    if(playerOne->playerSymbol == 'X'){
+    if(playerOne->playerSymbol == "X"){
         std::cout << RED << playerOne->playerName << RESET << " vs. " << BLUE << playerTwo->playerName << RESET << std::endl;
     } else {
         std::cout << BLUE << playerOne->playerName << RESET << " vs. " << RED << playerTwo->playerName << RESET << std::endl;
@@ -123,7 +123,7 @@ int Game::getPlayerMove(void){
     std::cin >> userIn; 
 
     /* Determine if input is valid and not already used */
-    while((userIn < 1 || userIn > 9) || (std::cin.fail()) || (slots[userIn - 1] == 'X' || slots[userIn - 1] == 'O')){
+    while((userIn < 1 || userIn > 9) || (std::cin.fail()) || (slots[userIn - 1] == "X" || slots[userIn - 1] == "O")){
         std::cin.clear();
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         
@@ -251,6 +251,9 @@ void Game::playGame(void){
         if(determineWinner()){
             std::cout << std::endl << currentPlayer->playerName << " won!" << std::endl;
             gameOn = false;
+            
+            /* TODO: It's not necessary, but I'd like to experiment with a deep copy rather than shallow */
+            winner = currentPlayer;
         } else if (determineTie()){
             std::cout << "TIE" << std::endl;
             gameOn = false;

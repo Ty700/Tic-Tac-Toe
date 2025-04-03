@@ -13,7 +13,7 @@ std::string generateAIName(void);
 AiDiff getAIDifficulty(void);
 
 struct Player{
-    Player(const std::string &name = "Unknown", const char ps = 'O', const bool state = false)
+    Player(const std::string &name = "Unknown", const std::string ps = "O", const bool state = false)
         : playerName(name), playerSymbol(ps), isPlayerAI(state)
         {
             if(isPlayerAI){
@@ -29,10 +29,9 @@ struct Player{
         }
 
     std::string playerName;
-    char        playerSymbol;
+    std::string playerSymbol;
     bool        isPlayerAI;
-
+    
     /* TBH, idk enum naming convention and forcing myself to even use an enum here */
     AiDiff         AIDifficulty;
-
 };

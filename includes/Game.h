@@ -32,10 +32,6 @@ private:
     int     determineWinner(void);
     int     determineWhoMovesFirst();
     bool    determineTie(void);
-
-    /* Player pointers */
-    const std::shared_ptr<Player> playerOne       {nullptr};
-    const std::shared_ptr<Player> playerTwo       {nullptr};
     
     /* Tracks the current player */
     std::shared_ptr<Player> currentPlayer         {nullptr};
@@ -47,7 +43,7 @@ private:
     static constexpr int MAX_ROUNDS {9};
 
     static constexpr int boardSize  {9};
-    char slots[boardSize] = {'1', '2', '3', '4', '5', '6', '7', '8', '9'};
+    std::string slots[boardSize] = {"1", "2", "3", "4", "5", "6", "7", "8", "9"};
 
     /* Tracks which slot the player wants to place their symbol on */
     int currentPlayerMove   {-1};
@@ -63,6 +59,10 @@ private:
 
     /* Game Stats */
 public: 
+    /* Player pointers */
+    const std::shared_ptr<Player> playerOne       {nullptr};
+    const std::shared_ptr<Player> playerTwo       {nullptr};
+
     std::shared_ptr<Player> winner;
 };
 

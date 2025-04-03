@@ -41,8 +41,8 @@ void GameConfig::setupGame(void){
                 std:: cout << "   AI's Name: " << playerTwoName << std::endl;
                 std::cout <<  "   AI's Symbol: ";
 
-                if(playerOneSymbol == 'X'){
-                    playerTwoSymbol = 'O';
+                if(playerOneSymbol == "X"){
+                    playerTwoSymbol = "O";
                     std::cout << playerTwoSymbol << std::endl;
                 } else {
                     playerTwoSymbol = 'X';
@@ -54,8 +54,8 @@ void GameConfig::setupGame(void){
                 std::cout << "   Player Two's Name: " << playerTwoName << std::endl;
                 std::cout << "   Player Two's Symbol: ";
 
-                if(playerOneSymbol == 'X'){
-                    playerTwoSymbol = 'O';
+                if(playerOneSymbol == "X"){
+                    playerTwoSymbol = "O";
                     std::cout << playerTwoSymbol << std::endl;
                 } else {
                     playerTwoSymbol = 'X';
@@ -74,7 +74,7 @@ void GameConfig::setupGame(void){
                 break;
             
             case(2):
-                playerOneSymbol = (playerOneSymbol == 'X') ? 'O' : 'X';
+                playerOneSymbol = (playerOneSymbol == "X") ? "O" : "X";
                 break;
 
             case(3):

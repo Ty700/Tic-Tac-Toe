@@ -137,3 +137,7 @@ You can also clean the binaries and CMake files via:
 - Network Play
 
 - GUI???
+
+## Learnings
+
+- Use a bit map to indicate where the players have gone. Display the game using something like if the slot is 0, print X, if not print O. When did I learn this? After I had to go and change all the chars to std::string to support GameStats... 
