@@ -17,5 +17,7 @@ int main(void){
     /* Main game loop. Will return only after a win or tie */
     currentGame->playGame();
 
-    updateOngoingGameStats(currentGame);    
+    int exitStatus = updateOngoingGameStats(currentGame);    
+
+    return exitStatus;
 }

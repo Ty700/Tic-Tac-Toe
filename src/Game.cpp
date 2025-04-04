@@ -256,6 +256,7 @@ void Game::playGame(void){
             winner = currentPlayer;
         } else if (determineTie()){
             std::cout << "TIE" << std::endl;
+            winner = nullptr;
             gameOn = false;
         } else {
             /* Other player's turn */

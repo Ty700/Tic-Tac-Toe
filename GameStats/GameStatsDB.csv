@@ -1,2 +1,4 @@
 0,PlayerOneName,PlayerTwoName,WinnerName,WinnerAI,WinnerSymbol
 1,Tyler,Jessie,Jessie,true,O
+2,Tyler,Maria,Tyler,false,X
+3,Tyler,Ai,TIE,N/A,N/A

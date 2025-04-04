@@ -1,3 +1,8 @@
+/** 
+ * TODO: I am not entirely familiar with C++ IO Operations so I really need to do some more research
+ * and refine this
+ */ 
+
 #include "Game.h"
 #include "GameStats.h"
 
@@ -15,7 +20,7 @@
  * RETURNS:     VOID
  */
 static void createFile(const char *FILE_PATH)
-{   
+{
     std::fstream file;
     file.open(FILE_PATH, std::ios::out);
     if (!file)
@@ -30,7 +35,7 @@ static void createFile(const char *FILE_PATH)
 /**
  * FUNCTION:    Helper of updateOngoingGameStats | Determines if Game Stats CSV exists, if not creates it
  * PARAMS:      Game stats file path
- * RETURNS:     VOID
+ * RETURNS:     fstream file
  */
 static std::fstream ensureGameStatsCSVFile(const char *CSV_PATH)
 {
@@ -62,7 +67,7 @@ static std::fstream ensureGameStatsCSVFile(const char *CSV_PATH)
 /**
  * FUNCTION:    Helper of updateOngoingGameStats | Determines if Game Stats file exists, if not creates it
  * PARAMS:      Game stats file path
- * RETURNS:     VOID
+ * RETURNS:     fstream file
  */
 static std::fstream ensureGameStatsFile(const char *GAME_STATS_PATH)
 {
@@ -74,8 +79,8 @@ static std::fstream ensureGameStatsFile(const char *GAME_STATS_PATH)
     std::fstream file;
     std::ios_base::openmode GAME_STATS_MODE = std::ios::in | std::ios::out | std::ios::app;
     file.open(GAME_STATS_PATH, GAME_STATS_MODE);
-    
-    if(!file.is_open())
+
+    if (!file.is_open())
     {
         std::ostringstream errMsg;
         errMsg << "Error: Opening " << GAME_STATS_PATH;
@@ -129,7 +134,8 @@ static void updateGameStatsCSVFile(std::shared_ptr<Game> game, std::fstream &csv
     std::vector<std::string> gameFields;
     std::string line;
     int gameCount = 0;
-    while(std::getline(csvFile, line)){
+    while (std::getline(csvFile, line))
+    {
         ++gameCount;
     }
 
@@ -140,19 +146,89 @@ static void updateGameStatsCSVFile(std::shared_ptr<Game> game, std::fstream &csv
     gameFields.push_back(std::to_string(gameCount));
     gameFields.push_back(game->playerOne->playerName);
     gameFields.push_back(game->playerTwo->playerName);
-    gameFields.push_back(game->winner->playerName);
-    gameFields.push_back((game->winner->isPlayerAI) ? "true" : "false");
-    gameFields.push_back(game->winner->playerSymbol);
 
-    for(size_t i = 0; i < gameFields.size(); i++){
+    /* Winner is nullptr if tie */
+    if(game->winner)
+    {
+        gameFields.push_back(game->winner->playerName);
+        gameFields.push_back((game->winner->isPlayerAI) ? "true" : "false");
+        gameFields.push_back(game->winner->playerSymbol);
+    } 
+    else 
+    {
+        gameFields.push_back("TIE");
+        gameFields.push_back("N/A");
+        gameFields.push_back("N/A");
+    }
+
+    for (size_t i = 0; i < gameFields.size(); i++)
+    {
         csvFile << gameFields[i];
-        if (i < gameFields.size() - 1) {
+        if (i < gameFields.size() - 1)
+        {
             csvFile << ",";
         }
     }
     csvFile << '\n';
-    
+
     csvFile.flush();
+}
+
+/**
+ * FUNCTION:    Write the updated CSV results to file
+ * PARAMS:      Game Stats file
+ * RETURNS:     VOID
+ */
+void writeToGameStats(std::fstream &gameStatsFile, std::fstream &csvFile)
+{
+    /* Capture last filled csv line an palce it in the vector */
+    /* TODO: Easier way (maybe) is to immediately go to std::ios::end and read one line backwards */
+    /* This method will take a while if there were an unrealistic amount of lines to go through */
+    csvFile.seekg(0, std::ios::beg);
+    std::string lastLine;
+    std::string currLine;
+
+    while (std::getline(csvFile, currLine))
+    {
+        lastLine = currLine;
+    }
+
+    /*
+        0 = Game Number
+        1 = PlayerOne Name
+        2 = PlayerTwo Name
+        3 = Winner Name
+        4 = Winner is AI?
+        5 = Winner Symbol
+    */
+    std::istringstream csvLine(lastLine);
+    std::vector<std::string> gameFields;
+    std::string field;
+
+    while (std::getline(csvLine, field, ','))
+    {
+        gameFields.push_back(field);
+    }
+
+    gameStatsFile.seekp(0, std::ios::end);
+    gameStatsFile   << "Game " << gameFields.at(0) << " Details: "
+                    << "\n\tPlayer One Name: " << gameFields.at(1) 
+                    << "\n\tPlayer Two Name: " << gameFields.at(2);
+
+                    if(gameFields.at(3) == "TIE")
+                    {
+                        gameStatsFile << "\n\tWinner: TIE";
+                    }
+                    else 
+                    {
+                        gameStatsFile << "\n\tWinner Name: " << gameFields.at(3)
+                        << "\n\tWinner was " << (gameFields.at(4) == "true" ? "AI" : "not AI")
+                        << "\n\tWinner Symbol: " << gameFields.at(5)
+                        << "\n\n"; 
+
+                    }
+                    
+    gameStatsFile.flush();
 }
 
 /**
@@ -173,8 +249,10 @@ int updateOngoingGameStats(std::shared_ptr<Game> game)
         std::fstream csvFile = ensureGameStatsCSVFile(CSV_PATH);
 
         updateGameStatsCSVFile(game, csvFile);
-
+        writeToGameStats(gameStatsFile, csvFile);
         csvFile.close();
+        gameStatsFile.close();
+
         return 0;
     }
     catch (const std::exception &e)

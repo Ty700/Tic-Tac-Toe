@@ -1,0 +1,18 @@
+Game 1 Details: 
+	Player One Name: Tyler
+	Player Two Name: Jessie
+	Winner Name: Jessie
+	Winner was AI
+	Winner Symbol: O
+
+Game 2 Details: 
+	Player One Name: Tyler
+	Player Two Name: Maria
+	Winner Name: Tyler
+	Winner was not AI
+	Winner Symbol: X
+
+Game 3 Details: 
+	Player One Name: Tyler
+	Player Two Name: Ai
+	Winner: TIE
