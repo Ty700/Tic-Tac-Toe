@@ -6,18 +6,32 @@
 #include <iostream>
 #include <memory>
 
-int main(void){
+int main() {
+    while (true) {
+        // Game settings
+        auto gameConfiguration = std::make_shared<GameConfig>();
 
-    /* Game settings */
-    auto gameConfiguration = std::make_shared<GameConfig>();
+        // Game
+        auto currentGame = std::make_shared<Game>(gameConfiguration);
 
-    /* Game */
-    auto currentGame = std::make_shared<Game>(gameConfiguration);
-    
-    /* Main game loop. Will return only after a win or tie */
-    currentGame->playGame();
+        // Main game loop. Will return only after a win or tie
+        currentGame->playGame();
 
-    int exitStatus = updateOngoingGameStats(currentGame);    
+        int exitStatus = updateOngoingGameStats(currentGame);
 
-    return exitStatus;
+        if (exitStatus) {
+            return exitStatus;
+        }
+
+        char userIn = 'N';
+        do {
+            std::cout << "Play Again? (Y/N): ";
+            std::cin >> userIn;
+            userIn = toupper(userIn);
+
+            if (userIn == 'N') {
+                return 0;
+            }
+        } while (userIn != 'Y');
+    }
 }
