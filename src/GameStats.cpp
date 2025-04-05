@@ -47,7 +47,20 @@ static std::fstream ensureGameStatsCSVFile(const char *CSV_PATH)
     {
         createFile(CSV_PATH);
         csvFile.open(CSV_PATH, CSV_MODE);
-        csvFile << "0,PlayerOneName,PlayerTwoName,WinnerName,WinnerAI,WinnerSymbol\n";
+
+        /*
+            0 = Game Number
+            1 = AIOne Name
+            2 = AIOne Difficulty
+            3 = AITwo Name
+            4 = AITwo Difficulty
+            5 = Player X Went First
+            6 = Winner Name
+            7 = AIDifficulty
+            8 = Winner Symbol
+        */
+
+        csvFile << "0,AIOneName,AIOneDiff,AITwoName,AITwoDiff,WhoWentFirst,WinnerName,WinnerDiff,WinnerSymbol\n";
     }
     else
     {
@@ -143,15 +156,29 @@ static void updateGameStatsCSVFile(std::shared_ptr<Game> game, std::fstream &csv
     csvFile.seekg(0, std::ios::end);
     csvFile.seekp(0, std::ios::end);
 
+      /*
+        0 = Game Number
+        1 = AIOne Name
+        2 = AIOne Difficulty
+        3 = AITwo Name
+        4 = AITwo Difficulty
+        5 = Player X Went First
+        6 = Winner Name
+        7 = AIDifficulty
+        8 = Winner Symbol
+    */
+
     gameFields.push_back(std::to_string(gameCount));
     gameFields.push_back(game->playerOne->playerName);
+    gameFields.push_back(std::to_string(game->playerOne->AIDifficulty));
     gameFields.push_back(game->playerTwo->playerName);
-
+    gameFields.push_back(std::to_string(game->playerTwo->AIDifficulty));
+    gameFields.push_back(std::to_string(game->whoWentFirst));
     /* Winner is nullptr if tie */
     if(game->winner)
     {
         gameFields.push_back(game->winner->playerName);
-        gameFields.push_back((game->winner->isPlayerAI) ? "true" : "false");
+        gameFields.push_back(std::to_string(game->winner->AIDifficulty));
         gameFields.push_back(game->winner->playerSymbol);
     } 
     else 
@@ -193,14 +220,6 @@ void writeToGameStats(std::fstream &gameStatsFile, std::fstream &csvFile)
         lastLine = currLine;
     }
 
-    /*
-        0 = Game Number
-        1 = PlayerOne Name
-        2 = PlayerTwo Name
-        3 = Winner Name
-        4 = Winner is AI?
-        5 = Winner Symbol
-    */
     std::istringstream csvLine(lastLine);
     std::vector<std::string> gameFields;
     std::string field;
@@ -213,17 +232,20 @@ void writeToGameStats(std::fstream &gameStatsFile, std::fstream &csvFile)
     gameStatsFile.seekp(0, std::ios::end);
     gameStatsFile   << "Game " << gameFields.at(0) << " Details: "
                     << "\n\tPlayer One Name: " << gameFields.at(1) 
-                    << "\n\tPlayer Two Name: " << gameFields.at(2);
+                    << "\n\tPlayer One Difficulty: " << gameFields.at(2)
+                    << "\n\tPlayer Two Name: " << gameFields.at(3)
+                    << "\n\tPlayer Two Difficulty: " << gameFields.at(4)
+                    << "\n\tStarter Player: Player " << ((gameFields.at(5) == "0") ? "One" : "Two"); 
 
-                    if(gameFields.at(3) == "TIE")
+                    if(gameFields.at(6) == "TIE")
                     {
-                        gameStatsFile << "\n\tWinner: TIE";
+                        gameStatsFile << "\n\tWinner: TIE\n\n";
                     }
                     else 
                     {
-                        gameStatsFile << "\n\tWinner Name: " << gameFields.at(3)
-                        << "\n\tWinner was " << (gameFields.at(4) == "true" ? "AI" : "not AI")
-                        << "\n\tWinner Symbol: " << gameFields.at(5)
+                        gameStatsFile << "\n\tWinner Name: " << gameFields.at(6)
+                        << "\n\tWinner AI Difficulty: " << gameFields.at(7)
+                        << "\n\tWinner Symbol: " << gameFields.at(8)
                         << "\n\n"; 
 
                     }

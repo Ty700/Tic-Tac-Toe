@@ -7,7 +7,9 @@
 #include <memory>
 
 int main() {
-    while (true) {
+
+    for(int i = 0; i < 1000; i++)
+    {
         // Game settings
         auto gameConfiguration = std::make_shared<GameConfig>();
 
@@ -22,16 +24,5 @@ int main() {
         if (exitStatus) {
             return exitStatus;
         }
-
-        char userIn = 'N';
-        do {
-            std::cout << "Play Again? (Y/N): ";
-            std::cin >> userIn;
-            userIn = toupper(userIn);
-
-            if (userIn == 'N') {
-                return 0;
-            }
-        } while (userIn != 'Y');
     }
 }

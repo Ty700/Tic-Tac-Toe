@@ -4,6 +4,7 @@
 
 #include <memory>
 #include <iostream>
+#include <random>
 
 class Game {
 
@@ -16,7 +17,8 @@ public:
         players[1] = playerTwo;
 
         /* Determines who goes first */
-        currentPlayerIndex = determineWhoMovesFirst();
+        currentPlayerIndex = (std::random_device{}() % 2);
+        whoWentFirst = currentPlayerIndex;
         currentPlayer = players[currentPlayerIndex];
     }
 
@@ -62,7 +64,7 @@ public:
     /* Player pointers */
     const std::shared_ptr<Player> playerOne       {nullptr};
     const std::shared_ptr<Player> playerTwo       {nullptr};
-
+    int whoWentFirst{-1};
     std::shared_ptr<Player> winner;
 };
 

@@ -16,9 +16,9 @@ public:
 private:
     int menuOption              {-1};
     void setupGame();
-    std::string playerOneName   {""};
+    std::string playerOneName   {"AI_1"};
     std::string playerOneSymbol {"X"};
-    std::string playerTwoName   {generateAIName()};
+    std::string playerTwoName   {"AI_2"};
     std::string playerTwoSymbol {"O"};
     bool        playingAgainstAI{true};    
     

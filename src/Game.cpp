@@ -160,7 +160,7 @@ static unsigned int AISleepTime(void){
  */
 int Game::getAIMove(void){
     unsigned int AIMove {0};
-    std::this_thread::sleep_for(std::chrono::seconds(AISleepTime()));
+    // std::this_thread::sleep_for(std::chrono::milliseconds(300));
     switch (playerTwo->AIDifficulty){
         /* Random */
         case EASY:   
@@ -242,7 +242,7 @@ void Game::playGame(void){
         std::cout << std::endl << currentPlayer->playerName << "'s Turn!" << std::endl;
 
         /* Branch depending if character is AI or not */
-        currentPlayerMove = (currentPlayer->isPlayerAI) ? getAIMove() : getPlayerMove();
+        currentPlayerMove = (currentPlayer->isPlayerAI) ? getAIMove() : getAIMove();
 
         updateSlot(currentPlayer, currentPlayerMove);
         

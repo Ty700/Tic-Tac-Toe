@@ -65,12 +65,12 @@ void GameConfig::setupGame(void){
 
             std::cout << "4. Start" << std::endl;
 
-            std::cin >> menuOption;
+            menuOption = 4;
 
         switch (menuOption)
         {
             case (1):
-                playerOneName = capturePlayerName();
+                playerOneName = "AI_1";
                 break;
             
             case(2):
@@ -89,7 +89,7 @@ void GameConfig::setupGame(void){
                     playerOneName = capturePlayerName();
                 }
 
-                playerOne = std::make_unique<Player>(playerOneName, playerOneSymbol, false);
+                playerOne = std::make_unique<Player>(playerOneName, playerOneSymbol, true);
                 
                 if(playingAgainstAI){
                     playerTwo = std::make_unique<Player>(playerTwoName, playerTwoSymbol, true);
