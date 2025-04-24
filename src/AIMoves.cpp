@@ -170,28 +170,47 @@ static bool movesLeft(const std::string slots[]){
 
 /**
  * FUNCTION:    Helper of Hard Mode | Evaluates the current minmax board and assigns a score
- * PARAMS:      current minmax slots, player symbol
- * RETURNS:     int representing the score of the given board... see http://goo.gl/sJgv68 for more details
+ * PARAMS:      current minmax slots, player symbol, AI symbol
+ * RETURNS:     int representing the score of the given board
  */
-static int evaluateSlots(std::string minMaxSlots[], const std::string playerSymbol){
+static int evaluateSlots(std::string minMaxSlots[], const std::string playerSymbol, const std::string aiSymbol) {
     /* Rows */
     for (int row = 0; row < 9; row += 3) {
         if (minMaxSlots[row] == minMaxSlots[row + 1] && minMaxSlots[row + 1] == minMaxSlots[row + 2]) {
-            return (minMaxSlots[row] == playerSymbol) ? -10 : 10;
+            if (minMaxSlots[row] == playerSymbol) {
+                return -10;
+            } else if (minMaxSlots[row] == aiSymbol) {
+                return 10;
+            }
         }
     }
 
     /* Cols */
     for (int col = 0; col < 3; col++) {
         if (minMaxSlots[col] == minMaxSlots[col + 3] && minMaxSlots[col + 3] == minMaxSlots[col + 6]) {
-            return (minMaxSlots[col] == playerSymbol) ? -10 : 10;
+            if (minMaxSlots[col] == playerSymbol) {
+                return -10;
+            } else if (minMaxSlots[col] == aiSymbol) {
+                return 10;
+            }
         }
     }
 
     /* Diagonals */
-    if ((minMaxSlots[0] == minMaxSlots[4] && minMaxSlots[4] == minMaxSlots[8]) ||
-        (minMaxSlots[2] == minMaxSlots[4] && minMaxSlots[4] == minMaxSlots[6])) {
-        return (minMaxSlots[4] == playerSymbol) ? -10 : 10;
+    if (minMaxSlots[0] == minMaxSlots[4] && minMaxSlots[4] == minMaxSlots[8]) {
+        if (minMaxSlots[4] == playerSymbol) {
+            return -10;
+        } else if (minMaxSlots[4] == aiSymbol) {
+            return 10;
+        }
+    }
+    
+    if (minMaxSlots[2] == minMaxSlots[4] && minMaxSlots[4] == minMaxSlots[6]) {
+        if (minMaxSlots[4] == playerSymbol) {
+            return -10;
+        } else if (minMaxSlots[4] == aiSymbol) {
+            return 10;
+        }
     }
 
     return 0;
@@ -200,32 +219,44 @@ static int evaluateSlots(std::string minMaxSlots[], const std::string playerSymb
 /**
  * FUNCTION:    Helper of Hard Mode | Minmax Algorithm
  * PARAMS:      Game slots, depth, min || maxer turn, playerSymbol, and AI's symbol
- * RETURNS:     int (0 - 9) representing the optimal move for the AI
+ * RETURNS:     int representing the score for the current board state
  */
-static int minmax(std::string minMaxSlots[], int depth, bool isMax, const std::string playerSymbol, const std::string aiSymbol){
-    int score = evaluateSlots(minMaxSlots, playerSymbol);
+static int minmax(std::string minMaxSlots[], int depth, bool isMax, const std::string playerSymbol, const std::string aiSymbol) {
+    // First, check if there's a winner
+    int score = evaluateSlots(minMaxSlots, playerSymbol, aiSymbol);
 
-    if(score == 10 || score == -10){
-        return score;
+    // If Maximizer has won the game, return the evaluated score
+    if (score == 10) {
+        return score - depth;  // Prefer quicker wins
     }
 
-    /* Tie? */
-    if(!movesLeft(minMaxSlots)){
+    // If Minimizer has won the game, return the evaluated score
+    if (score == -10) {
+        return score + depth;  // Prefer delaying losses
+    }
+
+    // If there are no more moves left, it's a tie
+    if (!movesLeft(minMaxSlots)) {
         return 0;
     }
 
-    if(isMax){
+    if (isMax) {
         /* Maximizer AKA AI */
         int best = -1000;
 
-        for(int i = 0; i < 9; i++){
-            if(!(minMaxSlots[i] == playerSymbol || minMaxSlots[i] == aiSymbol)){
+        for (int i = 0; i < 9; i++) {
+            // Check if cell is empty
+            if (!(minMaxSlots[i] == playerSymbol || minMaxSlots[i] == aiSymbol)) {
+                // Save the original value
                 std::string temp = minMaxSlots[i];
 
+                // Make the move
                 minMaxSlots[i] = aiSymbol;
 
+                // Recursively compute the minimax value
                 best = std::max(best, minmax(minMaxSlots, depth + 1, !isMax, playerSymbol, aiSymbol));
 
+                // Undo the move
                 minMaxSlots[i] = temp;
             }
         }
@@ -234,14 +265,19 @@ static int minmax(std::string minMaxSlots[], int depth, bool isMax, const std::s
         /* Minimizer AKA PLAYER */
         int best = 1000;
 
-        for(int i = 0; i < 9; i++){
-            if(!(minMaxSlots[i] == playerSymbol || minMaxSlots[i] == aiSymbol)){
+        for (int i = 0; i < 9; i++) {
+            // Check if cell is empty
+            if (!(minMaxSlots[i] == playerSymbol || minMaxSlots[i] == aiSymbol)) {
+                // Save the original value
                 std::string temp = minMaxSlots[i];
 
+                // Make the move
                 minMaxSlots[i] = playerSymbol;
 
+                // Recursively compute the minimax value
                 best = std::min(best, minmax(minMaxSlots, depth + 1, !isMax, playerSymbol, aiSymbol));
 
+                // Undo the move
                 minMaxSlots[i] = temp;
             }
         }
@@ -250,12 +286,14 @@ static int minmax(std::string minMaxSlots[], int depth, bool isMax, const std::s
 }
 /**
  * FUNCTION:    Hard Mode AI Difficulty | Implements an unbeatable AI using the Minimax algorithm
- * PARAMS:      A copy of the game board slots to simulate moves without altering the actual game state
- * RETURNS:     An int (0 - 9) representing the optimal move for the AI
+ * PARAMS:      A copy of the game board slots, player symbol, and AI symbol
+ * RETURNS:     An int (0 - 8) representing the optimal move for the AI
  */
 int makePlayerOneCry(const std::string slots[], const std::string playerSymbol, const std::string aiSymbol) {
-    int currBestVal = INT32_MIN;
-    unsigned int currBestMoveSlot{0};
+    int bestVal = -1000;
+    int bestMove = -1;
+    
+    // Create a copy of the game board
     std::string minMaxSlots[9];
     std::copy(slots, slots + 9, minMaxSlots);
     
@@ -271,34 +309,43 @@ int makePlayerOneCry(const std::string slots[], const std::string playerSymbol, 
         std::cout << "==========================================================" << std::endl;
     #endif
     
+    // Try all possible moves and pick the best one
     for (int i = 0; i < 9; i++) {
+        // Check if the cell is empty
         if (!(minMaxSlots[i] == playerSymbol || minMaxSlots[i] == aiSymbol)) {
+            // Save the original value
             std::string temp = minMaxSlots[i];
+            
+            // Make the move
             minMaxSlots[i] = aiSymbol;
             
+            // Compute evaluation value for this move
             int moveVal = minmax(minMaxSlots, 0, false, playerSymbol, aiSymbol);
             
             #ifdef DEBUG
                 std::cout << "Evaluated move " << i << " with value " << moveVal << std::endl;
             #endif
             
-            if (moveVal > currBestVal) {
-                currBestVal = moveVal;
-                currBestMoveSlot = i;
-                
-                #ifdef DEBUG
-                    std::cout << "New best move: " << i << " with value " << currBestVal << std::endl;
-                #endif
-            }
-            
             // Undo the move
             minMaxSlots[i] = temp;
+            
+            // If the value of the current move is more than the best value,
+            // update the best value and best move
+            if (moveVal > bestVal) {
+                bestMove = i;
+                bestVal = moveVal;
+                
+                #ifdef DEBUG
+                    std::cout << "New best move: " << i << " with value " << bestVal << std::endl;
+                #endif
+            }
         }
     }
     
     #ifdef DEBUG
-        std::cout << "Final best move: " << currBestMoveSlot << std::endl;
+        std::cout << "Final best move: " << bestMove << std::endl;
     #endif
     
-    return currBestMoveSlot;
+    return bestMove;
 }
+

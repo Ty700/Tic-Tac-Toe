@@ -4,6 +4,7 @@ project(TicTacToe VERSION 1.0.0)
 set(EXE_NAME TicTacToe)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_executable(${EXE_NAME} src/TicTacToe.cpp)
 add_subdirectory(src)

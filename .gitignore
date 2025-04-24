@@ -2,3 +2,4 @@
 bin/*
 build/*
 GameStats/
+compile_commands.json
