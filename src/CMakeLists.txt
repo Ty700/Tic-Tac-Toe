@@ -4,6 +4,7 @@ set(TICTACTOE_SRC
     "GameConfig.cpp"
     "Player.cpp"
     "GameStats.cpp"
+    "TicTacToeWindow.cpp"
 )
 
 target_sources(${EXE_NAME} PRIVATE ${TICTACTOE_SRC})

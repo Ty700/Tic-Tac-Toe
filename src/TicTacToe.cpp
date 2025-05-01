@@ -2,13 +2,17 @@
 #include "Game.h"
 #include "GameConfig.h"
 #include "GameStats.h"
+#include "TicTacToeWindow.h"
 
+#include <gtkmm/application.h>
 #include <iostream>
 #include <memory>
 
-int main() {
+int main(int argc, char *argv[]) {
+
+/*
     while (true) {
-        // Game settings
+	// Game settings
         auto gameConfiguration = std::make_shared<GameConfig>();
 
         // Game
@@ -34,4 +38,8 @@ int main() {
             }
         } while (userIn != 'Y');
     }
+    */
+
+	auto TicTacToeApp = Gtk::Application::create("www.Github.com/Ty700/TicTacToe");
+	return TicTacToeApp->make_window_and_run<TicTacToeWindow>(argc, argv);
 }
