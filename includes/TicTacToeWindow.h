@@ -9,13 +9,13 @@ class TicTacToeWindow : public Gtk::Window
 		TicTacToeWindow();
 		~TicTacToeWindow() override;
 
-	protected:
-		void on_startButton_click();
-
 	private:
+		void on_startButton_click();
+		void startGame();
+
 		Gtk::Box *p_mainWindowBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
-		size_t c_windowHeight = 640;
-		size_t c_windowWidth = 720;
+		const size_t c_windowHeight = 640;
+		const size_t c_windowWidth = 720;
 
 };
 

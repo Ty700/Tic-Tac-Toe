@@ -1,1 +1,17 @@
- 
+.title-label {
+	font-family: 'Times New Roman', Times, serif;
+	font-size: 48px;	
+	margin: 35px;
+	
+}
+
+.start-button {
+	font-family: 'Times New Roman', Times, serif;
+	font-size: 24px;
+	margin: 35px;
+}
+
+.start-button:hover {
+	outline-width: 3px;
+	outline-color: #5251B8;
+}
