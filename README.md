@@ -1,7 +1,8 @@
 
-# TicTacToe vs CPU
+# Tic-Tac-Toe
 
-A command-line implementation of the classic Tic-Tac-Toe game where players can play against an AI opponent with multiple difficulty settings.
+~~A command-line implementation of the classic Tic-Tac-Toe game where players can play against an AI opponent with multiple difficulty settings.~~
+TODO: UPDATE THIS (Can't right now as I am migrating OS)
 
 ## Back Story
 
