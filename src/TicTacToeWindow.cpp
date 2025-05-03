@@ -7,10 +7,13 @@
 #include <gtkmm/cssprovider.h>
 #include <gtkmm/stylecontext.h>
 #include <gtkmm/grid.h>
+#include <gtkmm/headerbar.h>
+#include <gtkmm/application.h>
 
 #include <iostream>
 
 #include "TicTacToeWindow.h"
+#include "gtk/gtk.h"
 
 void TicTacToeWindow::startGame()
 {
@@ -18,6 +21,18 @@ void TicTacToeWindow::startGame()
 	
 	p_mainWindowBox->append(*boardGrid);
 }
+
+void TicTacToeWindow::on_startButton_click()
+{
+
+	auto child = p_mainWindowBox->get_first_child(); 
+
+	while(child){
+		p_mainWindowBox->remove(*child);
+		child = p_mainWindowBox->get_first_child();
+	}
+}
+
 TicTacToeWindow::TicTacToeWindow()
 {
 	
@@ -31,6 +46,14 @@ TicTacToeWindow::TicTacToeWindow()
 	set_default_size(c_windowWidth, c_windowHeight);
 	set_resizable(false);
 	
+	auto headerBar = Gtk::make_managed<Gtk::HeaderBar>();
+	headerBar->set_title_widget(*Gtk::make_managed<Gtk::Label>("TicTacToe"));
+	headerBar->set_show_title_buttons(true);
+	
+	auto closeButton = Gtk::make_managed<Gtk::Button>("x");
+	closeButton->add_css_class("header-close");
+	set_titlebar(*headerBar);
+
 	/* =========== LOAD AND APPLY CSS FILTER =========== */
 	auto css_provider = Gtk::CssProvider::create();
 
@@ -43,7 +66,7 @@ TicTacToeWindow::TicTacToeWindow()
 				display, 
 				css_provider,
 				 
-				/* Style can be overwritten by player. 
+				/* Style can be overwritten by player
 				  * Will I add that?? 
 				  * No. 
 				  * Why? 
@@ -105,13 +128,3 @@ TicTacToeWindow::~TicTacToeWindow()
 {
 }
 
-void TicTacToeWindow::on_startButton_click()
-{
-		
-	auto child = p_mainWindowBox->get_first_child(); 
-
-	while(child){
-		p_mainWindowBox->remove(*child);
-		child = p_mainWindowBox->get_first_child();
-	}
-}
