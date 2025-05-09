@@ -1,5 +1,6 @@
 #include <glibmm/ustring.h>
 #include <glibmm.h>
+#include <gtkmm/enums.h>
 #include <gtkmm/label.h>
 #include <gtkmm/text.h>
 #include <gtkmm/box.h>
@@ -17,9 +18,33 @@
 
 void TicTacToeWindow::startGame()
 {
-	auto boardGrid = Gtk::make_managed<Gtk::Grid>();
+	auto spacerBoxTop = Gtk::make_managed<Gtk::Box>();
+	spacerBoxTop->set_margin_bottom(10);
 	
+	auto spacerBoxBottom = Gtk::make_managed<Gtk::Box>();
+	spacerBoxBottom->set_margin_top(10);
+
+	auto boardGrid = Gtk::make_managed<Gtk::Grid>();
+	boardGrid->set_halign(Gtk::Align::CENTER);
+	boardGrid->set_valign(Gtk::Align::CENTER);
+	for(int ROW  = 0; ROW < 3; ROW++){
+		for(int COL = 0; COL < 3; COL++){
+			auto button = Gtk::make_managed<Gtk::Button>();
+			button->add_css_class("button-grid");
+			button->set_size_request(120, 120);
+			button->set_expand(true);
+			button->set_vexpand(true);
+			button->set_hexpand(true);
+
+			boardGrid->attach(*button, COL, ROW); 
+			button->set_halign(Gtk::Align::CENTER);
+			button->set_valign(Gtk::Align::CENTER);
+		}
+	}
+	
+	p_mainWindowBox->append(*spacerBoxTop);
 	p_mainWindowBox->append(*boardGrid);
+	p_mainWindowBox->append(*spacerBoxBottom);
 }
 
 void TicTacToeWindow::on_startButton_click()
@@ -118,8 +143,7 @@ TicTacToeWindow::TicTacToeWindow()
 	startButton->signal_clicked().connect([this, startButton] () {
 			startButton->set_label("Starting Game!");
 			Glib::signal_timeout().connect_once(sigc::mem_fun(*this, &TicTacToeWindow::on_startButton_click), 1500);
-			
-			startGame();
+			Glib::signal_timeout().connect_once(sigc::mem_fun(*this, &TicTacToeWindow::startGame), 1500);
 	});
 
 }

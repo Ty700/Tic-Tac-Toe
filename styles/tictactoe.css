@@ -15,3 +15,15 @@
 	outline-width: 3px;
 	outline-color: #5251B8;
 }
+
+.button-grid {
+	font-family: 'Times New Roman', Times, serif;
+	font-size: 24px;
+	margin: 10px;
+}
+
+ .button-grid:hover {
+	 outline-offset: 0px;
+	 outline-width: 2px;
+	 outline-color: #47D238;
+ }
