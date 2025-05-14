@@ -1,6 +1,7 @@
 #include <glibmm.h>
 #include <gtkmm.h>
 #include <iostream>
+#include <memory.h>
 
 #include "Game.h"
 #include "TicTacToeWindow.h"
@@ -14,27 +15,17 @@ static void setupTicTacToeGrid(Gtk::Box *p_mainWindowBox)
 
 	auto spacerBoxBottom = Gtk::make_managed<Gtk::Box>();
 	spacerBoxBottom->set_margin_top(10);
-
-	auto boardGrid = Gtk::make_managed<Gtk::Grid>();
-	boardGrid->set_halign(Gtk::Align::CENTER);
-	boardGrid->set_valign(Gtk::Align::CENTER);
-
-	for(int ROW  = 0; ROW < 3; ROW++){
-		for(int COL = 0; COL < 3; COL++){
-			auto button = Gtk::make_managed<Gtk::Button>();
-
-			Slot newSlot(ROW, COL, button);	
-			boardGrid->attach(*button, COL, ROW); 
-		}
-	}
+	
+	auto newGame = std::make_unique<Game>();
 
 	p_mainWindowBox->append(*spacerBoxTop);
-	p_mainWindowBox->append(*boardGrid);
+	p_mainWindowBox->append(*newGame->getGrid());
 	p_mainWindowBox->append(*spacerBoxBottom);
 }
 
 void TicTacToeWindow::startGame()
 {
+	
 	setupTicTacToeGrid(p_mainWindowBox);
 }
 

@@ -37,4 +37,6 @@ public:
 	std::array<int, 2> getID() const { return p_id; } 
 	bool getIsEmpty() const { return this->p_isEmpty; }
 	Gtk::Button* getButton() const { return this->p_button; }
+
+	void onSlotClick(const int &row, const int &col);
 };

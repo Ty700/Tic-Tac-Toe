@@ -1,4 +1,5 @@
 #include <gtkmm.h>
+#include <iostream>
 #include "Slot.h"
 
 /**
@@ -21,3 +22,9 @@ void Slot::setProperties()
 	if(p_id[1] == 0) p_button->add_css_class("left-col");
 	if(p_id[1] == 2) p_button->add_css_class("right-col");
 }
+
+void Slot::onSlotClick(const int &row, const int &col)
+{
+	std::cout << "Click Detected! ROW: " << row << " COL: " << col << std::endl;
+}
+
