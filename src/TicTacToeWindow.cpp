@@ -2,7 +2,9 @@
 #include <gtkmm.h>
 #include <iostream>
 
+#include "Game.h"
 #include "TicTacToeWindow.h"
+#include "Slot.h"
 
 static void setupTicTacToeGrid(Gtk::Box *p_mainWindowBox)
 {
@@ -16,23 +18,13 @@ static void setupTicTacToeGrid(Gtk::Box *p_mainWindowBox)
 	auto boardGrid = Gtk::make_managed<Gtk::Grid>();
 	boardGrid->set_halign(Gtk::Align::CENTER);
 	boardGrid->set_valign(Gtk::Align::CENTER);
+
 	for(int ROW  = 0; ROW < 3; ROW++){
 		for(int COL = 0; COL < 3; COL++){
 			auto button = Gtk::make_managed<Gtk::Button>();
-			button->add_css_class("button-grid");
-			button->set_size_request(120, 120);
-			button->set_expand(true);
-			button->set_vexpand(true);
-			button->set_hexpand(true);
 
-			if(ROW == 0) button->add_css_class("top-row");
-			if(ROW == 2) button->add_css_class("bottom-row");
-			if(COL == 0) button->add_css_class("left-col");
-			if(COL == 2) button->add_css_class("right-col");
-
+			Slot newSlot(ROW, COL, button);	
 			boardGrid->attach(*button, COL, ROW); 
-			button->set_halign(Gtk::Align::CENTER);
-			button->set_valign(Gtk::Align::CENTER);
 		}
 	}
 
@@ -57,54 +49,8 @@ void TicTacToeWindow::on_startButton_click()
 	}
 }
 
-TicTacToeWindow::TicTacToeWindow()
+void TicTacToeWindow::setupMainMenuGUI()
 {
-	
-	/* =========== File Path(s) =========== */
-
-	/* CSS File for TicTacToeWindow */
-	const Glib::ustring css_file_path = "./styles/tictactoe.css";
-
-	/*  =========== Main Window Properties =========== */
-	set_title("TicTacToe");
-	set_default_size(c_windowWidth, c_windowHeight);
-	set_resizable(false);
-	
-	auto headerBar = Gtk::make_managed<Gtk::HeaderBar>();
-	headerBar->set_title_widget(*Gtk::make_managed<Gtk::Label>("TicTacToe"));
-	headerBar->set_show_title_buttons(true);
-	
-	auto closeButton = Gtk::make_managed<Gtk::Button>("x");
-	closeButton->add_css_class("header-close");
-	set_titlebar(*headerBar);
-
-	/* =========== LOAD AND APPLY CSS FILTER =========== */
-	auto css_provider = Gtk::CssProvider::create();
-
-	try {
-		css_provider->load_from_path(css_file_path);
-
-		auto display = get_display();
-
-		Gtk::StyleContext::add_provider_for_display(
-				display, 
-				css_provider,
-				 
-				/* Style can be overwritten by player
-				  * Will I add that?? 
-				  * No. 
-				  * Why? 
-				  * Players ruin everything. 
-				  * (Actually because idk how to let them customize it. SHHHHHHH)
-				*/
-
-				GTK_STYLE_PROVIDER_PRIORITY_APPLICATION); 
-	} catch (const Glib::Error& er) {
-		std::cerr << "Failed to load CSS: " << er.what() << std::endl;
-	}
-
-	/* =========== SETUP OF GUI COMPONENTS =========== */
-
 	/* Title and its box */
 	auto titleBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
 	titleBox->set_halign(Gtk::Align::CENTER);
@@ -125,26 +71,78 @@ TicTacToeWindow::TicTacToeWindow()
 	auto startButtonBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
 	startButtonBox->set_halign(Gtk::Align::CENTER);
 	startButtonBox->set_valign(Gtk::Align::END);
-	
+
 	auto startButton = Gtk::make_managed<Gtk::Button>();	
 	startButton->set_label("Start Game!");
 	startButton->add_css_class("start-button");
 	startButtonBox->append(*startButton);
-	
+
 	/* =========== STUPID FRONT END STUFF =========== */
 
 	p_mainWindowBox->append(*titleBox);
 	p_mainWindowBox->append(*spacerBox);
 	p_mainWindowBox->append(*startButtonBox);
 	set_child(*p_mainWindowBox);
-	
+
 	/* =========== SIGNAL CONNECTIONS =========== */
 	startButton->signal_clicked().connect([this, startButton] () {
 			startButton->set_label("Starting Game!");
 			Glib::signal_timeout().connect_once(sigc::mem_fun(*this, &TicTacToeWindow::on_startButton_click), 1500);
 			Glib::signal_timeout().connect_once(sigc::mem_fun(*this, &TicTacToeWindow::startGame), 1500);
-	});
+			});
+}
 
+void TicTacToeWindow::applyCSSMainMenu()
+{
+	/* CSS File for TicTacToeWindow */
+	const Glib::ustring css_file_path = "./styles/tictactoe.css";
+
+	/* =========== LOAD AND APPLY CSS FILTER =========== */
+	auto css_provider = Gtk::CssProvider::create();
+
+	try {
+		css_provider->load_from_path(css_file_path);
+
+		auto display = get_display();
+
+		Gtk::StyleContext::add_provider_for_display(
+				display, 
+				css_provider,
+
+				/* Style can be overwritten by player
+				 * Will I add that?? 
+				 * No. 
+				 * Why? 
+				 * Players ruin everything. 
+				 * (Actually because idk how to let them customize it. SHHHHHHH)
+				 */
+
+				GTK_STYLE_PROVIDER_PRIORITY_APPLICATION); 
+	} catch (const Glib::Error& er) {
+		std::cerr << "Failed to load CSS: " << er.what() << std::endl;
+	}
+}
+void TicTacToeWindow::setTicTacToeWindowProperties()
+{
+	/*  =========== Main Window Properties =========== */
+	set_title("TicTacToe");
+	set_default_size(c_windowWidth, c_windowHeight);
+	set_resizable(false);
+
+	auto headerBar = Gtk::make_managed<Gtk::HeaderBar>();
+	headerBar->set_title_widget(*Gtk::make_managed<Gtk::Label>("TicTacToe"));
+	headerBar->set_show_title_buttons(true);
+
+	auto closeButton = Gtk::make_managed<Gtk::Button>("x");
+	closeButton->add_css_class("header-close");
+	set_titlebar(*headerBar);
+}
+
+TicTacToeWindow::TicTacToeWindow()
+{
+	setTicTacToeWindowProperties();
+	applyCSSMainMenu();
+	setupMainMenuGUI();
 }
 
 TicTacToeWindow::~TicTacToeWindow()
