@@ -1,26 +1,15 @@
-#include <glibmm/ustring.h>
 #include <glibmm.h>
-#include <gtkmm/enums.h>
-#include <gtkmm/label.h>
-#include <gtkmm/text.h>
-#include <gtkmm/box.h>
-#include <gtkmm/button.h>
-#include <gtkmm/cssprovider.h>
-#include <gtkmm/stylecontext.h>
-#include <gtkmm/grid.h>
-#include <gtkmm/headerbar.h>
-#include <gtkmm/application.h>
-
+#include <gtkmm.h>
 #include <iostream>
 
 #include "TicTacToeWindow.h"
-#include "gtk/gtk.h"
 
-void TicTacToeWindow::startGame()
+static void setupTicTacToeGrid(Gtk::Box *p_mainWindowBox)
 {
+	/* 3x3 */
 	auto spacerBoxTop = Gtk::make_managed<Gtk::Box>();
 	spacerBoxTop->set_margin_bottom(10);
-	
+
 	auto spacerBoxBottom = Gtk::make_managed<Gtk::Box>();
 	spacerBoxBottom->set_margin_top(10);
 
@@ -36,15 +25,25 @@ void TicTacToeWindow::startGame()
 			button->set_vexpand(true);
 			button->set_hexpand(true);
 
+			if(ROW == 0) button->add_css_class("top-row");
+			if(ROW == 2) button->add_css_class("bottom-row");
+			if(COL == 0) button->add_css_class("left-col");
+			if(COL == 2) button->add_css_class("right-col");
+
 			boardGrid->attach(*button, COL, ROW); 
 			button->set_halign(Gtk::Align::CENTER);
 			button->set_valign(Gtk::Align::CENTER);
 		}
 	}
-	
+
 	p_mainWindowBox->append(*spacerBoxTop);
 	p_mainWindowBox->append(*boardGrid);
 	p_mainWindowBox->append(*spacerBoxBottom);
+}
+
+void TicTacToeWindow::startGame()
+{
+	setupTicTacToeGrid(p_mainWindowBox);
 }
 
 void TicTacToeWindow::on_startButton_click()

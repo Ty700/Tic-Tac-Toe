@@ -13,17 +13,38 @@
 
 .start-button:hover {
 	outline-width: 3px;
+	outline-offset: 0px;
 	outline-color: #5251B8;
 }
 
+
 .button-grid {
-	font-family: 'Times New Roman', Times, serif;
-	font-size: 24px;
-	margin: 10px;
+    background-color: white;
+    border: 2px solid black; 
+    border-radius: 0;       
+    font-size: 24px;
+    font-weight: bold;
+    min-height: 120px;
+    min-width: 120px;
+    padding: 0;
+    margin: 25;
 }
 
- .button-grid:hover {
-	 outline-offset: 0px;
-	 outline-width: 2px;
-	 outline-color: #47D238;
- }
+.button-grid:hover {
+	outline-offset: -10px;
+	outline-width: 3px;
+	outline-color: #47D238;
+}
+
+.top-row {
+    border-top: none;
+}
+.bottom-row {
+    border-bottom: none;
+}
+.left-col {
+    border-left: none;
+}
+.right-col {
+    border-right: none;
+}
