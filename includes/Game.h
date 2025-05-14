@@ -1,6 +1,4 @@
 #pragma once
-#include <gtkmm/grid.h>
-#include <gtkmm/object.h>
 #include <stdlib.h>
 #include <gtkmm.h>
 #include <memory.h>
@@ -18,6 +16,7 @@ class Game {
 private:
 	std::array<std::array<std::unique_ptr<Slot>, 3>, 3> p_boardSlots;
 	Gtk::Grid* p_grid;
+
 public:
 	Game()
 	{
@@ -29,6 +28,7 @@ public:
 
 	Slot* getBoardSlot(const int &row, const int &col) { return p_boardSlots[row][col].get(); }
 	Gtk::Grid* getGrid() { return p_grid; }
+
 private:
 	void fillBoardSlots();
 };

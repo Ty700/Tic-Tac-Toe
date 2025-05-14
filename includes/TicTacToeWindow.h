@@ -10,10 +10,10 @@ class TicTacToeWindow : public Gtk::Window
 		~TicTacToeWindow() override;
 
 	private:
-		void on_startButton_click();
-		void setTicTacToeWindowProperties();
+		void onStartButtonClick();
 		void setupMainMenuGUI();
 		void applyCSSMainMenu();
+		void setTicTacToeWindowProperties();
 		void startGame();
 
 		Gtk::Box *p_mainWindowBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);

@@ -5,17 +5,14 @@
 
 #include "Game.h"
 #include "TicTacToeWindow.h"
-#include "Slot.h"
 
-static void setupTicTacToeGrid(Gtk::Box *p_mainWindowBox)
+void TicTacToeWindow::startGame()
 {
-	/* 3x3 */
 	auto spacerBoxTop = Gtk::make_managed<Gtk::Box>();
 	spacerBoxTop->set_margin_bottom(10);
 
 	auto spacerBoxBottom = Gtk::make_managed<Gtk::Box>();
 	spacerBoxBottom->set_margin_top(10);
-	
 	auto newGame = std::make_unique<Game>();
 
 	p_mainWindowBox->append(*spacerBoxTop);
@@ -23,13 +20,7 @@ static void setupTicTacToeGrid(Gtk::Box *p_mainWindowBox)
 	p_mainWindowBox->append(*spacerBoxBottom);
 }
 
-void TicTacToeWindow::startGame()
-{
-	
-	setupTicTacToeGrid(p_mainWindowBox);
-}
-
-void TicTacToeWindow::on_startButton_click()
+void TicTacToeWindow::onStartButtonClick()
 {
 
 	auto child = p_mainWindowBox->get_first_child(); 
@@ -57,7 +48,43 @@ void TicTacToeWindow::setupMainMenuGUI()
 	auto spacerBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
 	spacerBox->set_vexpand(true);
 	spacerBox->set_hexpand(false);
+	
+	/* Player One Boxes (SO MANY BOXES) */
+	auto playerOneBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
+	auto playerOneNameLabel = Gtk::make_managed<Gtk::Label>("Your name: ");
+	playerOneNameLabel->set_halign(Gtk::Align::START);
+	playerOneNameLabel->add_css_class("player1-name");
 
+	auto playerOneNameEntry = Gtk::make_managed<Gtk::Entry>();
+	playerOneNameEntry->set_placeholder_text("Enter Name: ");
+
+	playerOneBox->append(*playerOneNameLabel);
+	playerOneBox->append(*playerOneNameEntry);
+	
+	auto playerOneSymbolBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
+	auto playerOneSymbolLabel = Gtk::make_managed<Gtk::Label>("Player 1 Symbol: ");
+
+
+	auto symbolX = Gtk::make_managed<Gtk::CheckButton>("X");
+	auto symbolO = Gtk::make_managed<Gtk::CheckButton>("O");
+	symbolO->set_group(*symbolX);
+	
+	playerOneSymbolBox->append(*playerOneSymbolLabel);
+	playerOneSymbolBox->set_margin(5);
+	playerOneSymbolBox->append(*symbolX);
+	playerOneSymbolBox->append(*symbolO);
+
+	/* Menu Box */
+	auto menuBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
+	menuBox->set_margin(10);
+	menuBox->append(*playerOneBox);
+	menuBox->append(*playerOneSymbolBox);
+	
+	/* Space between menu and start game button */
+	auto spacerBox2 = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
+	spacerBox2->set_vexpand(true);
+	spacerBox2->set_hexpand(false);
+	
 	/* Start button and its box */
 	auto startButtonBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
 	startButtonBox->set_halign(Gtk::Align::CENTER);
@@ -72,13 +99,15 @@ void TicTacToeWindow::setupMainMenuGUI()
 
 	p_mainWindowBox->append(*titleBox);
 	p_mainWindowBox->append(*spacerBox);
+	p_mainWindowBox->append(*menuBox);
+	p_mainWindowBox->append(*spacerBox2);
 	p_mainWindowBox->append(*startButtonBox);
 	set_child(*p_mainWindowBox);
 
 	/* =========== SIGNAL CONNECTIONS =========== */
 	startButton->signal_clicked().connect([this, startButton] () {
 			startButton->set_label("Starting Game!");
-			Glib::signal_timeout().connect_once(sigc::mem_fun(*this, &TicTacToeWindow::on_startButton_click), 1500);
+			Glib::signal_timeout().connect_once(sigc::mem_fun(*this, &TicTacToeWindow::onStartButtonClick), 1500);
 			Glib::signal_timeout().connect_once(sigc::mem_fun(*this, &TicTacToeWindow::startGame), 1500);
 			});
 }

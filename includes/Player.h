@@ -1,37 +1,26 @@
 #pragma once
 #include <string>
-#include <iostream>
 
-enum AiDiff {
-    EASY, 
-    MEDIUM, 
-    HARD
-};
+/* I can already tell this will confuse me later */
+enum PlayerSymbol {X, O};
+enum PlayerState  {Human, AI};
+enum PlayerDiff   {EASY, MEDIUM, HARD};
 
-std::string capturePlayerName(void);
-std::string generateAIName(void);
-AiDiff getAIDifficulty(void);
+class Player
+{
+	private:
+		std::string 	p_playerName;	
+		PlayerSymbol 	p_playerSymbol;
+		PlayerState 	p_playerState;
+		PlayerDiff 	p_playerDiff;  /* Only for AI */
 
-struct Player{
-    Player(const std::string &name = "Unknown", const std::string ps = "O", const bool state = false)
-        : playerName(name), playerSymbol(ps), isPlayerAI(state)
-        {
-            if(isPlayerAI){
-                AIDifficulty = getAIDifficulty();
+	public: 
+		Player(const std::string &name = "Unknown", const PlayerSymbol sym = X, const PlayerState state = Human)
+			: p_playerName(name), p_playerSymbol(sym), p_playerState(state)
+		{}
 
-                #ifdef DEBUG
-                    std::cout << "Enter AI Diff: ";
-                    int diff;
-                    std::cin >> diff;
-                    AIDifficulty = static_cast<AiDiff>(diff);
-                #endif
-            }
-        }
-
-    std::string playerName;
-    std::string playerSymbol;
-    bool        isPlayerAI;
-    
-    /* TBH, idk enum naming convention and forcing myself to even use an enum here */
-    AiDiff         AIDifficulty;
+		std::string getPlayerName() const { return this->p_playerName; }
+		PlayerSymbol getPlayerSymbol() const { return this->p_playerSymbol; }
+		PlayerState getPlayerState() const { return this->p_playerState; }
+		PlayerDiff getPlayerDiff() const { return this->p_playerDiff; }
 };

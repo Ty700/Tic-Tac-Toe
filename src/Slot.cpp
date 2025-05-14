@@ -25,6 +25,6 @@ void Slot::setProperties()
 
 void Slot::onSlotClick(const int &row, const int &col)
 {
-	std::cout << "Click Detected! ROW: " << row << " COL: " << col << std::endl;
+	
 }
 
