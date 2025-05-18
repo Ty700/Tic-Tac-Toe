@@ -1,13 +1,15 @@
+/* A bunch of settings that don't make sense (Horrible at front-end  */
+
 .title-label {
 	font-family: 'Times New Roman', Times, serif;
-	font-size: 48px;	
-	margin: 35px;
+	font-size: 72px;	
+	margin: 20px;
 	
 }
 
 .start-button {
 	font-family: 'Times New Roman', Times, serif;
-	font-size: 24px;
+	font-size:   48px;
 	margin: 35px;
 }
 
@@ -26,7 +28,7 @@
     font-weight: bold;
     min-height: 120px;
     min-width: 120px;
-    padding: 0;
+    padding: 0px;
     margin: 25;
 }
 
@@ -47,4 +49,22 @@
 }
 .right-col {
     border-right: none;
+}
+
+.menu {
+	font-family: 'Times New Roman', Times, serif;
+	font-size: 24px;
+	margin: 3px;
+}
+
+.menu.p1Name {
+	margin-bottom: 10px;
+}
+
+.menu.p2Name {
+	margin-top: 10px;
+}
+
+.emnu.sym {
+	margin: 25px;
 }

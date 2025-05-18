@@ -1,5 +1,6 @@
 #include <glibmm.h>
 #include <gtkmm.h>
+#include <gtkmm/enums.h>
 #include <iostream>
 #include <memory.h>
 
@@ -22,7 +23,6 @@ void TicTacToeWindow::startGame()
 
 void TicTacToeWindow::onStartButtonClick()
 {
-
 	auto child = p_mainWindowBox->get_first_child(); 
 
 	while(child){
@@ -31,6 +31,9 @@ void TicTacToeWindow::onStartButtonClick()
 	}
 }
 
+/** 
+ * TODO: My lord
+ */
 void TicTacToeWindow::setupMainMenuGUI()
 {
 	/* Title and its box */
@@ -38,48 +41,71 @@ void TicTacToeWindow::setupMainMenuGUI()
 	titleBox->set_halign(Gtk::Align::CENTER);
 
 	/* Sets properties for the title */
-	auto welcomeTitle = Gtk::make_managed<Gtk::Label>("Welcome to TicTacToe!"); 
-	welcomeTitle->add_css_class("title-label");
+	auto welcomeTitle = Gtk::make_managed<Gtk::Label>("TicTacToe!"); 
 
-	/* Puts welcomeTitle label in its box */
 	titleBox->append(*welcomeTitle);
 
 	/* Spacer (I literally hate front-end work... slowly coming to this realization */
-	auto spacerBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
-	spacerBox->set_vexpand(true);
-	spacerBox->set_hexpand(false);
+	auto titleMenuSpace = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
+	titleMenuSpace->set_vexpand(true);
+	titleMenuSpace->set_hexpand(false);
 	
-	/* Player One Boxes (SO MANY BOXES) */
-	auto playerOneBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
-	auto playerOneNameLabel = Gtk::make_managed<Gtk::Label>("Your name: ");
-	playerOneNameLabel->set_halign(Gtk::Align::START);
-	playerOneNameLabel->add_css_class("player1-name");
+	/* Menu Box */
+	auto menuBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
+	menuBox->set_margin(10);
+	menuBox->set_halign(Gtk::Align::CENTER);
 
-	auto playerOneNameEntry = Gtk::make_managed<Gtk::Entry>();
-	playerOneNameEntry->set_placeholder_text("Enter Name: ");
-
-	playerOneBox->append(*playerOneNameLabel);
-	playerOneBox->append(*playerOneNameEntry);
+	/* P1 Box (SO MANY BOXES) */
+	auto p1Box = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::HORIZONTAL);
+	p1Box->set_halign(Gtk::Align::CENTER);
 	
-	auto playerOneSymbolBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
-	auto playerOneSymbolLabel = Gtk::make_managed<Gtk::Label>("Player 1 Symbol: ");
-
-
+	/* P1 Name Label  */
+	auto p1NameLbl = Gtk::make_managed<Gtk::Label>("Player 1 Name: ");
+	p1NameLbl->set_halign(Gtk::Align::START);
+	
+	/* P1 Entry for Name */
+	auto p1NameEntry = Gtk::make_managed<Gtk::Entry>();
+	p1NameEntry->set_placeholder_text("David");
+	p1NameEntry->set_halign(Gtk::Align::START);
+	p1NameEntry->set_hexpand(true);
+	
+	/* P1 elements to P1 Box */
+	p1Box->append(*p1NameLbl);
+	p1Box->append(*p1NameEntry);
+	
+	/* P1 Sym Box */
+	auto p1SymBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::HORIZONTAL);
+	auto p1SymLbl = Gtk::make_managed<Gtk::Label>("Player 1 Symbol: ");
+	
+	/* X || O Buttons */
 	auto symbolX = Gtk::make_managed<Gtk::CheckButton>("X");
 	auto symbolO = Gtk::make_managed<Gtk::CheckButton>("O");
 	symbolO->set_group(*symbolX);
 	
-	playerOneSymbolBox->append(*playerOneSymbolLabel);
-	playerOneSymbolBox->set_margin(5);
-	playerOneSymbolBox->append(*symbolX);
-	playerOneSymbolBox->append(*symbolO);
-
-	/* Menu Box */
-	auto menuBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
-	menuBox->set_margin(10);
-	menuBox->append(*playerOneBox);
-	menuBox->append(*playerOneSymbolBox);
+	p1SymBox->append(*p1SymLbl);
+	p1SymBox->set_margin(5);
+	p1SymBox->set_halign(Gtk::Align::START);
+	p1SymBox->append(*symbolX);
+	p1SymBox->append(*symbolO);
 	
+	/* P2 Box */
+	auto p2Box = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::HORIZONTAL);
+	
+	/* P2 Name Label  */
+	auto p2NameLbl = Gtk::make_managed<Gtk::Label>("Player 2 Name: ");
+	p2NameLbl->set_halign(Gtk::Align::CENTER);
+
+	auto p2NameEntry = Gtk::make_managed<Gtk::Entry>();
+	p2NameEntry->set_placeholder_text("Goliath");
+	
+	p2Box->append(*p2NameLbl);
+	p2Box->append(*p2NameEntry);
+
+	/* P1 & P2 related boxes to menuBox */
+	menuBox->append(*p1Box);
+	menuBox->append(*p1SymBox);
+	menuBox->append(*p2Box);
+
 	/* Space between menu and start game button */
 	auto spacerBox2 = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
 	spacerBox2->set_vexpand(true);
@@ -92,13 +118,33 @@ void TicTacToeWindow::setupMainMenuGUI()
 
 	auto startButton = Gtk::make_managed<Gtk::Button>();	
 	startButton->set_label("Start Game!");
-	startButton->add_css_class("start-button");
 	startButtonBox->append(*startButton);
+
+	/* CSS FILTERS */
+	welcomeTitle->add_css_class("title-label");
+	startButton->add_css_class("start-button");
+	
+	p1NameLbl->add_css_class("menu");
+	p1NameLbl->add_css_class("p1Name");
+	p1NameEntry->add_css_class("menu");
+	p1NameEntry->add_css_class("p1Name");
+	p1SymLbl->add_css_class("menu");
+	p1SymLbl->add_css_class("p1Sym");
+
+	p2NameLbl->add_css_class("menu");
+	p2NameLbl->add_css_class("p2Name");
+	p2NameEntry->add_css_class("menu");
+	p2NameEntry->add_css_class("p2name");
+
+	symbolO->add_css_class("menu");
+	symbolO->add_css_class("sym");
+	symbolX->add_css_class("menu");
+	symbolX->add_css_class("sym");
 
 	/* =========== STUPID FRONT END STUFF =========== */
 
 	p_mainWindowBox->append(*titleBox);
-	p_mainWindowBox->append(*spacerBox);
+	p_mainWindowBox->append(*titleMenuSpace);
 	p_mainWindowBox->append(*menuBox);
 	p_mainWindowBox->append(*spacerBox2);
 	p_mainWindowBox->append(*startButtonBox);
