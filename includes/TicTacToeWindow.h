@@ -18,6 +18,7 @@ class TicTacToeWindow : public Gtk::Window
 		void applyCSSMainMenu();
 		void setTicTacToeWindowProperties();
 		void startGame();
+		void setupTicTacToeGridGUI();
 
 		Gtk::Box *p_mainWindowBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
 		const size_t c_windowHeight = 640;
@@ -28,8 +29,8 @@ class TicTacToeWindow : public Gtk::Window
 };
 
 /**
- * @FUNCTION: 	Looks for a widget of type T, that has a name of entryName
- * @PARAMS:  	Type T | Root widget to search from | name of the widget to look for 
+ * @FUNCTION: 	Looks for a widget of type T, that has an attr name of entryName
+ * @PARAMS:  	Type T | Root widget to search from | attr name to look for 
  * @RETURNS:    Widget of type T	
  */
 template <typename T>

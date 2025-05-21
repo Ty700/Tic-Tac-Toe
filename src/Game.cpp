@@ -3,6 +3,7 @@
 #include <sigc++/functors/mem_fun.h>
 #include <sigc++/functors/ptr_fun.h>
 #include <stdlib.h>
+#include <random>
 
 #include "Game.h"
 #include "Slot.h"
@@ -13,6 +14,7 @@
  * 		- Slot contains the GUI button. 
  * 		- Button signal is also connected here. 
  * @PARAMS: 	VOID 
+ * @RET:	VOID
  */
 void Game::fillBoardSlots()
 {
@@ -29,4 +31,19 @@ void Game::fillBoardSlots()
 			p_grid->attach(*button, COL, ROW);
 		}
 	}
+}
+
+/**
+ * @FUNCTION: 	Determines who goes first | Either main menu or random
+ * @PARAMS: 	VOID
+ * @RET: 	VOID
+ */
+int Game::determineWhoGoesFirst()
+{
+	std::random_device rd;    
+	int idx = rd() % 2;
+	#ifdef DEBUG 
+		std::cout << "Roll a D2..." << idx << std::endl;
+	#endif 
+	return idx;
 }

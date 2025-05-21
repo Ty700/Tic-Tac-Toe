@@ -7,7 +7,7 @@
 #include "Player.h"
 #include "TicTacToeWindow.h"
 
-void TicTacToeWindow::startGame()
+void TicTacToeWindow::setupTicTacToeGridGUI()
 {
 	auto spacerBoxTop = Gtk::make_managed<Gtk::Box>();
 	spacerBoxTop->set_margin_bottom(10);
@@ -20,13 +20,16 @@ void TicTacToeWindow::startGame()
 	p_mainWindowBox->append(*spacerBoxBottom);
 }
 
+void TicTacToeWindow::startGame()
+{
+	setupTicTacToeGridGUI();
+}
+
 void TicTacToeWindow::onStartButtonClick()
 {
-	
-	/* Before we delete all the init GUI elements, grab important info */
-	std::string p1Name, p2Name;
-	
-	/* Search for p1 name and sym 
+	/* 
+	 * Before we delete all the init GUI elements, grab important info
+	 * Search for p1 name and sym 
 	 * Fun Fact: This is the first time I see a use case for a recursive function
 	 *
 	 * Since the function needs to return either a GTK::Entry, Checkbox, etc, 
@@ -37,46 +40,77 @@ void TicTacToeWindow::onStartButtonClick()
 	
 	auto p1NameEntry = findWidget<Gtk::Entry>(p_mainWindowBox, "p1NameEntry");
 	auto p2NameEntry = findWidget<Gtk::Entry>(p_mainWindowBox, "p2NameEntry");
-	auto p1Sym = findWidget<Gtk::CheckButton>(p_mainWindowBox, "p1Sym");
-	
+	auto p1SymX = findWidget<Gtk::CheckButton>(p_mainWindowBox, "symbolX");
+	auto p1FirstBut = findWidget<Gtk::CheckButton>(p_mainWindowBox, "p1FirstBut");	
+	auto p2FirstBut = findWidget<Gtk::CheckButton>(p_mainWindowBox, "p2FirstBut");	
+	auto randFirstBut = findWidget<Gtk::CheckButton>(p_mainWindowBox, "randFirstBut");
+
 	#ifdef DEBUG 
-		std::cout << "Player 1 Name: " << p1NameEntry->get_text() 
-			  << "\nPlayer 2 Name: " << p2NameEntry->get_text() 
-			  << "\nPlayer 1 Symbol: " << p1Sym->get_active() 
-			  << std::endl;
+		std::cout << "Player 1 Name: "     << p1NameEntry->get_text() 
+			  << "\nPlayer 2 Name: "   << p2NameEntry->get_text() 
+			  << "\nPlayer 1 Symbol: " << p1SymX->get_active() 
+			  << "\nP1 first: " 	   << p1FirstBut->get_active() 
+			  << "\nP2 first: " 	   << p2FirstBut->get_active()
+			  << "\nRandom: " 	   << randFirstBut->get_active()
+			  << std::endl << std::endl;
 	#endif
 
 	/* Create Player Objs 
-	 * TODO: AI Option. P2 is AI by default 
+	 * TODO: Player Option. P2 is AI by default 
 	 */
 	Player::PlayerParams p1Params{
 		.name  = p1NameEntry->get_text(),
-		.sym   = ((p1Sym->get_active() == Player::PlayerSymbol::O) ? Player::PlayerSymbol::O : Player::PlayerSymbol::X),
+		.sym   = ((p1SymX->get_active()) ? Player::PlayerSymbol::X : Player::PlayerSymbol::O),
 		.state = Player::PlayerState::Human 
 	};
 
 	Player::PlayerParams p2Params{
 		.name  = p2NameEntry->get_text(),
-		.sym   = ((p1Sym->get_active() == Player::PlayerSymbol::O) ? Player::PlayerSymbol::X : Player::PlayerSymbol::O),
-		.state = Player::PlayerState::AI
+		.sym   = (p1Params.sym == Player::PlayerSymbol::X) ? Player::PlayerSymbol::O : Player::PlayerSymbol::X, 
+		.state = Player::PlayerState::AI,
 	};
 
-	std::unique_ptr<Player> p1 = std::make_unique<Player>(p1Params);
-	std::unique_ptr<Player> p2 = std::make_unique<Player>(p2Params);
+	std::shared_ptr<Player> p1 = std::make_shared<Player>(p1Params);
+	std::shared_ptr<Player> p2 = std::make_shared<Player>(p2Params);
 	
 	#ifdef DEBUG
 		std::cout << "\nP1 Name: " << p1->getPlayerName() << "\nP1 State: " << static_cast<Player::PlayerState>(p1->getPlayerState()) << "\nP1 Symbol: " << static_cast<Player::PlayerSymbol>(p1->getPlayerSymbol()) << "\n";
 		std::cout << "\nP2 Name: " << p2->getPlayerName() << "\nP2 State: " << static_cast<Player::PlayerState>(p2->getPlayerState()) << "\nP2 Symbol: " << static_cast<Player::PlayerSymbol>(p2->getPlayerSymbol()) << "\n";
 	#endif
+	
+	int turnIdx{-1};
+	if(p1FirstBut->get_active())
+	{
+		turnIdx = 0;
+	} else if (p2FirstBut->get_active())
+	{
+		turnIdx = 1;
+	} else {
+		turnIdx = 2;
+	}
 
 	/* Create Game Obj */
-	p_mainGame = std::make_unique<Game>(std::move(p1), std::move(p2));
+	Game::GameParams gameParams{
+		.p1 = p1,
+		.p2 = p2,
+		.turnIdx = turnIdx,
+	};
+	
+	#ifdef DEBUG 
+		std::cout << "Turn Idx: " << gameParams.turnIdx << std::endl;
+	#endif
 
+	p_mainGame = std::make_unique<Game>(gameParams);
+	
+	/* After extracting data, delete all GUI elements to prepare for TicTacToe grid */
 	auto box = p_mainWindowBox->get_first_child();
 	while(box){
 		p_mainWindowBox->remove(*box);
 		box = p_mainWindowBox->get_first_child();
 	}
+	
+	/* Start Game */
+	startGame();
 }
 
 /** 
@@ -105,7 +139,7 @@ void TicTacToeWindow::setupMainMenuGUI()
 
 	/* P1 Box (SO MANY BOXES) */
 	auto p1Box = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::HORIZONTAL);
-	p1Box->set_halign(Gtk::Align::CENTER);
+	p1Box->set_halign(Gtk::Align::START);
 	
 	/* P1 Name Label  */
 	auto p1NameLbl = Gtk::make_managed<Gtk::Label>("Player 1 Name: ");
@@ -125,13 +159,14 @@ void TicTacToeWindow::setupMainMenuGUI()
 	/* P1 Sym Box */
 	auto p1SymBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::HORIZONTAL);
 	auto p1SymLbl = Gtk::make_managed<Gtk::Label>("Player 1 Symbol: ");
+	p1SymLbl->set_halign(Gtk::Align::START);
 	
 	/* X || O Buttons */
 	auto symbolX = Gtk::make_managed<Gtk::CheckButton>("X");
 	auto symbolO = Gtk::make_managed<Gtk::CheckButton>("O");
 	symbolO->set_group(*symbolX);
 	
-	symbolX->set_name("p1Sym");
+	symbolX->set_name("symbolX");
 	p1SymBox->append(*p1SymLbl);
 	p1SymBox->set_margin(5);
 	p1SymBox->set_halign(Gtk::Align::START);
@@ -143,7 +178,7 @@ void TicTacToeWindow::setupMainMenuGUI()
 	
 	/* P2 Name Label  */
 	auto p2NameLbl = Gtk::make_managed<Gtk::Label>("Player 2 Name: ");
-	p2NameLbl->set_halign(Gtk::Align::CENTER);
+	p2NameLbl->set_halign(Gtk::Align::START);
 
 	auto p2NameEntry = Gtk::make_managed<Gtk::Entry>();
 	p2NameEntry->set_placeholder_text("Goliath");
@@ -156,6 +191,30 @@ void TicTacToeWindow::setupMainMenuGUI()
 	menuBox->append(*p1Box);
 	menuBox->append(*p1SymBox);
 	menuBox->append(*p2Box);
+	
+	auto goesFirstBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::HORIZONTAL);
+	auto firstLabel = Gtk::make_managed<Gtk::Label>("Who goes first: ");
+	firstLabel->set_halign(Gtk::Align::START);
+
+	auto p1FirstBut = Gtk::make_managed<Gtk::CheckButton>("Player 1");
+	auto p2FirstBut = Gtk::make_managed<Gtk::CheckButton>("Player 2");
+	auto randFirstBut = Gtk::make_managed<Gtk::CheckButton>("Random");
+	
+	p1FirstBut->set_name("p1FirstBut");
+	p2FirstBut->set_name("p2FirstBut");
+	randFirstBut->set_name("randFirstBut");
+
+	p2FirstBut->set_group(*p1FirstBut);
+	randFirstBut->set_group(*p1FirstBut);
+
+	goesFirstBox->append(*firstLabel);
+	goesFirstBox->set_margin(5);
+	goesFirstBox->set_halign(Gtk::Align::START);
+	goesFirstBox->append(*p1FirstBut);
+	goesFirstBox->append(*p2FirstBut);
+	goesFirstBox->append(*randFirstBut);
+
+	menuBox->append(*goesFirstBox);
 
 	/* Space between menu and start game button */
 	auto spacerBox2 = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
@@ -191,6 +250,12 @@ void TicTacToeWindow::setupMainMenuGUI()
 	symbolO->add_css_class("sym");
 	symbolX->add_css_class("menu");
 	symbolX->add_css_class("sym");
+	
+	firstLabel->add_css_class("menu");
+	p1FirstBut->add_css_class("menu");
+	p2FirstBut->add_css_class("menu");
+	randFirstBut->add_css_class("menu");
+
 
 	/* =========== STUPID FRONT END STUFF =========== */
 
@@ -205,7 +270,6 @@ void TicTacToeWindow::setupMainMenuGUI()
 	startButton->signal_clicked().connect([this, startButton] () {
 			startButton->set_label("Starting Game!");
 			Glib::signal_timeout().connect_once(sigc::mem_fun(*this, &TicTacToeWindow::onStartButtonClick), 1500);
-			Glib::signal_timeout().connect_once(sigc::mem_fun(*this, &TicTacToeWindow::startGame), 1500);
 			});
 }
 
