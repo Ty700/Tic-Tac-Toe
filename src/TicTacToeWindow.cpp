@@ -1,6 +1,5 @@
 #include <glibmm.h>
 #include <gtkmm.h>
-#include <gtkmm/enums.h>
 #include <iostream>
 #include <memory.h>
 
@@ -23,11 +22,35 @@ void TicTacToeWindow::startGame()
 
 void TicTacToeWindow::onStartButtonClick()
 {
-	auto child = p_mainWindowBox->get_first_child(); 
+	
+	/* Before we delete all the init GUI elements, grab important info */
+	std::string p1Name, p2Name;
+	
+	/* Search for p1 name and sym 
+	 * Fun Fact: This is the first time I see a use case for a recursive function
+	 *
+	 * Since the function needs to return either a GTK::Entry, Checkbox, etc, 
+	 * it is also the first time I saw a use case for a template!
+	 *
+	 * Pretty cool ig
+	 */
+	
+	auto p1NameEntry = findWidget<Gtk::Entry>(p_mainWindowBox, "p1NameEntry");
+	auto p2NameEntry = findWidget<Gtk::Entry>(p_mainWindowBox, "p2NameEntry");
+	auto p1Sym = findWidget<Gtk::CheckButton>(p_mainWindowBox, "p1Sym");
+	
+//	#ifdef DEBUG 
+		std::cout << "Player 1 Name: " << p1NameEntry->get_text() 
+			  << "\nPlayer 2 Name: " << p2NameEntry->get_text() 
+			  << "\nPlayer 1 Symbol: " << p1Sym->get_active() 
+			  << std::endl;
+//	#endif
 
-	while(child){
-		p_mainWindowBox->remove(*child);
-		child = p_mainWindowBox->get_first_child();
+	auto box = p_mainWindowBox->get_first_child();
+
+	while(box){
+		p_mainWindowBox->remove(*box);
+		box = p_mainWindowBox->get_first_child();
 	}
 }
 
@@ -65,6 +88,7 @@ void TicTacToeWindow::setupMainMenuGUI()
 	
 	/* P1 Entry for Name */
 	auto p1NameEntry = Gtk::make_managed<Gtk::Entry>();
+	p1NameEntry->set_name("p1NameEntry");
 	p1NameEntry->set_placeholder_text("David");
 	p1NameEntry->set_halign(Gtk::Align::START);
 	p1NameEntry->set_hexpand(true);
@@ -82,6 +106,7 @@ void TicTacToeWindow::setupMainMenuGUI()
 	auto symbolO = Gtk::make_managed<Gtk::CheckButton>("O");
 	symbolO->set_group(*symbolX);
 	
+	symbolX->set_name("p1Sym");
 	p1SymBox->append(*p1SymLbl);
 	p1SymBox->set_margin(5);
 	p1SymBox->set_halign(Gtk::Align::START);
@@ -97,7 +122,8 @@ void TicTacToeWindow::setupMainMenuGUI()
 
 	auto p2NameEntry = Gtk::make_managed<Gtk::Entry>();
 	p2NameEntry->set_placeholder_text("Goliath");
-	
+	p2NameEntry->set_name("p2NameEntry");
+
 	p2Box->append(*p2NameLbl);
 	p2Box->append(*p2NameEntry);
 

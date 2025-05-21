@@ -2,6 +2,9 @@
 #include <gtkmm/object.h>
 #include <gtkmm/window.h>
 #include <gtkmm/button.h>
+#include <memory.h>
+
+#include "Game.h"
 
 class TicTacToeWindow : public Gtk::Window 
 {
@@ -20,5 +23,36 @@ class TicTacToeWindow : public Gtk::Window
 		const size_t c_windowHeight = 640;
 		const size_t c_windowWidth = 720;
 
+		std::unique_ptr<Game> p_mainGame = nullptr;
+
 };
 
+/**
+ * @FUNCTION: 	Looks for a widget of type T, that has a name of entryName
+ * @PARAMS:  	Type T | Root widget to search from | name of the widget to look for 
+ * @RETURNS:    Widget of type T	
+ */
+template <typename T>
+T* findWidget(Gtk::Widget* root, const Glib::ustring& entryName)
+{
+	if (auto target = dynamic_cast<T*>(root))
+	{
+		if(target->get_name() == entryName)
+		{
+			return target;
+		}
+	}
+	
+	if (auto child = root->get_first_child()) 
+	{
+		while(child) 
+		{
+			if (auto result = findWidget<T>(child, entryName))
+			{
+				return result;
+			}
+		child = child->get_next_sibling();
+		}
+	}	
+	return nullptr;
+}

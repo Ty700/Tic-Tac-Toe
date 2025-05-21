@@ -25,6 +25,6 @@ void Slot::setProperties()
 
 void Slot::onSlotClick(const int &row, const int &col)
 {
-	
+	/* Will update the p_isEmpty param */
 }
 
