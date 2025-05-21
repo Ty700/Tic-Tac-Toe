@@ -3,26 +3,30 @@
 
 class Player
 {
-	private:
 
+	public: 
 		/* I can already tell this will confuse me later */
 		enum PlayerSymbol {O, X};
 		enum PlayerState  {Human, AI};
 		enum PlayerDiff   {EASY, MEDIUM, HARD, PLAYER_DIFF_COUNT};
 
-		std::string 	p_playerName;	
-		PlayerSymbol 	p_playerSymbol;
-		PlayerState 	p_playerState;
-		PlayerDiff 	p_playerDiff;  /* Only for AI */
+		struct PlayerParams {
+			std::string name;
+			Player::PlayerSymbol sym = Player::PlayerSymbol::X;
+			Player::PlayerState state = Player::PlayerState::Human;
+		};
 
-	public: 
-		Player(const std::string &name = "Unknown", const PlayerSymbol sym = X, const PlayerState state = Human)
-			: p_playerName(name), p_playerSymbol(sym), p_playerState(state)
+		Player(const PlayerParams& params)
+			: p_playerName(params.name), p_playerSymbol(params.sym), p_playerState(params.state)
 		{
-			if(state == AI)
+			if(p_playerState == AI)
+			{
+				setAIDifficulty();
+			}
+
+			if(p_playerName.empty())
 			{
 				generateAIName();
-				setAIDifficulty();
 			}
 		}
 
@@ -31,7 +35,13 @@ class Player
 		PlayerState  getPlayerState()  const { return this->p_playerState;  }
 		PlayerDiff   getPlayerDiff()   const { return this->p_playerDiff;   }
 
+
 	private:
+		std::string 	p_playerName;	
+		PlayerSymbol 	p_playerSymbol;
+		PlayerState 	p_playerState;
+		PlayerDiff 	p_playerDiff;  /* Only for AI */
+
 		void setAIDifficulty();
 		void generateAIName();
 };

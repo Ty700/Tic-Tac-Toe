@@ -1,6 +1,10 @@
 #include <random>
 #include <string>
 
+#ifdef DEBUG
+	#include <iostream>
+#endif 
+
 #include "Player.h"
 /**
  * FUNCTION:    If player chooses to play against an AI, this function is called to pick a random AI name.
@@ -27,6 +31,10 @@ void Player::generateAIName(){
     /* Generate a random number and select name via mod */
     std::random_device rd;    
     p_playerName =  NPCNames[rd()  % NPC_NAME_AMOUNT];
+
+    #ifdef DEBUG 
+    	std::cout << "AI Name: " << p_playerName << std::endl;
+    #endif
 }
 
 
@@ -39,7 +47,7 @@ void Player::generateAIName(){
  */
 void Player::setAIDifficulty(){
     std::random_device rd;
-    unsigned int idx = rd()  % Player::PlayerDiff::PLAYER_DIFF_COUNT;
+    unsigned int idx = rd()  % PlayerDiff::PLAYER_DIFF_COUNT;
     p_playerDiff = static_cast<PlayerDiff>(idx);
 
     #ifdef DEBUG

@@ -4,6 +4,7 @@
 #include <memory.h>
 
 #include "Game.h"
+#include "Player.h"
 #include "TicTacToeWindow.h"
 
 void TicTacToeWindow::startGame()
@@ -13,10 +14,9 @@ void TicTacToeWindow::startGame()
 
 	auto spacerBoxBottom = Gtk::make_managed<Gtk::Box>();
 	spacerBoxBottom->set_margin_top(10);
-	auto newGame = std::make_unique<Game>();
 
 	p_mainWindowBox->append(*spacerBoxTop);
-	p_mainWindowBox->append(*newGame->getGrid());
+	p_mainWindowBox->append(*p_mainGame->getGrid());
 	p_mainWindowBox->append(*spacerBoxBottom);
 }
 
@@ -39,15 +39,40 @@ void TicTacToeWindow::onStartButtonClick()
 	auto p2NameEntry = findWidget<Gtk::Entry>(p_mainWindowBox, "p2NameEntry");
 	auto p1Sym = findWidget<Gtk::CheckButton>(p_mainWindowBox, "p1Sym");
 	
-//	#ifdef DEBUG 
+	#ifdef DEBUG 
 		std::cout << "Player 1 Name: " << p1NameEntry->get_text() 
 			  << "\nPlayer 2 Name: " << p2NameEntry->get_text() 
 			  << "\nPlayer 1 Symbol: " << p1Sym->get_active() 
 			  << std::endl;
-//	#endif
+	#endif
+
+	/* Create Player Objs 
+	 * TODO: AI Option. P2 is AI by default 
+	 */
+	Player::PlayerParams p1Params{
+		.name  = p1NameEntry->get_text(),
+		.sym   = ((p1Sym->get_active() == Player::PlayerSymbol::O) ? Player::PlayerSymbol::O : Player::PlayerSymbol::X),
+		.state = Player::PlayerState::Human 
+	};
+
+	Player::PlayerParams p2Params{
+		.name  = p2NameEntry->get_text(),
+		.sym   = ((p1Sym->get_active() == Player::PlayerSymbol::O) ? Player::PlayerSymbol::X : Player::PlayerSymbol::O),
+		.state = Player::PlayerState::AI
+	};
+
+	std::unique_ptr<Player> p1 = std::make_unique<Player>(p1Params);
+	std::unique_ptr<Player> p2 = std::make_unique<Player>(p2Params);
+	
+	#ifdef DEBUG
+		std::cout << "\nP1 Name: " << p1->getPlayerName() << "\nP1 State: " << static_cast<Player::PlayerState>(p1->getPlayerState()) << "\nP1 Symbol: " << static_cast<Player::PlayerSymbol>(p1->getPlayerSymbol()) << "\n";
+		std::cout << "\nP2 Name: " << p2->getPlayerName() << "\nP2 State: " << static_cast<Player::PlayerState>(p2->getPlayerState()) << "\nP2 Symbol: " << static_cast<Player::PlayerSymbol>(p2->getPlayerSymbol()) << "\n";
+	#endif
+
+	/* Create Game Obj */
+	p_mainGame = std::make_unique<Game>(std::move(p1), std::move(p2));
 
 	auto box = p_mainWindowBox->get_first_child();
-
 	while(box){
 		p_mainWindowBox->remove(*box);
 		box = p_mainWindowBox->get_first_child();
@@ -211,7 +236,7 @@ void TicTacToeWindow::applyCSSMainMenu()
 
 				GTK_STYLE_PROVIDER_PRIORITY_APPLICATION); 
 	} catch (const Glib::Error& er) {
-		std::cerr << "Failed to load CSS: " << er.what() << std::endl;
+		std::cout << "Failed to load CSS: " << er.what() << std::endl;
 	}
 }
 void TicTacToeWindow::setTicTacToeWindowProperties()

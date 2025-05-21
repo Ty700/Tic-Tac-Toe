@@ -6,7 +6,6 @@
 
 #include "Game.h"
 #include "Slot.h"
-#include "Player.h"
 
 /**
  * @FUNCTION: 	- Creates the slot object and places them in an 2D array
@@ -30,15 +29,4 @@ void Game::fillBoardSlots()
 			p_grid->attach(*button, COL, ROW);
 		}
 	}
-}
-
-/** 
- * @FUNCTION: 	Set's the Game's playerOne and playerTwo members | Transfers ownership from player to Game class!!!
- * @PARAMS:  	A ptr to player objects
- * @RET:	VOID
- */
-void Game::setPlayers(std::unique_ptr<Player>& p1, std::unique_ptr<Player>& p2)
-{
-	this->p_PlayerOne = std::move(p1);
-	this->p_PlayerTwo = std::move(p2);
 }

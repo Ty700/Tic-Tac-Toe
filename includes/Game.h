@@ -18,11 +18,12 @@ class Game {
 private:
 	std::array<std::array<std::unique_ptr<Slot>, 3>, 3> p_boardSlots;
 	Gtk::Grid* p_grid;
-	std::unique_ptr<Player> p_PlayerOne = nullptr;
-	std::unique_ptr<Player> p_PlayerTwo = nullptr;
+	std::unique_ptr<Player> p_playerOne {nullptr};
+	std::unique_ptr<Player> p_playerTwo {nullptr};
 
 public:
-	Game()
+	Game(std::unique_ptr<Player> p1, std::unique_ptr<Player> p2)
+		: p_playerOne(std::move(p1)), p_playerTwo(std::move(p2))
 	{
 		p_grid = Gtk::make_managed<Gtk::Grid>();
 		p_grid->set_halign(Gtk::Align::CENTER);
@@ -32,7 +33,6 @@ public:
 
 	Slot* getBoardSlot(const int &row, const int &col) { return p_boardSlots[row][col].get(); }
 	Gtk::Grid* getGrid() { return p_grid; }
-	void setPlayers(std::unique_ptr<Player>& p1, std::unique_ptr<Player>& p2);
 
 private:
 	void fillBoardSlots();
