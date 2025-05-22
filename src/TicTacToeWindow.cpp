@@ -40,10 +40,10 @@ void TicTacToeWindow::onStartButtonClick()
 	
 	auto p1NameEntry = findWidget<Gtk::Entry>(p_mainWindowBox, "p1NameEntry");
 	auto p2NameEntry = findWidget<Gtk::Entry>(p_mainWindowBox, "p2NameEntry");
-	auto p1SymX = findWidget<Gtk::CheckButton>(p_mainWindowBox, "symbolX");
-	auto p1FirstBut = findWidget<Gtk::CheckButton>(p_mainWindowBox, "p1FirstBut");	
-	auto p2FirstBut = findWidget<Gtk::CheckButton>(p_mainWindowBox, "p2FirstBut");	
-	auto randFirstBut = findWidget<Gtk::CheckButton>(p_mainWindowBox, "randFirstBut");
+	auto p1SymX = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "symbolX");
+	auto p1FirstBut = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "p1FirstBut");	
+	auto p2FirstBut = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "p2FirstBut");	
+	auto randFirstBut = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "randFirstBut");
 
 	#ifdef DEBUG 
 		std::cout << "Player 1 Name: "     << p1NameEntry->get_text() 
@@ -162,11 +162,14 @@ void TicTacToeWindow::setupMainMenuGUI()
 	p1SymLbl->set_halign(Gtk::Align::START);
 	
 	/* X || O Buttons */
-	auto symbolX = Gtk::make_managed<Gtk::CheckButton>("X");
-	auto symbolO = Gtk::make_managed<Gtk::CheckButton>("O");
-	symbolO->set_group(*symbolX);
-	
+	auto symbolX = Gtk::make_managed<Gtk::ToggleButton>("X");
+	auto symbolO = Gtk::make_managed<Gtk::ToggleButton>("O");
+	symbolX->set_group(*symbolO);
+	symbolX->set_active(true);	
+
 	symbolX->set_name("symbolX");
+	symbolO->set_name("symbolO");
+
 	p1SymBox->append(*p1SymLbl);
 	p1SymBox->set_margin(5);
 	p1SymBox->set_halign(Gtk::Align::START);
@@ -196,16 +199,17 @@ void TicTacToeWindow::setupMainMenuGUI()
 	auto firstLabel = Gtk::make_managed<Gtk::Label>("Who goes first: ");
 	firstLabel->set_halign(Gtk::Align::START);
 
-	auto p1FirstBut = Gtk::make_managed<Gtk::CheckButton>("Player 1");
-	auto p2FirstBut = Gtk::make_managed<Gtk::CheckButton>("Player 2");
-	auto randFirstBut = Gtk::make_managed<Gtk::CheckButton>("Random");
+	auto p1FirstBut = Gtk::make_managed<Gtk::ToggleButton>("Player 1");
+	auto p2FirstBut = Gtk::make_managed<Gtk::ToggleButton>("Player 2");
+	auto randFirstBut = Gtk::make_managed<Gtk::ToggleButton>("Random");
 	
 	p1FirstBut->set_name("p1FirstBut");
 	p2FirstBut->set_name("p2FirstBut");
 	randFirstBut->set_name("randFirstBut");
 
-	p2FirstBut->set_group(*p1FirstBut);
-	randFirstBut->set_group(*p1FirstBut);
+	p1FirstBut->set_group(*p2FirstBut);
+	randFirstBut->set_group(*p2FirstBut);
+	randFirstBut->set_active(true);
 
 	goesFirstBox->append(*firstLabel);
 	goesFirstBox->set_margin(5);
@@ -235,26 +239,21 @@ void TicTacToeWindow::setupMainMenuGUI()
 	startButton->add_css_class("start-button");
 	
 	p1NameLbl->add_css_class("menu");
-	p1NameLbl->add_css_class("p1Name");
 	p1NameEntry->add_css_class("menu");
-	p1NameEntry->add_css_class("p1Name");
+	p1NameEntry->add_css_class("entry");
 	p1SymLbl->add_css_class("menu");
-	p1SymLbl->add_css_class("p1Sym");
 
 	p2NameLbl->add_css_class("menu");
-	p2NameLbl->add_css_class("p2Name");
 	p2NameEntry->add_css_class("menu");
-	p2NameEntry->add_css_class("p2name");
+	p2NameEntry->add_css_class("entry");
 
-	symbolO->add_css_class("menu");
-	symbolO->add_css_class("sym");
-	symbolX->add_css_class("menu");
-	symbolX->add_css_class("sym");
+	symbolO->add_css_class("radio-button");
+	symbolX->add_css_class("radio-button");
 	
 	firstLabel->add_css_class("menu");
-	p1FirstBut->add_css_class("menu");
-	p2FirstBut->add_css_class("menu");
-	randFirstBut->add_css_class("menu");
+	p1FirstBut->add_css_class("radio-button");
+	p2FirstBut->add_css_class("radio-button");
+	randFirstBut->add_css_class("radio-button");
 
 
 	/* =========== STUPID FRONT END STUFF =========== */
@@ -313,6 +312,7 @@ void TicTacToeWindow::setTicTacToeWindowProperties()
 	auto headerBar = Gtk::make_managed<Gtk::HeaderBar>();
 	headerBar->set_title_widget(*Gtk::make_managed<Gtk::Label>("TicTacToe"));
 	headerBar->set_show_title_buttons(true);
+	headerBar->add_css_class("headerbar");
 
 	auto closeButton = Gtk::make_managed<Gtk::Button>("x");
 	closeButton->add_css_class("header-close");
