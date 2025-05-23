@@ -27,9 +27,11 @@ private:
 	void validMove(const int& row, const int& col);
 	void invalidMove();
 	void processGameTransition();
+	std::shared_ptr<Player> checkForWinner();
+	void processEndOfGame();
 
 	static constexpr int MAX_ROUNDS {9};
-	int currRound{-1};
+	int currRound{0};
 
 	std::array<std::array<std::unique_ptr<Slot>, 3>, 3> p_boardSlots;
 
@@ -81,7 +83,7 @@ public:
 		#endif
 	}
 
-	std::shared_ptr<Player> winningPlayer;
+	std::shared_ptr<Player> p_winningPlayer;
 	Slot* getBoardSlot(const int &row, const int &col) { return p_boardSlots[row][col].get(); }
 	Gtk::Grid* getGrid() { return p_grid; }
 	int getCurrPlayerIndex() { return p_turnIdx; }

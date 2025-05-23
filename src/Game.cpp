@@ -9,24 +9,104 @@
 #include "Slot.h"
 
 /** 
+ * @FUNCTION:	Determines if there is a winner via the last move 
+ * @PARAMS: 	Int vals that corresponds to last move cords
+ * @RET:	Ptr to the player that won (nullptr if else)
+ */
+std::shared_ptr<Player> Game::checkForWinner()
+{
+    const Glib::ustring currentSymbol = (p_PlayerArr[p_turnIdx]->getPlayerSymbol() == Player::PlayerSymbol::X) ? "X" : "O";
+    
+    // Check the row of the last move
+    if(p_boardSlots[p_currPlayerChoice[0]][0]->getSymbol() == currentSymbol && 
+       p_boardSlots[p_currPlayerChoice[0]][1]->getSymbol() == currentSymbol && 
+       p_boardSlots[p_currPlayerChoice[0]][2]->getSymbol() == currentSymbol) {
+        return p_PlayerArr[p_turnIdx];
+    }
+    
+    // Check the column of the last move
+    if(p_boardSlots[0][p_currPlayerChoice[1]]->getSymbol() == currentSymbol && 
+       p_boardSlots[1][p_currPlayerChoice[1]]->getSymbol() == currentSymbol && 
+       p_boardSlots[2][p_currPlayerChoice[1]]->getSymbol() == currentSymbol) {
+        return p_PlayerArr[p_turnIdx];
+    }
+ 
+    // Check main diagonal
+    if(p_currPlayerChoice[0] == p_currPlayerChoice[1]){
+        if(p_boardSlots[0][0]->getSymbol() == currentSymbol && 
+           p_boardSlots[1][1]->getSymbol() == currentSymbol && 
+           p_boardSlots[2][2]->getSymbol() == currentSymbol) {
+            return p_PlayerArr[p_turnIdx];
+        }
+    }
+    
+    // Check anti-diagonal 
+    if(p_currPlayerChoice[0] + p_currPlayerChoice[1] == 2) {
+        if(p_boardSlots[0][2]->getSymbol() == currentSymbol && 
+           p_boardSlots[1][1]->getSymbol() == currentSymbol && 
+           p_boardSlots[2][0]->getSymbol() == currentSymbol) {
+            return p_PlayerArr[p_turnIdx];
+        }
+    }
+    
+    return nullptr;
+}
+
+/**
+ * @FUNCTION: 	Handles the ending of the game 
+ * @PARAMS: 	VOID
+ * @RET:	VOID 
+ */
+void Game::processEndOfGame()
+{
+	/* Call Game Stats */
+
+	/* Update GUI Display Accordingly */
+	if(p_winningPlayer)
+	{
+		#ifdef DEBUG 
+			std::cout << "Player " << p_turnIdx << " Won!\n";
+		#endif
+	} else {
+		#ifdef DEBUG 
+			std::cout << "Tie\n";
+		#endif
+
+	}
+}
+
+/** 
  * @FUNCTION: 	Responsible for the bulk of the work to move the game along upon valid moves 
  * @PARAMS: 	VOID 
  * @RET: 	VOID 
  */
 void Game::processGameTransition()
 {
-	/* Check for winner */
-	/* checkWinner */
+	/* Winning move can only happen 5 rounds in. */
+	if(++currRound >= 5){	
+		/* Check for winner */
+		p_winningPlayer = checkForWinner();
 
-	/* If winner, set winner player for GameStats */
-	/* Change player turn index */
-	
+		/* If winner, set winner player for GameStats */
+		if(p_winningPlayer != nullptr)
+		{
+			#ifdef DEBUG 
+				std::cout << "Winner Detected!\n";
+			#endif
+
+			processEndOfGame();
+			return;
+		}
+	}
+
 	/* Tie? */
-	if(++currRound == MAX_ROUNDS)
+	if(currRound == MAX_ROUNDS)
 	{
 		/* End Game */	
+		processEndOfGame();			
+		return;
 	}
-	
+
 	p_turnIdx = (p_turnIdx + 1) % 2;
 	
 	/* 
@@ -53,8 +133,8 @@ void Game::validMove(const int& row, const int& col)
 		std::cout << "Slot clicked at: " << row << " " << col << std::endl;
 	#endif
 
-	/* TODO: Update Slot's button to be player's symbol */
-	/* p_boardSlots[row][col]->updateSymbol(p_PlayerArr[p_turnIdx]->getSymbol()); */
+	/* Update Slot's button to be player's symbol */
+	p_boardSlots[row][col]->updateSymbol(p_PlayerArr[p_turnIdx]->getPlayerSymbol()); 
 	
 	/* Move game along */
 	processGameTransition();

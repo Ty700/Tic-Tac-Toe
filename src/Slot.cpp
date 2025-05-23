@@ -31,10 +31,9 @@ void Slot::setButtonProperties()
  */
 void Slot::onSlotClick()
 {
-	/* Will update the p_isEmpty param */
-	if(p_isEmpty)
+	/* If p_symbolStr length == 0, then slot is avaliable */
+	if(p_symbolStr.length() == 0)
 	{
-		p_isEmpty = 0;
 		p_onSlotClickedCallback(p_id[0], p_id[1]);
 	} else {
 		p_onSlotClickedCallback(-1, -1);
@@ -48,5 +47,6 @@ void Slot::onSlotClick()
  */
 void Slot::updateSymbol(const Player::PlayerSymbol& sym)
 {
-
+	p_symbolStr = (sym == Player::PlayerSymbol::O) ? "O" : "X";
+	p_button->set_label(p_symbolStr);
 }

@@ -23,7 +23,7 @@ class Slot
 private:
 	std::array<int,2> p_id = {-1, -1};
 	Gtk::Button* p_button;
-	int p_isEmpty{1}; 
+	Glib::ustring p_symbolStr{""};
 	void setButtonProperties();
 	std::function<void(int, int)> p_onSlotClickedCallback;
 public:
@@ -38,8 +38,8 @@ public:
 	}
 
 	std::array<int, 2> getID() const { return p_id; } 
-	bool getIsEmpty() const { return this->p_isEmpty; }
 	Gtk::Button* getButton() const { return this->p_button; }
 	void updateSymbol(const Player::PlayerSymbol& sym);
 	void onSlotClick();
+	Glib::ustring getSymbol() const { return this->p_symbolStr; }
 };
