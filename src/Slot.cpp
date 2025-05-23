@@ -3,11 +3,11 @@
 #include "Slot.h"
 
 /**
- * FUNCTION: 	Sets the front-end related properties of slot instance
- * PARAMS: 	VOID
- * RETURNS: 	VOID 
+ * @FUNCTION: 	Sets the front-end related properties of slot instance
+ * @PARAMS: 	VOID
+ * @RET: 	VOID 
 */
-void Slot::setProperties()
+void Slot::setButtonProperties()
 {
 	p_button->set_size_request(120, 120);
 	p_button->set_expand(true);
@@ -23,8 +23,30 @@ void Slot::setProperties()
 	if(p_id[1] == 2) p_button->add_css_class("right-col");
 }
 
-void Slot::onSlotClick(const int &row, const int &col)
+/**
+ * @FUNCTION: 	Callback for game.
+ * 		If slot isn't taken, will callback its p_id. If not, -1,-1
+ * @PARAMS: 	VOID 
+ * @RET: 	VOID | Callback to game	
+ */
+void Slot::onSlotClick()
 {
 	/* Will update the p_isEmpty param */
+	if(p_isEmpty)
+	{
+		p_isEmpty = 0;
+		p_onSlotClickedCallback(p_id[0], p_id[1]);
+	} else {
+		p_onSlotClickedCallback(-1, -1);
+	}
 }
 
+/**
+ * @FUNCTION: 	Responsible for the front-end work of updating slot's symbol
+ * @PARAMS: 	What symbol to update it to 
+ * @RET:	VOID 
+ */
+void Slot::updateSymbol(const Player::PlayerSymbol& sym)
+{
+
+}

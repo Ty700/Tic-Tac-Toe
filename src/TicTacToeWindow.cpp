@@ -2,29 +2,53 @@
 #include <gtkmm.h>
 #include <iostream>
 #include <memory.h>
+#include <string>
 
 #include "Game.h"
 #include "Player.h"
 #include "TicTacToeWindow.h"
 
+/**
+ * FUNCTION:	Sets up the blank game state GUI 
+ * PARAMS: 	VOID 
+ * RET:		VOID
+ */
 void TicTacToeWindow::setupTicTacToeGridGUI()
 {
 	auto spacerBoxTop = Gtk::make_managed<Gtk::Box>();
 	spacerBoxTop->set_margin_bottom(10);
 
+	Glib::ustring turnText = "Player " + std::to_string(p_mainGame->getCurrPlayerIndex() + 1) + "'s Turn!";
+	auto turnLabel = Gtk::make_managed<Gtk::Label>(turnText);	
+	turnLabel->set_name("turnLabel");
+	turnLabel->add_css_class("menu");
+
 	auto spacerBoxBottom = Gtk::make_managed<Gtk::Box>();
 	spacerBoxBottom->set_margin_top(10);
 
 	p_mainWindowBox->append(*spacerBoxTop);
+	p_mainWindowBox->append(*turnLabel);
 	p_mainWindowBox->append(*p_mainGame->getGrid());
 	p_mainWindowBox->append(*spacerBoxBottom);
 }
 
+/**
+ * FUNCTION: 	Last chance to set things up before main game loop 
+ * PARAMS: 	VOID
+ * RET:		VOID 
+ */
 void TicTacToeWindow::startGame()
 {
 	setupTicTacToeGridGUI();
 }
 
+/** 
+ * FUNCTION: 	Runs when the player presses "Start Game"
+ * 		  - Grabs important info from main menu 
+ * 		  - Sets up player, and game obj(s) 
+ * PARAMS: 	VOID
+ * RET: 	VOID 
+ */
 void TicTacToeWindow::onStartButtonClick()
 {
 	/* 

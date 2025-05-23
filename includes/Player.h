@@ -35,7 +35,6 @@ class Player
 		PlayerState  getPlayerState()  const { return this->p_playerState;  }
 		PlayerDiff   getPlayerDiff()   const { return this->p_playerDiff;   }
 
-
 	private:
 		std::string 	p_playerName;	
 		PlayerSymbol 	p_playerSymbol;

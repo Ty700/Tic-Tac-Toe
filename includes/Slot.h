@@ -3,6 +3,8 @@
 #include <assert.h>
 #include <stdlib.h>
 
+#include "Player.h"
+
 #pragma once
 /** 
  * This class represents one of the 9 possible
@@ -21,22 +23,23 @@ class Slot
 private:
 	std::array<int,2> p_id = {-1, -1};
 	Gtk::Button* p_button;
-	bool  p_isEmpty{0}; 
-	void setProperties();
-
+	int p_isEmpty{1}; 
+	void setButtonProperties();
+	std::function<void(int, int)> p_onSlotClickedCallback;
 public:
-	Slot(int row, int col, Gtk::Button *but)
-		: p_id{row, col}, p_button(but)
+	Slot(int row, int col, Gtk::Button *but, std::function<void(int, int)> callback)
+		: p_id{row, col}, p_button(but), p_onSlotClickedCallback(callback)
 	{
 		assert(row >= 0);
 		assert(col >= 0);
 		assert(but != nullptr);
-		setProperties();
+		assert(callback);
+		setButtonProperties();
 	}
 
 	std::array<int, 2> getID() const { return p_id; } 
 	bool getIsEmpty() const { return this->p_isEmpty; }
 	Gtk::Button* getButton() const { return this->p_button; }
-
-	void onSlotClick(const int &row, const int &col);
+	void updateSymbol(const Player::PlayerSymbol& sym);
+	void onSlotClick();
 };
