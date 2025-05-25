@@ -59,6 +59,15 @@ std::shared_ptr<Player> Game::checkForWinner()
  */
 void Game::processEndOfGame(const int& condition)
 {
+	/* Disables slots */
+	for(int row = 0; row < 3; row++)
+	{
+		for(int col = 0; col < 3; col++)
+		{
+			p_boardSlots[row][col]->getButton()->set_sensitive(false);
+		}
+	}
+
 	/* TODO: Game Stats */	
 }
 
