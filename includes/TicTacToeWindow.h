@@ -19,7 +19,7 @@ class TicTacToeWindow : public Gtk::Window
 		void setTicTacToeWindowProperties();
 		void startGame();
 		void setupTicTacToeGridGUI();
-		void updateTurnDisplay();
+		void updateTurnDisplay(const int& condition);
 
 		Gtk::Box *p_mainWindowBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
 		const size_t c_windowHeight = 640;

@@ -57,22 +57,9 @@ std::shared_ptr<Player> Game::checkForWinner()
  * @PARAMS: 	VOID
  * @RET:	VOID 
  */
-void Game::processEndOfGame()
+void Game::processEndOfGame(const int& condition)
 {
-	/* Call Game Stats */
-
-	/* Update GUI Display Accordingly */
-	if(p_winningPlayer)
-	{
-		#ifdef DEBUG 
-			std::cout << "Player " << p_turnIdx << " Won!\n";
-		#endif
-	} else {
-		#ifdef DEBUG 
-			std::cout << "Tie\n";
-		#endif
-
-	}
+	/* TODO: Game Stats */	
 }
 
 /** 
@@ -83,32 +70,32 @@ void Game::processEndOfGame()
 void Game::processGameTransition()
 {
 	/* Winning move can only happen 5 rounds in. */
-	if(++currRound >= 5){	
+	if(++p_currRound >= 5){	
 		/* Check for winner */
 		p_winningPlayer = checkForWinner();
 
 		/* If winner, set winner player for GameStats */
-		if(p_winningPlayer != nullptr)
+		if(p_winningPlayer)
 		{
-			#ifdef DEBUG 
-				std::cout << "Winner Detected!\n";
-			#endif
-
-			processEndOfGame();
+			p_updateUICallback(TurnConditions::HasWinner);
+			processEndOfGame(TurnConditions::HasWinner);
 			return;
 		}
 	}
 
 	/* Tie? */
-	if(currRound == MAX_ROUNDS)
+	if(p_currRound == MAX_ROUNDS)
 	{
 		/* End Game */	
-		processEndOfGame();			
+
+		p_updateUICallback(TurnConditions::Tie);			
+		processEndOfGame(TurnConditions::Tie);			
 		return;
 	}
 
 	p_turnIdx = (p_turnIdx + 1) % 2;
-	p_updateUICallback();			
+	p_updateUICallback(TurnConditions::KeepGoing);			
+
 	/* 
 	 * Remember when I said I hated enums?? Fool I was.
 	 * This is SO MUCH EASIER TO READ BECAUSE OF ENUMS 

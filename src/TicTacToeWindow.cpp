@@ -8,16 +8,16 @@
 #include "TicTacToeWindow.h"
 
 /**
- * FUNCTION:	Sets up the blank game state GUI 
- * PARAMS: 	VOID 
- * RET:		VOID
+ * @FUNCTION:	Sets up the blank game state GUI 
+ * @PARAMS: 	VOID 
+ * @RET:	VOID
  */
 void TicTacToeWindow::setupTicTacToeGridGUI()
 {
 	auto spacerBoxTop = Gtk::make_managed<Gtk::Box>();
 	spacerBoxTop->set_margin_bottom(10);
 	
-	updateTurnDisplay();
+	updateTurnDisplay(Game::TurnConditions::KeepGoing);
 	p_turnLabel->set_name("p_turnLabel");
 	p_turnLabel->add_css_class("title-label");
 
@@ -31,9 +31,9 @@ void TicTacToeWindow::setupTicTacToeGridGUI()
 }
 
 /**
- * FUNCTION: 	Last chance to set things up before main game loop 
- * PARAMS: 	VOID
- * RET:		VOID 
+ * @FUNCTION: 	Last chance to set things up before main game loop 
+ * @PARAMS: 	VOID
+ * @RET:	VOID 
  */
 void TicTacToeWindow::startGame()
 {
@@ -46,17 +46,28 @@ void TicTacToeWindow::startGame()
  * @RET: 	VOID 
  * @INFO: 	Callback for Game.
  */
-void TicTacToeWindow::updateTurnDisplay()
-{
-	Glib::ustring turnText = p_mainGame->getCurrPlayerName() + "'s Turn!";
+void TicTacToeWindow::updateTurnDisplay(const int& condition)
+{	
+	Glib::ustring turnText;
+
+	if(condition == Game::TurnConditions::HasWinner)
+	{
+		turnText = p_mainGame->getCurrPlayerName() + " has won!";
+	} else if (condition == Game::TurnConditions::Tie)
+	{
+		turnText = "Tie!";
+	} else {
+		turnText = p_mainGame->getCurrPlayerName() + "'s Turn!";
+	} 
+
 	p_turnLabel->set_text(turnText);
 }
 /** 
- * FUNCTION: 	Runs when the player presses "Start Game"
+ * @FUNCTION: 	Runs when the player presses "Start Game"
  * 		  - Grabs important info from main menu 
  * 		  - Sets up player, and game obj(s) 
- * PARAMS: 	VOID
- * RET: 	VOID 
+ * @PARAMS: 	VOID
+ * @RET: 	VOID 
  */
 void TicTacToeWindow::onStartButtonClick()
 {
@@ -127,7 +138,7 @@ void TicTacToeWindow::onStartButtonClick()
 		.p1 = p1,
 		.p2 = p2,
 		.turnIdx = turnIdx,
-		.updateUICallback = [this]() { updateTurnDisplay(); }
+		.updateUICallback = [this](const int& condition) { updateTurnDisplay(condition); }
 	};
 	
 	#ifdef DEBUG 

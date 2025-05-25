@@ -28,10 +28,10 @@ private:
 	void invalidMove();
 	void processGameTransition();
 	std::shared_ptr<Player> checkForWinner();
-	void processEndOfGame();
+	void processEndOfGame(const int& condition);
 
 	static constexpr int MAX_ROUNDS {9};
-	int currRound{0};
+	int p_currRound{0};
 
 	std::array<std::array<std::unique_ptr<Slot>, 3>, 3> p_boardSlots;
 
@@ -45,9 +45,10 @@ private:
 	int p_turnIdx{2};
 	std::array<int, 2> p_currPlayerChoice {-1,-1};
 
-	std::function<void()> p_updateUICallback;
+	std::function<void(int)> p_updateUICallback;
 public:
 	enum Turn {PlayerOne, PlayerTwo, Random};
+	enum TurnConditions {HasWinner, Tie, KeepGoing};
 
 	struct GameParams 
 	{
@@ -57,7 +58,7 @@ public:
 		/* Init to random. Will change upon user selection in main menu */
 		int turnIdx = Random; 
 
-		std::function<void()> updateUICallback;
+		std::function<void(int)> updateUICallback;
 	};
 
 	Game(const GameParams& params)
@@ -94,4 +95,5 @@ public:
 	Gtk::Grid* getGrid() { return p_grid; }
 	Glib::ustring getCurrPlayerName() { return p_PlayerArr[p_turnIdx]->getPlayerName(); }
 	int getCurrPlayerIndex() { return p_turnIdx; }
+	int getCurrRounds() {return p_currRound; }
 };
