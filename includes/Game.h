@@ -45,6 +45,7 @@ private:
 	int p_turnIdx{2};
 	std::array<int, 2> p_currPlayerChoice {-1,-1};
 
+	std::function<void()> p_updateUICallback;
 public:
 	enum Turn {PlayerOne, PlayerTwo, Random};
 
@@ -55,15 +56,20 @@ public:
 
 		/* Init to random. Will change upon user selection in main menu */
 		int turnIdx = Random; 
+
+		std::function<void()> updateUICallback;
 	};
 
 	Game(const GameParams& params)
 		: p_playerOne(params.p1), p_playerTwo(params.p2), 
 		  p_PlayerArr{p_playerOne, p_playerTwo}, 
-		  p_turnIdx((params.turnIdx != Random) ? params.turnIdx : determineWhoGoesFirst())
+		  p_turnIdx((params.turnIdx != Random) ? params.turnIdx : determineWhoGoesFirst()),
+		  p_updateUICallback(params.updateUICallback)
+		  
 	{
 		assert(p_playerOne != nullptr);
 		assert(p_playerTwo != nullptr);
+		assert(p_updateUICallback);
 
 		p_grid = Gtk::make_managed<Gtk::Grid>();
 		p_grid->set_halign(Gtk::Align::CENTER);
@@ -86,5 +92,6 @@ public:
 	std::shared_ptr<Player> p_winningPlayer;
 	Slot* getBoardSlot(const int &row, const int &col) { return p_boardSlots[row][col].get(); }
 	Gtk::Grid* getGrid() { return p_grid; }
+	Glib::ustring getCurrPlayerName() { return p_PlayerArr[p_turnIdx]->getPlayerName(); }
 	int getCurrPlayerIndex() { return p_turnIdx; }
 };

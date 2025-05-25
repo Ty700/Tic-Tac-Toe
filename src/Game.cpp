@@ -108,7 +108,7 @@ void Game::processGameTransition()
 	}
 
 	p_turnIdx = (p_turnIdx + 1) % 2;
-	
+	p_updateUICallback();			
 	/* 
 	 * Remember when I said I hated enums?? Fool I was.
 	 * This is SO MUCH EASIER TO READ BECAUSE OF ENUMS 
@@ -119,6 +119,14 @@ void Game::processGameTransition()
 	}
 }
 
+/**
+ * @FUNCTION: 	Executed when player picks an invalid move 
+ * 			- Might be obselete later. 
+ * 			- I might disable making invalid moves in general
+ * 			- In the mean time, will update GUI to announce move was invalid 
+ * @PARAMS: 	VOID 
+ * @RET: 	VOID 
+ */
 void Game::invalidMove()
 {
 	/* TODO: Update GUI to announce invalid move */	

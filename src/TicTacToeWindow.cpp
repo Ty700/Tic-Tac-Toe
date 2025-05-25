@@ -2,7 +2,6 @@
 #include <gtkmm.h>
 #include <iostream>
 #include <memory.h>
-#include <string>
 
 #include "Game.h"
 #include "Player.h"
@@ -17,17 +16,16 @@ void TicTacToeWindow::setupTicTacToeGridGUI()
 {
 	auto spacerBoxTop = Gtk::make_managed<Gtk::Box>();
 	spacerBoxTop->set_margin_bottom(10);
-
-	Glib::ustring turnText = "Player " + std::to_string(p_mainGame->getCurrPlayerIndex() + 1) + "'s Turn!";
-	auto turnLabel = Gtk::make_managed<Gtk::Label>(turnText);	
-	turnLabel->set_name("turnLabel");
-	turnLabel->add_css_class("menu");
+	
+	updateTurnDisplay();
+	p_turnLabel->set_name("p_turnLabel");
+	p_turnLabel->add_css_class("title-label");
 
 	auto spacerBoxBottom = Gtk::make_managed<Gtk::Box>();
 	spacerBoxBottom->set_margin_top(10);
 
 	p_mainWindowBox->append(*spacerBoxTop);
-	p_mainWindowBox->append(*turnLabel);
+	p_mainWindowBox->append(*p_turnLabel);
 	p_mainWindowBox->append(*p_mainGame->getGrid());
 	p_mainWindowBox->append(*spacerBoxBottom);
 }
@@ -42,6 +40,17 @@ void TicTacToeWindow::startGame()
 	setupTicTacToeGridGUI();
 }
 
+/**
+ * @FUNCTION:	Responsible for updating the GUI to display who's turn it is.
+ * @PARAMS: 	VOID 
+ * @RET: 	VOID 
+ * @INFO: 	Callback for Game.
+ */
+void TicTacToeWindow::updateTurnDisplay()
+{
+	Glib::ustring turnText = p_mainGame->getCurrPlayerName() + "'s Turn!";
+	p_turnLabel->set_text(turnText);
+}
 /** 
  * FUNCTION: 	Runs when the player presses "Start Game"
  * 		  - Grabs important info from main menu 
@@ -67,9 +76,9 @@ void TicTacToeWindow::onStartButtonClick()
 	auto p1SymX = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "symbolX");
 	auto p1FirstBut = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "p1FirstBut");	
 	auto p2FirstBut = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "p2FirstBut");	
-	auto randFirstBut = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "randFirstBut");
 
 	#ifdef DEBUG 
+		auto randFirstBut = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "randFirstBut");
 		std::cout << "Player 1 Name: "     << p1NameEntry->get_text() 
 			  << "\nPlayer 2 Name: "   << p2NameEntry->get_text() 
 			  << "\nPlayer 1 Symbol: " << p1SymX->get_active() 
@@ -118,6 +127,7 @@ void TicTacToeWindow::onStartButtonClick()
 		.p1 = p1,
 		.p2 = p2,
 		.turnIdx = turnIdx,
+		.updateUICallback = [this]() { updateTurnDisplay(); }
 	};
 	
 	#ifdef DEBUG 
