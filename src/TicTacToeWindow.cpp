@@ -1,5 +1,6 @@
 #include <glibmm.h>
 #include <gtkmm.h>
+#include <gtkmm/accelkey.h>
 #include <iostream>
 #include <memory.h>
 
@@ -30,15 +31,15 @@ void TicTacToeWindow::setupTicTacToeGridGUI()
 	p_mainWindowBox->append(*spacerBoxBottom);
 }
 
-/**
- * @FUNCTION: 	Last chance to set things up before main game loop 
- * @PARAMS: 	VOID
- * @RET:	VOID 
- */
-void TicTacToeWindow::startGame()
-{
-	setupTicTacToeGridGUI();
-}
+// /**
+//  * @FUNCTION: 	Last chance to set things up before main game loop 
+//  * @PARAMS: 	VOID
+//  * @RET:	VOID 
+//  */
+// void TicTacToeWindow::startGame()
+// {
+// 	setupTicTacToeGridGUI();
+// }
 
 /**
  * @FUNCTION:	Responsible for updating the GUI to display who's turn it is.
@@ -87,6 +88,7 @@ void TicTacToeWindow::onStartButtonClick()
 	auto p1SymX = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "symbolX");
 	auto p1FirstBut = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "p1FirstBut");	
 	auto p2FirstBut = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "p2FirstBut");	
+	auto p2TypeHumanBut = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "p2TypeHuman");
 
 	#ifdef DEBUG 
 		auto randFirstBut = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "randFirstBut");
@@ -111,7 +113,7 @@ void TicTacToeWindow::onStartButtonClick()
 	Player::PlayerParams p2Params{
 		.name  = p2NameEntry->get_text(),
 		.sym   = (p1Params.sym == Player::PlayerSymbol::X) ? Player::PlayerSymbol::O : Player::PlayerSymbol::X, 
-		.state = Player::PlayerState::AI,
+		.state = (p2TypeHumanBut->get_active()) ? Player::PlayerState::Human : Player::PlayerState::AI
 	};
 
 	std::shared_ptr<Player> p1 = std::make_shared<Player>(p1Params);
@@ -155,166 +157,209 @@ void TicTacToeWindow::onStartButtonClick()
 	}
 	
 	/* Start Game */
-	startGame();
+//	startGame();
+	setupTicTacToeGridGUI();
 }
 
-/** 
- * TODO: My lord
+/**
+ * @FUNCTION: Sets up the main menu GUI with player configuration options
+ * @PARAMS:   VOID
+ * @RET:      VOID
  */
 void TicTacToeWindow::setupMainMenuGUI()
 {
-	/* Title and its box */
-	auto titleBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
-	titleBox->set_halign(Gtk::Align::CENTER);
+    /* =========== TITLE SECTION =========== */
+    auto titleBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
+    titleBox->set_halign(Gtk::Align::CENTER);
 
-	/* Sets properties for the title */
-	auto welcomeTitle = Gtk::make_managed<Gtk::Label>("TicTacToe!"); 
+    auto welcomeTitle = Gtk::make_managed<Gtk::Label>("TicTacToe!"); 
+    titleBox->append(*welcomeTitle);
 
-	titleBox->append(*welcomeTitle);
+    /* Title to menu spacer */
+    auto titleMenuSpace = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
+    titleMenuSpace->set_vexpand(true);
+    titleMenuSpace->set_hexpand(false);
+    
+    /* =========== MAIN MENU BOX =========== */
+    auto menuBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
+    menuBox->set_margin(10);
+    menuBox->set_halign(Gtk::Align::CENTER);
 
-	/* Spacer (I literally hate front-end work... slowly coming to this realization */
-	auto titleMenuSpace = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
-	titleMenuSpace->set_vexpand(true);
-	titleMenuSpace->set_hexpand(false);
-	
-	/* Menu Box */
-	auto menuBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
-	menuBox->set_margin(10);
-	menuBox->set_halign(Gtk::Align::CENTER);
+    /* =========== PLAYER 1 CONFIGURATION =========== */
+    
+    /* Player 1 Name */
+    auto p1Box = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::HORIZONTAL);
+    p1Box->set_halign(Gtk::Align::START);
+    
+    auto p1NameLbl = Gtk::make_managed<Gtk::Label>("Player 1 Name: ");
+    p1NameLbl->set_halign(Gtk::Align::START);
+    p1NameLbl->set_size_request(180, -1);
 
-	/* P1 Box (SO MANY BOXES) */
-	auto p1Box = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::HORIZONTAL);
-	p1Box->set_halign(Gtk::Align::START);
-	
-	/* P1 Name Label  */
-	auto p1NameLbl = Gtk::make_managed<Gtk::Label>("Player 1 Name: ");
-	p1NameLbl->set_halign(Gtk::Align::START);
-	
-	/* P1 Entry for Name */
-	auto p1NameEntry = Gtk::make_managed<Gtk::Entry>();
-	p1NameEntry->set_name("p1NameEntry");
-	p1NameEntry->set_placeholder_text("David");
-	p1NameEntry->set_halign(Gtk::Align::START);
-	p1NameEntry->set_hexpand(true);
-	
-	/* P1 elements to P1 Box */
-	p1Box->append(*p1NameLbl);
-	p1Box->append(*p1NameEntry);
-	
-	/* P1 Sym Box */
-	auto p1SymBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::HORIZONTAL);
-	auto p1SymLbl = Gtk::make_managed<Gtk::Label>("Player 1 Symbol: ");
-	p1SymLbl->set_halign(Gtk::Align::START);
-	
-	/* X || O Buttons */
-	auto symbolX = Gtk::make_managed<Gtk::ToggleButton>("X");
-	auto symbolO = Gtk::make_managed<Gtk::ToggleButton>("O");
-	symbolX->set_group(*symbolO);
-	symbolX->set_active(true);	
+    auto p1NameEntry = Gtk::make_managed<Gtk::Entry>();
+    p1NameEntry->set_name("p1NameEntry");
+    p1NameEntry->set_placeholder_text("David");
+    p1NameEntry->set_halign(Gtk::Align::START);
+    p1NameEntry->set_hexpand(true);
+    
+    p1Box->append(*p1NameLbl);
+    p1Box->append(*p1NameEntry);
+    
+    /* Player 1 Symbol Selection */
+    auto p1SymBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::HORIZONTAL);
+    auto p1SymLbl = Gtk::make_managed<Gtk::Label>("Player 1 Symbol: ");
+    p1SymLbl->set_halign(Gtk::Align::START);
+    p1SymLbl->set_size_request(180, -1);
+    
+    auto symbolX = Gtk::make_managed<Gtk::ToggleButton>("X");
+    auto symbolO = Gtk::make_managed<Gtk::ToggleButton>("O");
+    symbolX->set_group(*symbolO);
+    symbolX->set_active(true);    
+    symbolX->set_name("symbolX");
+    symbolO->set_name("symbolO");
 
-	symbolX->set_name("symbolX");
-	symbolO->set_name("symbolO");
+    p1SymBox->append(*p1SymLbl);
+    p1SymBox->set_margin(5);
+    p1SymBox->set_halign(Gtk::Align::START);
+    p1SymBox->append(*symbolX);
+    p1SymBox->append(*symbolO);
 
-	p1SymBox->append(*p1SymLbl);
-	p1SymBox->set_margin(5);
-	p1SymBox->set_halign(Gtk::Align::START);
-	p1SymBox->append(*symbolX);
-	p1SymBox->append(*symbolO);
-	
-	/* P2 Box */
-	auto p2Box = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::HORIZONTAL);
-	
-	/* P2 Name Label  */
-	auto p2NameLbl = Gtk::make_managed<Gtk::Label>("Player 2 Name: ");
-	p2NameLbl->set_halign(Gtk::Align::START);
+    /* =========== PLAYER 2 CONFIGURATION =========== */
+    
+    /* Player 2 Type Selection */
+    auto p2TypeBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::HORIZONTAL);    
 
-	auto p2NameEntry = Gtk::make_managed<Gtk::Entry>();
-	p2NameEntry->set_placeholder_text("Goliath");
-	p2NameEntry->set_name("p2NameEntry");
+    auto p2TypeLabel = Gtk::make_managed<Gtk::Label>("Player 2 is a: ");
+    p2TypeLabel->set_halign(Gtk::Align::START);
+    p2TypeLabel->set_size_request(180, -1);
 
-	p2Box->append(*p2NameLbl);
-	p2Box->append(*p2NameEntry);
+    auto p2TypeHumanBut = Gtk::make_managed<Gtk::ToggleButton>("Human");
+    p2TypeHumanBut->set_name("p2TypeHuman");
 
-	/* P1 & P2 related boxes to menuBox */
-	menuBox->append(*p1Box);
-	menuBox->append(*p1SymBox);
-	menuBox->append(*p2Box);
-	
-	auto goesFirstBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::HORIZONTAL);
-	auto firstLabel = Gtk::make_managed<Gtk::Label>("Who goes first: ");
-	firstLabel->set_halign(Gtk::Align::START);
+    auto p2TypeAIBut = Gtk::make_managed<Gtk::ToggleButton>("AI");
+    p2TypeAIBut->set_active(true);
+    p2TypeAIBut->set_name("p2TypeAI");
+    p2TypeHumanBut->set_group(*p2TypeAIBut);
 
-	auto p1FirstBut = Gtk::make_managed<Gtk::ToggleButton>("Player 1");
-	auto p2FirstBut = Gtk::make_managed<Gtk::ToggleButton>("Player 2");
-	auto randFirstBut = Gtk::make_managed<Gtk::ToggleButton>("Random");
-	
-	p1FirstBut->set_name("p1FirstBut");
-	p2FirstBut->set_name("p2FirstBut");
-	randFirstBut->set_name("randFirstBut");
+    p2TypeBox->append(*p2TypeLabel);
+    p2TypeBox->set_margin(5);
+    p2TypeBox->set_halign(Gtk::Align::START);
+    p2TypeBox->append(*p2TypeHumanBut);
+    p2TypeBox->append(*p2TypeAIBut);
+    
+    /* Player 2 Name (conditionally visible) */
+    auto p2Box = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::HORIZONTAL);
 
-	p1FirstBut->set_group(*p2FirstBut);
-	randFirstBut->set_group(*p2FirstBut);
-	randFirstBut->set_active(true);
+    auto p2NameLbl = Gtk::make_managed<Gtk::Label>("Player 2 Name: ");
+    p2NameLbl->set_halign(Gtk::Align::START);
+    p2NameLbl->set_size_request(180, -1);
 
-	goesFirstBox->append(*firstLabel);
-	goesFirstBox->set_margin(5);
-	goesFirstBox->set_halign(Gtk::Align::START);
-	goesFirstBox->append(*p1FirstBut);
-	goesFirstBox->append(*p2FirstBut);
-	goesFirstBox->append(*randFirstBut);
+    auto p2NameEntry = Gtk::make_managed<Gtk::Entry>();
+    p2NameEntry->set_placeholder_text("Goliath");
+    p2NameEntry->set_name("p2NameEntry");
 
-	menuBox->append(*goesFirstBox);
+    p2Box->append(*p2NameLbl);
+    p2Box->append(*p2NameEntry);
 
-	/* Space between menu and start game button */
-	auto spacerBox2 = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
-	spacerBox2->set_vexpand(true);
-	spacerBox2->set_hexpand(false);
-	
-	/* Start button and its box */
-	auto startButtonBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
-	startButtonBox->set_halign(Gtk::Align::CENTER);
-	startButtonBox->set_valign(Gtk::Align::END);
+    /* Signal to hide/show P2 name entry based on type selection */
+    p2TypeHumanBut->signal_toggled().connect([p2Box, p2TypeHumanBut]() {
+        if (p2TypeHumanBut->get_active()) {
+            p2Box->set_visible(true);   // Show name entry for human
+        } else {
+            p2Box->set_visible(false);  // Hide name entry for AI
+        }
+    });
 
-	auto startButton = Gtk::make_managed<Gtk::Button>();	
-	startButton->set_label("Start Game!");
-	startButtonBox->append(*startButton);
+    // Set initial state (since AI is default, hide the name box)
+    p2Box->set_visible(false);
 
-	/* CSS FILTERS */
-	welcomeTitle->add_css_class("title-label");
-	startButton->add_css_class("start-button");
-	
-	p1NameLbl->add_css_class("menu");
-	p1NameEntry->add_css_class("menu");
-	p1NameEntry->add_css_class("entry");
-	p1SymLbl->add_css_class("menu");
+    /* =========== GAME START OPTIONS =========== */
+    
+    /* Who Goes First Selection */
+    auto goesFirstBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::HORIZONTAL);
+    auto firstLabel = Gtk::make_managed<Gtk::Label>("Who goes first: ");
+    firstLabel->set_halign(Gtk::Align::START);
+    firstLabel->set_size_request(180, -1);
 
-	p2NameLbl->add_css_class("menu");
-	p2NameEntry->add_css_class("menu");
-	p2NameEntry->add_css_class("entry");
+    auto p1FirstBut = Gtk::make_managed<Gtk::ToggleButton>("Player 1");
+    auto p2FirstBut = Gtk::make_managed<Gtk::ToggleButton>("Player 2");
+    auto randFirstBut = Gtk::make_managed<Gtk::ToggleButton>("Random");
+    
+    p1FirstBut->set_name("p1FirstBut");
+    p2FirstBut->set_name("p2FirstBut");
+    randFirstBut->set_name("randFirstBut");
 
-	symbolO->add_css_class("radio-button");
-	symbolX->add_css_class("radio-button");
-	
-	firstLabel->add_css_class("menu");
-	p1FirstBut->add_css_class("radio-button");
-	p2FirstBut->add_css_class("radio-button");
-	randFirstBut->add_css_class("radio-button");
+    p1FirstBut->set_group(*p2FirstBut);
+    randFirstBut->set_group(*p2FirstBut);
+    randFirstBut->set_active(true);
 
+    goesFirstBox->append(*firstLabel);
+    goesFirstBox->set_margin(5);
+    goesFirstBox->set_halign(Gtk::Align::START);
+    goesFirstBox->append(*p1FirstBut);
+    goesFirstBox->append(*p2FirstBut);
+    goesFirstBox->append(*randFirstBut);
 
-	/* =========== STUPID FRONT END STUFF =========== */
+    /* =========== ADD ALL SECTIONS TO MENU =========== */
+    menuBox->append(*p1Box);
+    menuBox->append(*p1SymBox);
+    menuBox->append(*p2TypeBox);
+    menuBox->append(*p2Box);
+    menuBox->append(*goesFirstBox);
 
-	p_mainWindowBox->append(*titleBox);
-	p_mainWindowBox->append(*titleMenuSpace);
-	p_mainWindowBox->append(*menuBox);
-	p_mainWindowBox->append(*spacerBox2);
-	p_mainWindowBox->append(*startButtonBox);
-	set_child(*p_mainWindowBox);
+    /* =========== START BUTTON SECTION =========== */
+    
+    /* Menu to start button spacer */
+    auto spacerBox2 = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
+    spacerBox2->set_vexpand(true);
+    spacerBox2->set_hexpand(false);
+    
+    auto startButtonBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
+    startButtonBox->set_halign(Gtk::Align::CENTER);
+    startButtonBox->set_valign(Gtk::Align::END);
 
-	/* =========== SIGNAL CONNECTIONS =========== */
-	startButton->signal_clicked().connect([this, startButton] () {
-			startButton->set_label("Starting Game!");
-			Glib::signal_timeout().connect_once(sigc::mem_fun(*this, &TicTacToeWindow::onStartButtonClick), 1500);
-			});
+    auto startButton = Gtk::make_managed<Gtk::Button>();    
+    startButton->set_label("Start Game!");
+    startButtonBox->append(*startButton);
+
+    /* =========== APPLY CSS STYLING =========== */
+    welcomeTitle->add_css_class("title-label");
+    startButton->add_css_class("start-button");
+    
+    /* Player 1 styling */
+    p1NameLbl->add_css_class("menu");
+    p1NameEntry->add_css_class("menu");
+    p1NameEntry->add_css_class("entry");
+    p1SymLbl->add_css_class("menu");
+    symbolO->add_css_class("radio-button");
+    symbolX->add_css_class("radio-button");
+
+    /* Player 2 styling */
+    p2TypeLabel->add_css_class("menu");
+    p2TypeHumanBut->add_css_class("radio-button");
+    p2TypeAIBut->add_css_class("radio-button");
+    p2NameLbl->add_css_class("menu");
+    p2NameEntry->add_css_class("menu");
+    p2NameEntry->add_css_class("entry");
+    
+    /* Game options styling */
+    firstLabel->add_css_class("menu");
+    p1FirstBut->add_css_class("radio-button");
+    p2FirstBut->add_css_class("radio-button");
+    randFirstBut->add_css_class("radio-button");
+
+    /* =========== ASSEMBLE MAIN WINDOW =========== */
+    p_mainWindowBox->append(*titleBox);
+    p_mainWindowBox->append(*titleMenuSpace);
+    p_mainWindowBox->append(*menuBox);
+    p_mainWindowBox->append(*spacerBox2);
+    p_mainWindowBox->append(*startButtonBox);
+    set_child(*p_mainWindowBox);
+
+    /* =========== SIGNAL CONNECTIONS =========== */
+    startButton->signal_clicked().connect([this, startButton]() {
+        startButton->set_label("Starting Game!");
+        Glib::signal_timeout().connect_once(sigc::mem_fun(*this, &TicTacToeWindow::onStartButtonClick), 1500);
+    });
 }
 
 void TicTacToeWindow::applyCSSMainMenu()
@@ -347,6 +392,7 @@ void TicTacToeWindow::applyCSSMainMenu()
 		std::cout << "Failed to load CSS: " << er.what() << std::endl;
 	}
 }
+
 void TicTacToeWindow::setTicTacToeWindowProperties()
 {
 	/*  =========== Main Window Properties =========== */

@@ -10,6 +10,7 @@
 
 #include "Slot.h"
 #include "Player.h"
+#include "AIMoves.h"
 
 /** 
  * TOP Level Game class
