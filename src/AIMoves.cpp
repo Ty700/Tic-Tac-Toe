@@ -1,33 +1,42 @@
-// #include "AIMoves.h"
-//
-// #include <iostream>
-// #include <random>
-// #include <thread>
-// #include <chrono>
-//
-// /**
-//  * FUNCTION:    Easy Mode AI Move
-//  * PARAMS:      Current game board 
-//  * RETURNS:     int value (0-9) that is a random selection
-//  */
-// int randomAIMove(){
-//     int AIMove = -1;
-//
-//     do{
-//         const unsigned int randomNum = std::random_device{}();
-//         AIMove = randomNum % 9;
-//
-//         #ifdef DEBUG
-//             std::cout << "AI Rolled: " << AIMove << std::endl;
-//         #endif
-//     }while(slots[AIMove] == "X" || slots[AIMove] == "O");
-//
-//     #ifdef DEBUG
-//         std::cout << "AI MOVING TO: " << AIMove << std::endl;
-//     #endif
-//
-//     return AIMove;
-// }
+#include <gtkmm.h>
+#include <random>
+#include <array>
+
+#ifdef DEBUG
+	#include <iostream>
+#endif 
+
+#include "AIMoves.h"
+
+/**
+ * @FUNCTION:    Easy Mode AI Move
+ * @PARAMS:      Current game board 
+ * @RETURNS:     Cords (row, col) to move to  
+ */
+std::array<int,2> randomAIMove(std::array<std::array<std::unique_ptr<Slot>, 3>, 3>& currSlots)
+{
+	std::vector<std::array<int, 2>> validMoves;
+
+	for(int row = 0; row < 3; row++)
+	{
+		for(int col = 0; col < 3; col++)
+		{
+			if(currSlots[row][col]->getSymbol().empty())
+			{
+				validMoves.push_back({row, col});
+			}
+		}
+	}
+
+	std::random_device rd;
+	auto aiMove =  validMoves[ rd() % validMoves.size() ];
+	
+	#ifdef DEBUG 
+		std::cout << "AI Moving to: " << aiMove[0] << " " << aiMove[1] << std::endl;
+	#endif
+
+	return aiMove;
+}
 //
 // /**
 //  * FUNCTION:    Medium Mode Helper | Determines if the middle slot is open 

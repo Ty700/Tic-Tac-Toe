@@ -47,7 +47,7 @@ void Player::generateAIName(){
  */
 void Player::setAIDifficulty(){
     std::random_device rd;
-    unsigned int idx = rd()  % PlayerDiff::PLAYER_DIFF_COUNT;
+    unsigned int idx = rd()  % PLAYER_DIFF_COUNT;
     p_playerDiff = static_cast<PlayerDiff>(idx);
 
     #ifdef DEBUG

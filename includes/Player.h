@@ -8,7 +8,7 @@ class Player
 		/* I can already tell this will confuse me later */
 		enum PlayerSymbol {O, X};
 		enum PlayerState  {Human, AI};
-		enum PlayerDiff   {EASY, MEDIUM, HARD, PLAYER_DIFF_COUNT};
+		enum PlayerDiff   {EASY, MEDIUM, HARD};
 
 		struct PlayerParams {
 			std::string name;
@@ -21,7 +21,7 @@ class Player
 		{
 			if(p_playerState == AI)
 			{
-				setAIDifficulty();
+				p_playerDiff = EASY;
 			}
 
 			if(p_playerName.empty())
@@ -36,6 +36,7 @@ class Player
 		PlayerDiff   getPlayerDiff()   const { return this->p_playerDiff;   }
 
 	private:
+		static constexpr int PLAYER_DIFF_COUNT {4};
 		std::string 	p_playerName;	
 		PlayerSymbol 	p_playerSymbol;
 		PlayerState 	p_playerState;

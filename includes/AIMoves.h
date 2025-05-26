@@ -1,10 +1,9 @@
-#ifndef AI_MOVES_H
-#define AI_MOVES_H
+#pragma once
 
-#include <string>
+#include <gtkmm.h>
+#include <array>
 
-int randomAIMove(const std::string slots[]);
-int makePlayerOneCrySlightlyLess(const std::string slots[], const std::string playerSymbol, const std::string aiSymbol);
-int makePlayerOneCry(const std::string slots[], const std::string playerSymbol, const std::string aiSymbol);
+#include "Slot.h"
 
-#endif /* AI_MOVES_H */
+std::array<int, 2> randomAIMove(std::array<std::array<std::unique_ptr<Slot>, 3>, 3>& currSlots);
+

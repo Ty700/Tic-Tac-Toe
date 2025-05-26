@@ -10,7 +10,6 @@
 
 #include "Slot.h"
 #include "Player.h"
-#include "AIMoves.h"
 
 /** 
  * TOP Level Game class
@@ -29,12 +28,24 @@ private:
 	void invalidMove();
 	void processGameTransition();
 	std::shared_ptr<Player> checkForWinner();
-	void processEndOfGame(const int& condition);
-
+	void processEndOfGame();
+	void enableAllSlots();
+	void disableAllSlots();
+	
 	static constexpr int MAX_ROUNDS {9};
 	int p_currRound{0};
 
 	std::array<std::array<std::unique_ptr<Slot>, 3>, 3> p_boardSlots;
+	
+	/* TODO: Refactor Player class 
+	 * 		- Player = Base Class 
+	 * 			- Holds generic info (name, state, sym)
+	 * 		- HumanPlayer derived from Player 
+	 * 			- Holds all Human player func
+	 * 		- AIPlayer derived from Player 
+	 * 			- Holds all AI player func 
+	 */
+	std::array<int, 2> processAIMove();
 
 	/* TODO: Tsk Tsk... "It's fookin RAW" - Gordon Ramsey */
 	Gtk::Grid* p_grid;
@@ -90,10 +101,12 @@ public:
 				  << std::endl;
 		#endif
 	}
+	
+	void playGame();
 
 	std::shared_ptr<Player> p_winningPlayer;
 	Slot* getBoardSlot(const int &row, const int &col) { return p_boardSlots[row][col].get(); }
-	Gtk::Grid* getGrid() { return p_grid; }
+	Gtk::Grid* getGrid() const { return p_grid; }
 	Glib::ustring getCurrPlayerName() { return p_PlayerArr[p_turnIdx]->getPlayerName(); }
 	int getCurrPlayerIndex() { return p_turnIdx; }
 	int getCurrRounds() {return p_currRound; }

@@ -31,15 +31,16 @@ void TicTacToeWindow::setupTicTacToeGridGUI()
 	p_mainWindowBox->append(*spacerBoxBottom);
 }
 
-// /**
-//  * @FUNCTION: 	Last chance to set things up before main game loop 
-//  * @PARAMS: 	VOID
-//  * @RET:	VOID 
-//  */
-// void TicTacToeWindow::startGame()
-// {
-// 	setupTicTacToeGridGUI();
-// }
+/**
+ * @FUNCTION: 	Last chance to set things up before main game loop 
+ * @PARAMS: 	VOID
+ * @RET:	VOID 
+ */
+void TicTacToeWindow::startGame()
+{
+	setupTicTacToeGridGUI();
+	p_mainGame->playGame();
+}
 
 /**
  * @FUNCTION:	Responsible for updating the GUI to display who's turn it is.
@@ -157,8 +158,7 @@ void TicTacToeWindow::onStartButtonClick()
 	}
 	
 	/* Start Game */
-//	startGame();
-	setupTicTacToeGridGUI();
+	startGame();
 }
 
 /**
