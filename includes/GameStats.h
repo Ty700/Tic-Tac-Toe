@@ -8,4 +8,4 @@
  * PARAMS:      Game that just ended 
  * RETURNS:     1 -> Error | 0 -> Success
  */
-int updateOngoingGameStats(std::shared_ptr<Game> game);
+int updateOngoingGameStats(std::unique_ptr<Game>& game);

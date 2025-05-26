@@ -8,6 +8,7 @@
 #include "Game.h"
 #include "Slot.h"
 #include "AIMoves.h"
+#include "GameStats.h"
 
 /** 
  * @FUNCTION:	Determines if there is a winner via the last move 
@@ -111,8 +112,6 @@ void Game::disableAllSlots()
 void Game::processEndOfGame()
 {
     disableAllSlots();
-
-    /* TODO: Game Stats */	
 }
 
 /** 
@@ -126,9 +125,9 @@ void Game::processGameTransition()
     if(++p_currRound >= 5){	
         /* Check for winner */
         p_winningPlayer = checkForWinner();
-
+	
         /* If winner, set winner player for GameStats */
-        if(p_winningPlayer)
+        if(p_winningPlayer != nullptr)
         {
             p_updateUICallback(TurnConditions::HasWinner);
             processEndOfGame();

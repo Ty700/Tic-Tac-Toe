@@ -7,6 +7,7 @@
 #include "Game.h"
 #include "Player.h"
 #include "TicTacToeWindow.h"
+#include "GameStats.h"
 
 /**
  * @FUNCTION:	Sets up the blank game state GUI 
@@ -40,6 +41,7 @@ void TicTacToeWindow::startGame()
 {
 	setupTicTacToeGridGUI();
 	p_mainGame->playGame();
+	updateOngoingGameStats(p_mainGame);
 }
 
 /**

@@ -110,4 +110,6 @@ public:
 	Glib::ustring getCurrPlayerName() { return p_PlayerArr[p_turnIdx]->getPlayerName(); }
 	int getCurrPlayerIndex() { return p_turnIdx; }
 	int getCurrRounds() {return p_currRound; }
+	std::shared_ptr<Player> getPlayerOne() { return p_playerOne; }
+	std::shared_ptr<Player> getPlayerTwo() { return p_playerTwo; }
 };
