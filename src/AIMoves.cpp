@@ -1,17 +1,20 @@
 #include <gtkmm.h>
 #include <random>
 #include <array>
+#include <vector>
+#include <algorithm>
 
 #ifdef DEBUG
 	#include <iostream>
 #endif 
 
 #include "AIMoves.h"
+#include "Slot.h"
 
 /**
- * @FUNCTION:    Easy Mode AI Move
+ * @FUNCTION:    Easy Mode AI Move - Random valid move
  * @PARAMS:      Current game board 
- * @RETURNS:     Cords (row, col) to move to  
+ * @RETURNS:     Coordinates (row, col) to move to  
  */
 std::array<int,2> randomAIMove(std::array<std::array<std::unique_ptr<Slot>, 3>, 3>& currSlots)
 {
@@ -28,333 +31,369 @@ std::array<int,2> randomAIMove(std::array<std::array<std::unique_ptr<Slot>, 3>, 
 		}
 	}
 
+	if(validMoves.empty()) {
+		return {-1, -1}; // Should never happen
+	}
+
 	std::random_device rd;
-	auto aiMove =  validMoves[ rd() % validMoves.size() ];
+	auto aiMove = validMoves[rd() % validMoves.size()];
 	
 	#ifdef DEBUG 
-		std::cout << "AI Moving to: " << aiMove[0] << " " << aiMove[1] << std::endl;
+		std::cout << "Easy AI Moving to: " << aiMove[0] << " " << aiMove[1] << std::endl;
 	#endif
 
 	return aiMove;
 }
-//
-// /**
-//  * FUNCTION:    Medium Mode Helper | Determines if the middle slot is open 
-//  * PARAMS:      Current board slots 
-//  * RETURNS:     True if middle is open | False if not 
-//  */
-// bool isMiddleOpen(const std::string slots[]){
-//     return (slots[4] == "5");
-// }
-// /** 
-//  * FUNCTION:    Medium Mode Helper | Checks if opponent has two in a row 
-//  * PARAMS:      Current Game board | current player's Symbol 
-//  * RETURNS:     int value that blocks the player || -1 indicating player doesn't have two in a row anywhere
-//  * TODO:        Refactor this to not be exhaustive (This is a proof of concept version)
-//  */
-// int findTwoInARow(const std::string slots[], std::string symbol){
-//     /* Check Rows */
-//
-//     /* First Row */
-//     if (slots[0] == symbol && slots[1] == symbol && slots[2] != "X" && slots[2] != "O") { return 2; }
-//     if (slots[0] == symbol && slots[2] == symbol && slots[1] != "X" && slots[1] != "O") { return 1; }
-//     if (slots[1] == symbol && slots[2] == symbol && slots[0] != "X" && slots[0] != "O") { return 0; }
-//
-//     /* Second Row */
-//     if (slots[3] == symbol && slots[4] == symbol && slots[5] != "X" && slots[5] != "O") { return 5; }
-//     if (slots[3] == symbol && slots[5] == symbol && slots[4] != "X" && slots[4] != "O") { return 4; }
-//     if (slots[4] == symbol && slots[5] == symbol && slots[3] != "X" && slots[3] != "O") { return 3; }
-//
-//     /* Third Row */
-//     if (slots[6] == symbol && slots[7] == symbol && slots[8] != "X" && slots[8] != "O") { return 8; }
-//     if (slots[6] == symbol && slots[8] == symbol && slots[7] != "X" && slots[7] != "O") { return 7; }
-//     if (slots[7] == symbol && slots[8] == symbol && slots[6] != "X" && slots[6] != "O") { return 6; }
-//
-//     /* Check Columns */
-//
-//     /* First Column */
-//     if (slots[0] == symbol && slots[3] == symbol && slots[6] != "X" && slots[6] != "O") { return 6; }
-//     if (slots[0] == symbol && slots[6] == symbol && slots[3] != "X" && slots[3] != "O") { return 5; }
-//     if (slots[3] == symbol && slots[6] == symbol && slots[0] != "X" && slots[0] != "O") { return 0; }
-//
-//     /* Second Column */
-//     if (slots[1] == symbol && slots[4] == symbol && slots[7] != "X" && slots[7] != "O") { return 7; }
-//     if (slots[1] == symbol && slots[7] == symbol && slots[4] != "X" && slots[4] != "O") { return 4; }
-//     if (slots[4] == symbol && slots[7] == symbol && slots[1] != "X" && slots[1] != "O") { return 1; }
-//
-//     /* Third Column */
-//     if (slots[2] == symbol && slots[5] == symbol && slots[8] != "X" && slots[8] != "O") { return 8; }
-//     if (slots[2] == symbol && slots[8] == symbol && slots[5] != "X" && slots[5] != "O") { return 5; }
-//     if (slots[5] == symbol && slots[8] == symbol && slots[2] != "X" && slots[2] != "O") { return 2; }
-//
-//     /* Check Diagonals */
-//
-//     /* Top-Left to Bottom-Right */
-//     if (slots[0] == symbol && slots[4] == symbol && slots[8] != "X" && slots[8] != "O") { return 8; }
-//     if (slots[0] == symbol && slots[8] == symbol && slots[4] != "X" && slots[4] != "O") { return 4; }
-//     if (slots[4] == symbol && slots[8] == symbol && slots[0] != "X" && slots[0] != "O") { return 0; }
-//
-//     /* Top-Right to Bottom-Left */
-//     if (slots[2] == symbol && slots[4] == symbol && slots[6] != "X" && slots[6] != "O") { return 6; }
-//     if (slots[2] == symbol && slots[6] == symbol && slots[4] != "X" && slots[4] != "O") { return 4; }
-//     if (slots[4] == symbol && slots[6] == symbol && slots[2] != "X" && slots[2] != "O") { return 2; }
-//
-//     return -1;
-// }
-// /** 
-//  * FUNCTION:    Determines if there is an open corner slots 
-//  * PARAMS:      Current board slots 
-//  * RETURNS:     Corner slot (random if more than one) || -1 if no corner slots avaliable 
-//  */
-// int isCornerOpen(const std::string slots[]){
-//     std::vector<int> avaliableCorners{};
-//
-//     if (slots[0] == "1") { avaliableCorners.push_back(0); }
-//     if (slots[2] == "3") { avaliableCorners.push_back(2); }
-//     if (slots[6] == "7") { avaliableCorners.push_back(6); }
-//     if (slots[8] == "9") { avaliableCorners.push_back(8); }
-//
-//     if(avaliableCorners.empty()){
-//         return -1;
-//     }
-//
-//     if(avaliableCorners.size() == 1){
-//         return avaliableCorners[0];
-//     }
-//
-//     /* If more than one corner, return a random one*/
-//     return (avaliableCorners[std::random_device{}() % avaliableCorners.size()]);
-// }
-//
-// /**
-//  * FUNCTION:    Medium Difficulty AI Mode | Balance of randomness and perfect play 
-//  * PARAMS:      Current game board | both player symbols 
-//  * RETURNS:     int value (0 - 9) that represents where the AI will be moving
-//  */
-//
-// int makePlayerOneCrySlightlyLess(const std::string slots[], const std::string playerSymbol, const std::string aiSymbol){
-//         int nextAiMove = -1;
-//         /* Check if AI can win */
-//         nextAiMove = findTwoInARow(slots, aiSymbol);
-//
-//         if(nextAiMove != -1){
-//             return nextAiMove;
-//         }
-//         /* Check if opponent has two in a row */
-//         nextAiMove = findTwoInARow(slots, playerSymbol);
-//
-//         if(nextAiMove != -1){
-//             return nextAiMove;
-//         }
-//
-//         /* Check if center avaliable */
-//         if(isMiddleOpen(slots)){
-//             return 4;
-//         }
-//         /* Check if corner avaliable */
-//         nextAiMove = isCornerOpen(slots);
-//
-//         if(nextAiMove != -1){
-//             return nextAiMove;
-//         }
-//
-//         /* If not, make random move */
-//         return (randomAIMove(slots));
-// }
-//
-// /**
-//  * FUNCTION:    Helper of Hard Mode | Determines if there are any more valid moves left (A copy of determineIfTie really), 
-//  *              however these minmax functions don't have access to Game members
-//  * PARAMS:      Current board
-//  * RETURNS:     True if valid moves are avaliable || False if not  
-//  */
-// static bool movesLeft(const std::string slots[]){
-//     for(int i = 0; i < 9; i++){
-//         if(slots[i] != "X" && slots[i] != "O"){
-//             return true;
-//         }
-//     }
-//     return false;
-// }
-//
-// /**
-//  * FUNCTION:    Helper of Hard Mode | Evaluates the current minmax board and assigns a score
-//  * PARAMS:      current minmax slots, player symbol, AI symbol
-//  * RETURNS:     int representing the score of the given board
-//  */
-// static int evaluateSlots(std::string minMaxSlots[], const std::string playerSymbol, const std::string aiSymbol) {
-//     /* Rows */
-//     for (int row = 0; row < 9; row += 3) {
-//         if (minMaxSlots[row] == minMaxSlots[row + 1] && minMaxSlots[row + 1] == minMaxSlots[row + 2]) {
-//             if (minMaxSlots[row] == playerSymbol) {
-//                 return -10;
-//             } else if (minMaxSlots[row] == aiSymbol) {
-//                 return 10;
-//             }
-//         }
-//     }
-//
-//     /* Cols */
-//     for (int col = 0; col < 3; col++) {
-//         if (minMaxSlots[col] == minMaxSlots[col + 3] && minMaxSlots[col + 3] == minMaxSlots[col + 6]) {
-//             if (minMaxSlots[col] == playerSymbol) {
-//                 return -10;
-//             } else if (minMaxSlots[col] == aiSymbol) {
-//                 return 10;
-//             }
-//         }
-//     }
-//
-//     /* Diagonals */
-//     if (minMaxSlots[0] == minMaxSlots[4] && minMaxSlots[4] == minMaxSlots[8]) {
-//         if (minMaxSlots[4] == playerSymbol) {
-//             return -10;
-//         } else if (minMaxSlots[4] == aiSymbol) {
-//             return 10;
-//         }
-//     }
-//
-//     if (minMaxSlots[2] == minMaxSlots[4] && minMaxSlots[4] == minMaxSlots[6]) {
-//         if (minMaxSlots[4] == playerSymbol) {
-//             return -10;
-//         } else if (minMaxSlots[4] == aiSymbol) {
-//             return 10;
-//         }
-//     }
-//
-//     return 0;
-// }
-//
-// /**
-//  * FUNCTION:    Helper of Hard Mode | Minmax Algorithm
-//  * PARAMS:      Game slots, depth, min || maxer turn, playerSymbol, and AI's symbol
-//  * RETURNS:     int representing the score for the current board state
-//  */
-// static int minmax(std::string minMaxSlots[], int depth, bool isMax, const std::string playerSymbol, const std::string aiSymbol) {
-//     // First, check if there's a winner
-//     int score = evaluateSlots(minMaxSlots, playerSymbol, aiSymbol);
-//
-//     // If Maximizer has won the game, return the evaluated score
-//     if (score == 10) {
-//         return score - depth;  // Prefer quicker wins
-//     }
-//
-//     // If Minimizer has won the game, return the evaluated score
-//     if (score == -10) {
-//         return score + depth;  // Prefer delaying losses
-//     }
-//
-//     // If there are no more moves left, it's a tie
-//     if (!movesLeft(minMaxSlots)) {
-//         return 0;
-//     }
-//
-//     if (isMax) {
-//         /* Maximizer AKA AI */
-//         int best = -1000;
-//
-//         for (int i = 0; i < 9; i++) {
-//             // Check if cell is empty
-//             if (!(minMaxSlots[i] == playerSymbol || minMaxSlots[i] == aiSymbol)) {
-//                 // Save the original value
-//                 std::string temp = minMaxSlots[i];
-//
-//                 // Make the move
-//                 minMaxSlots[i] = aiSymbol;
-//
-//                 // Recursively compute the minimax value
-//                 best = std::max(best, minmax(minMaxSlots, depth + 1, !isMax, playerSymbol, aiSymbol));
-//
-//                 // Undo the move
-//                 minMaxSlots[i] = temp;
-//             }
-//         }
-//         return best;
-//     } else {
-//         /* Minimizer AKA PLAYER */
-//         int best = 1000;
-//
-//         for (int i = 0; i < 9; i++) {
-//             // Check if cell is empty
-//             if (!(minMaxSlots[i] == playerSymbol || minMaxSlots[i] == aiSymbol)) {
-//                 // Save the original value
-//                 std::string temp = minMaxSlots[i];
-//
-//                 // Make the move
-//                 minMaxSlots[i] = playerSymbol;
-//
-//                 // Recursively compute the minimax value
-//                 best = std::min(best, minmax(minMaxSlots, depth + 1, !isMax, playerSymbol, aiSymbol));
-//
-//                 // Undo the move
-//                 minMaxSlots[i] = temp;
-//             }
-//         }
-//         return best;
-//     }
-// }
-// /**
-//  * FUNCTION:    Hard Mode AI Difficulty | Implements an unbeatable AI using the Minimax algorithm
-//  * PARAMS:      A copy of the game board slots, player symbol, and AI symbol
-//  * RETURNS:     An int (0 - 8) representing the optimal move for the AI
-//  */
-// int makePlayerOneCry(const std::string slots[], const std::string playerSymbol, const std::string aiSymbol) {
-//     int bestVal = -1000;
-//     int bestMove = -1;
-//
-//     // Create a copy of the game board
-//     std::string minMaxSlots[9];
-//     std::copy(slots, slots + 9, minMaxSlots);
-//
-//     #ifdef DEBUG
-//         std::cout << "==========================================================" << std::endl;
-//         std::cout << "makePlayerOneCry called with playerSymbol = " << playerSymbol 
-//                  << ", aiSymbol = " << aiSymbol << std::endl;
-//         std::cout << "Current board: ";
-//         for (int i = 0; i < 9; i++) {
-//             std::cout << minMaxSlots[i] << " ";
-//         }
-//         std::cout << std::endl;
-//         std::cout << "==========================================================" << std::endl;
-//     #endif
-//
-//     // Try all possible moves and pick the best one
-//     for (int i = 0; i < 9; i++) {
-//         // Check if the cell is empty
-//         if (!(minMaxSlots[i] == playerSymbol || minMaxSlots[i] == aiSymbol)) {
-//             // Save the original value
-//             std::string temp = minMaxSlots[i];
-//
-//             // Make the move
-//             minMaxSlots[i] = aiSymbol;
-//
-//             // Compute evaluation value for this move
-//             int moveVal = minmax(minMaxSlots, 0, false, playerSymbol, aiSymbol);
-//
-//             #ifdef DEBUG
-//                 std::cout << "Evaluated move " << i << " with value " << moveVal << std::endl;
-//             #endif
-//
-//             // Undo the move
-//             minMaxSlots[i] = temp;
-//
-//             // If the value of the current move is more than the best value,
-//             // update the best value and best move
-//             if (moveVal > bestVal) {
-//                 bestMove = i;
-//                 bestVal = moveVal;
-//
-//                 #ifdef DEBUG
-//                     std::cout << "New best move: " << i << " with value " << bestVal << std::endl;
-//                 #endif
-//             }
-//         }
-//     }
-//
-//     #ifdef DEBUG
-//         std::cout << "Final best move: " << bestMove << std::endl;
-//     #endif
-//
-//     return bestMove;
-// }
 
+/**
+ * @FUNCTION:    Medium Mode AI Move - Strategic but not perfect
+ * @PARAMS:      Current game board, player symbol, AI symbol
+ * @RETURNS:     Coordinates (row, col) to move to  
+ */
+std::array<int,2> mediumAIMove(std::array<std::array<std::unique_ptr<Slot>, 3>, 3>& currSlots, 
+                               Player::PlayerSymbol playerSymbol, Player::PlayerSymbol aiSymbol)
+{
+	// 1. Check if AI can win
+	auto winMove = findWinningMove(currSlots, aiSymbol);
+	if(winMove[0] != -1) {
+		#ifdef DEBUG 
+			std::cout << "Medium AI winning move: " << winMove[0] << " " << winMove[1] << std::endl;
+		#endif
+		return winMove;
+	}
+
+	// 2. Block player from winning
+	auto blockMove = findWinningMove(currSlots, playerSymbol);
+	if(blockMove[0] != -1) {
+		#ifdef DEBUG 
+			std::cout << "Medium AI blocking move: " << blockMove[0] << " " << blockMove[1] << std::endl;
+		#endif
+		return blockMove;
+	}
+
+	// 3. Take center if available
+	if(currSlots[1][1]->getSymbol().empty()) {
+		#ifdef DEBUG 
+			std::cout << "Medium AI taking center: 1 1" << std::endl;
+		#endif
+		return {1, 1};
+	}
+
+	// 4. Take a corner
+	std::vector<std::array<int, 2>> corners = {{0,0}, {0,2}, {2,0}, {2,2}};
+	std::vector<std::array<int, 2>> availableCorners;
+	
+	for(auto corner : corners) {
+		if(currSlots[corner[0]][corner[1]]->getSymbol().empty()) {
+			availableCorners.push_back(corner);
+		}
+	}
+	
+	if(!availableCorners.empty()) {
+		std::random_device rd;
+		auto move = availableCorners[rd() % availableCorners.size()];
+		#ifdef DEBUG 
+			std::cout << "Medium AI taking corner: " << move[0] << " " << move[1] << std::endl;
+		#endif
+		return move;
+	}
+
+	// 5. Take any available move
+	#ifdef DEBUG 
+		std::cout << "Medium AI falling back to random" << std::endl;
+	#endif
+	return randomAIMove(currSlots);
+}
+
+/**
+ * @FUNCTION:    Hard Mode AI Move - Unbeatable using minimax
+ * @PARAMS:      Current game board, player symbol, AI symbol  
+ * @RETURNS:     Coordinates (row, col) to move to
+ */
+std::array<int,2> hardAIMove(std::array<std::array<std::unique_ptr<Slot>, 3>, 3>& currSlots,
+                             Player::PlayerSymbol playerSymbol, Player::PlayerSymbol aiSymbol)
+{
+	int bestScore = -1000;
+	std::array<int, 2> bestMove = {-1, -1};
+
+	// Try all possible moves
+	for(int row = 0; row < 3; row++) {
+		for(int col = 0; col < 3; col++) {
+			if(currSlots[row][col]->getSymbol().empty()) {
+				// Calculate score for this move using minimax simulation
+				int score = simulateMinimax(currSlots, row, col, 0, false, playerSymbol, aiSymbol);
+				
+				// Update best move if this is better
+				if(score > bestScore) {
+					bestScore = score;
+					bestMove = {row, col};
+				}
+			}
+		}
+	}
+
+	#ifdef DEBUG 
+		std::cout << "Hard AI best move: " << bestMove[0] << " " << bestMove[1] 
+		          << " with score: " << bestScore << std::endl;
+	#endif
+
+	return bestMove;
+}
+
+/**
+ * @FUNCTION:    Find winning move for given symbol
+ * @PARAMS:      Current board, symbol to check
+ * @RETURNS:     Winning move coordinates or {-1, -1} if none
+ */
+std::array<int,2> findWinningMove(std::array<std::array<std::unique_ptr<Slot>, 3>, 3>& currSlots, 
+                                  Player::PlayerSymbol symbol)
+{
+	// Check all possible moves
+	for(int row = 0; row < 3; row++) {
+		for(int col = 0; col < 3; col++) {
+			if(currSlots[row][col]->getSymbol().empty()) {
+				// Check if placing symbol here would create a win
+				if(wouldWin(currSlots, row, col, symbol)) {
+					return {row, col};
+				}
+			}
+		}
+	}
+	
+	return {-1, -1}; // No winning move found
+}
+
+/**
+ * @FUNCTION:    Check if placing symbol at position would win
+ * @PARAMS:      Current board, position, symbol
+ * @RETURNS:     True if move would win
+ */
+/**
+ * @FUNCTION:    Check if placing symbol at position would win
+ * @PARAMS:      Current board, position, symbol
+ * @RETURNS:     True if move would win
+ */
+bool wouldWin(std::array<std::array<std::unique_ptr<Slot>, 3>, 3>& currSlots, 
+              int row, int col, Player::PlayerSymbol symbol)
+{
+	Glib::ustring symbolStr = (symbol == Player::PlayerSymbol::X) ? "X" : "O";
+	
+	// Check row
+	int rowCount = 0;
+	for(int c = 0; c < 3; c++) {
+		if(c == col || currSlots[row][c]->getSymbol() == symbolStr) {
+			rowCount++;
+		}
+	}
+	if(rowCount == 3) return true;
+	
+	// Check column
+	int colCount = 0;
+	for(int r = 0; r < 3; r++) {
+		if(r == row || currSlots[r][col]->getSymbol() == symbolStr) {
+			colCount++;
+		}
+	}
+	if(colCount == 3) return true;
+	
+	// Check main diagonal (if on diagonal)
+	if(row == col) {
+		int diagCount = 0;
+		for(int i = 0; i < 3; i++) {
+			if((i == row && i == col) || currSlots[i][i]->getSymbol() == symbolStr) {
+				diagCount++;
+			}
+		}
+		if(diagCount == 3) return true;
+	}
+	
+	// Check anti-diagonal (if on anti-diagonal)
+	if(row + col == 2) {
+		int antiDiagCount = 0;
+		for(int i = 0; i < 3; i++) {
+			if((i == row && (2-i) == col) || currSlots[i][2-i]->getSymbol() == symbolStr) {
+				antiDiagCount++;
+			}
+		}
+		if(antiDiagCount == 3) return true;
+	}
+	
+	return false;
+}
+
+/**
+ * @FUNCTION:    Check if given symbol has won
+ * @PARAMS:      Current board, symbol to check
+ * @RETURNS:     True if symbol has won
+ */
+/**
+ * @FUNCTION:    Check if given symbol has won
+ * @PARAMS:      Current board, symbol to check
+ * @RETURNS:     True if symbol has won
+ */
+bool checkWin(std::array<std::array<std::unique_ptr<Slot>, 3>, 3>& currSlots, 
+              Player::PlayerSymbol symbol)
+{
+	Glib::ustring symbolStr = (symbol == Player::PlayerSymbol::X) ? "X" : "O";
+	
+	// Check rows
+	for(int row = 0; row < 3; row++) {
+		if(currSlots[row][0]->getSymbol() == symbolStr && 
+		   currSlots[row][1]->getSymbol() == symbolStr && 
+		   currSlots[row][2]->getSymbol() == symbolStr) {
+			return true;
+		}
+	}
+	
+	// Check columns
+	for(int col = 0; col < 3; col++) {
+		if(currSlots[0][col]->getSymbol() == symbolStr && 
+		   currSlots[1][col]->getSymbol() == symbolStr && 
+		   currSlots[2][col]->getSymbol() == symbolStr) {
+			return true;
+		}
+	}
+	
+	// Check main diagonal
+	if(currSlots[0][0]->getSymbol() == symbolStr && 
+	   currSlots[1][1]->getSymbol() == symbolStr && 
+	   currSlots[2][2]->getSymbol() == symbolStr) {
+		return true;
+	}
+	
+	// Check anti-diagonal
+	if(currSlots[0][2]->getSymbol() == symbolStr && 
+	   currSlots[1][1]->getSymbol() == symbolStr && 
+	   currSlots[2][0]->getSymbol() == symbolStr) {
+		return true;
+	}
+	
+	return false;
+}
+
+/**
+ * @FUNCTION:    Check if board is full
+ * @PARAMS:      Current board
+ * @RETURNS:     True if board is full
+ */
+bool isBoardFull(std::array<std::array<std::unique_ptr<Slot>, 3>, 3>& currSlots)
+{
+	for(int row = 0; row < 3; row++) {
+		for(int col = 0; col < 3; col++) {
+			if(currSlots[row][col]->getSymbol().empty()) {
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
+/**
+ * @FUNCTION:    Simulate minimax for a specific first move
+ * @PARAMS:      Current board, first move coordinates, depth, is maximizing, symbols
+ * @RETURNS:     Score of making the first move
+ */
+/**
+ * @FUNCTION:    Simulate minimax for a specific first move
+ * @PARAMS:      Current board, first move coordinates, depth, is maximizing, symbols
+ * @RETURNS:     Score of making the first move
+ */
+int simulateMinimax(std::array<std::array<std::unique_ptr<Slot>, 3>, 3>& currSlots,
+                    int firstRow, int firstCol, int depth, bool isMaximizing, 
+                    Player::PlayerSymbol playerSymbol, Player::PlayerSymbol aiSymbol)
+{
+	// Create a copy of the board state as strings for simulation
+	std::string board[9];
+	for(int row = 0; row < 3; row++) {
+		for(int col = 0; col < 3; col++) {
+			board[row * 3 + col] = std::string(currSlots[row][col]->getSymbol());
+		}
+	}
+	
+	// Make the first move
+	std::string aiSymbolStr = (aiSymbol == Player::PlayerSymbol::X) ? "X" : "O";
+	std::string playerSymbolStr = (playerSymbol == Player::PlayerSymbol::X) ? "X" : "O";
+	board[firstRow * 3 + firstCol] = aiSymbolStr;
+	
+	// Run minimax on the resulting position
+	return minimaxSimulation(board, depth + 1, isMaximizing, playerSymbolStr, aiSymbolStr);
+}
+
+/**
+ * @FUNCTION:    Minimax simulation using string array
+ * @PARAMS:      Board state, depth, is maximizing, symbols
+ * @RETURNS:     Score of the position
+ */
+int minimaxSimulation(std::string board[9], int depth, bool isMaximizing,
+                      const std::string& playerSymbol, const std::string& aiSymbol)
+{
+	// Check for wins
+	if(checkWinSimulation(board, aiSymbol)) {
+		return 10 - depth;
+	}
+	if(checkWinSimulation(board, playerSymbol)) {
+		return depth - 10;
+	}
+	
+	// Check for tie
+	bool isFull = true;
+	for(int i = 0; i < 9; i++) {
+		if(board[i].empty()) {
+			isFull = false;
+			break;
+		}
+	}
+	if(isFull) return 0;
+	
+	if(isMaximizing) {
+		int bestScore = -1000;
+		for(int i = 0; i < 9; i++) {
+			if(board[i].empty()) {
+				board[i] = aiSymbol;
+				int score = minimaxSimulation(board, depth + 1, false, playerSymbol, aiSymbol);
+				board[i] = "";
+				bestScore = std::max(score, bestScore);
+			}
+		}
+		return bestScore;
+	} else {
+		int bestScore = 1000;
+		for(int i = 0; i < 9; i++) {
+			if(board[i].empty()) {
+				board[i] = playerSymbol;
+				int score = minimaxSimulation(board, depth + 1, true, playerSymbol, aiSymbol);
+				board[i] = "";
+				bestScore = std::min(score, bestScore);
+			}
+		}
+		return bestScore;
+	}
+}
+
+/**
+ * @FUNCTION:    Check win in string array simulation
+ * @PARAMS:      Board array, symbol
+ * @RETURNS:     True if symbol wins
+ */
+bool checkWinSimulation(std::string board[9], const std::string& symbol)
+{
+	// Check rows
+	for(int row = 0; row < 3; row++) {
+		if(board[row*3] == symbol && board[row*3+1] == symbol && board[row*3+2] == symbol) {
+			return true;
+		}
+	}
+	
+	// Check columns
+	for(int col = 0; col < 3; col++) {
+		if(board[col] == symbol && board[col+3] == symbol && board[col+6] == symbol) {
+			return true;
+		}
+	}
+	
+	// Check diagonals
+	if(board[0] == symbol && board[4] == symbol && board[8] == symbol) return true;
+	if(board[2] == symbol && board[4] == symbol && board[6] == symbol) return true;
+	
+	return false;
+}

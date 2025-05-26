@@ -64,12 +64,13 @@ std::array<int, 2> Game::processAIMove()
     {
         case Player::PlayerDiff::EASY:
             return randomAIMove(p_boardSlots);
+	    break;
         case Player::PlayerDiff::MEDIUM:
-            // TODO: Implement medium AI
-            return randomAIMove(p_boardSlots);
+            return mediumAIMove(p_boardSlots, p_playerOne->getPlayerSymbol(), p_playerTwo->getPlayerSymbol());
+	    break;
         case Player::PlayerDiff::HARD:
-            // TODO: Implement hard AI
-            return randomAIMove(p_boardSlots);
+            return hardAIMove(p_boardSlots, p_playerOne->getPlayerSymbol(), p_playerTwo->getPlayerSymbol());
+	    break;
     }
     return {-1, -1};
 }
@@ -206,6 +207,7 @@ void Game::playGame()
     }
     else
     {
+        /* Human turn - enable buttons and wait for click */
         enableAllSlots();
     }
 }

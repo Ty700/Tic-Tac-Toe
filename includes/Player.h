@@ -21,7 +21,7 @@ class Player
 		{
 			if(p_playerState == AI)
 			{
-				p_playerDiff = EASY;
+				setAIDifficulty();
 			}
 
 			if(p_playerName.empty())
