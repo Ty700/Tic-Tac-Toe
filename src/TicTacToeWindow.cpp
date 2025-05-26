@@ -41,7 +41,6 @@ void TicTacToeWindow::startGame()
 {
 	setupTicTacToeGridGUI();
 	p_mainGame->playGame();
-	updateOngoingGameStats(p_mainGame);
 }
 
 /**
@@ -57,9 +56,11 @@ void TicTacToeWindow::updateTurnDisplay(const int& condition)
 	if(condition == Game::TurnConditions::HasWinner)
 	{
 		turnText = p_mainGame->getCurrPlayerName() + " has won!";
+		updateOngoingGameStats(p_mainGame);
 	} else if (condition == Game::TurnConditions::Tie)
 	{
 		turnText = "Tie!";
+		updateOngoingGameStats(p_mainGame);
 	} else {
 		turnText = p_mainGame->getCurrPlayerName() + "'s Turn!";
 	} 

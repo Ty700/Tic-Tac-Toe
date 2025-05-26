@@ -147,7 +147,6 @@ static void updateGameStatsCSVFile(std::unique_ptr<Game>& game, std::fstream &cs
     gameFields.push_back(game->getPlayerOne()->getPlayerName());
     gameFields.push_back(game->getPlayerTwo()->getPlayerName());
 	
-    std::cout << game->p_winningPlayer->getPlayerName();
     /* Winner is nullptr if tie */
     if(game->p_winningPlayer != nullptr)
     {

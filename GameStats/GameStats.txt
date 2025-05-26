@@ -10,3 +10,10 @@ Game 3 Details:
 	Player One Name: Tyler
 	Player Two Name: Abby
 	Winner: TIE
+Game 4 Details: 
+	Player One Name: Tyler
+	Player Two Name: Chris
+	Winner Name: Chris
+	Winner was AI
+	Winner Symbol: O
+
