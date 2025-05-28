@@ -17,3 +17,18 @@ Game 4 Details:
 	Winner was AI
 	Winner Symbol: O
 
+Game 5 Details: 
+	Player One Name: Tyler
+	Player Two Name: Daisuke
+	Winner Name: Tyler
+	Winner was not AI
+	Winner Symbol: X
+
+Game 6 Details: 
+	Player One Name: Tyler
+	Player Two Name: Ai
+	Winner: TIE
+Game 7 Details: 
+	Player One Name: Tyler
+	Player Two Name: Alex
+	Winner: TIE

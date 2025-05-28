@@ -2,7 +2,8 @@
 # Tic-Tac-Toe
 
 ~~A command-line implementation of the classic Tic-Tac-Toe game where players can play against an AI opponent with multiple difficulty settings.~~
-TODO: UPDATE THIS (Can't right now as I am migrating OS)
+
+This was a CLI Implementation of the classic Tic-Tac-Toe game (click <a href="https://github.com/Ty700/Tic-Tac-Toe/tree/cli">here</a> for the CLI version) but now it has upgraded with the recent implementation of a GUI using the GTKMM 4.0 library!
 
 ## Back Story
 
@@ -28,7 +29,6 @@ This was my first "big" project when I was learning C++ and programming fundamen
 
 ## Building the Game
 
-
 ### Prerequisites  
 
 - A Linux-based operating system
@@ -37,9 +37,13 @@ This was my first "big" project when I was learning C++ and programming fundamen
 
 - Python 3.6 or later
 
+- <a href="https://gnome.pages.gitlab.gnome.org/gtkmm-documentation/chapter-installation.html">GTKMM 4.0</a> and its dependencies
+
+### This game doesn't compile for Windows (YET). This is in-progress. 
+
 ### Compilation
 
-You can build the game using the python build script: build.py
+You can compile the program using the automated python build script: 
 
 #### Production Version
 
@@ -65,18 +69,9 @@ You can also clean the binaries and CMake files via:
 
 - Decide who goes first
 
-2. During the game
+2. During the game:
 
-- Enter a number 1 - 9 to select where to place your symbol
-
-- The board positions are numbered
-```
-	1 | 2 | 3
-	--+---+--
-	4 | 5 | 6
-	--+---+--
-	7 | 8 | 9
-```
+- Select one of the 9 slots to put your symbol (X/O)
 
 3. The game ends when either:
 
@@ -86,29 +81,35 @@ You can also clean the binaries and CMake files via:
 
 ## Screenshots
 
-#### Game Setup:
+#### Game Setup vs AI:
 
-<img src="img/Screenshot%20from%202025-03-20%2010-52-15.png" width="275" alt="Game Setup">
+<img src="./img/Human_vs_AI.png" width="275" alt="Game Setup vs AI">
+
+<img src="./img/Human_vs_Human.png" width="275" alt="Game Setup vs Human">
 
 #### Gameplay:
 
-<img src="img/Screenshot%20from%202025-03-20%2010-53-13.png" width="200" alt="Gameplay">
+<img src="./img/start_game.png" width="275" alt="Start of the game">
+
+<img src="./img/end_game.png" width="275" alt="End of game">
 
 #### Game Statistics CSV 
 
-<img src="img/Screenshot from 2025-04-03 23-32-26.png" width="500" alt="Gameplay">
+<img src="./img/Screenshot from 2025-04-03 23-32-26.png" width="500" alt="Game Stats CSV DB">
 
 #### Game Statistics Text 
 
-<img src="img/Screenshot from 2025-04-03 23-32-46.png" width="250" alt="Gameplay">
+<img src="./img/Screenshot from 2025-04-03 23-32-46.png" width="250" alt="Human Readable Game Stats">
 
 ## File Structure
 
-- tictactop.cpp: main program entry point
+- tictactoe.cpp: main program entry point
+
+- tactactoewindow.cpp/h: Controls the bulk of the GUI
 
 - Game.cpp/h: Handles the game logic and board state
 
-- GameConfig.cpp/h: Manages game setup and configuration
+- Slot.cpp/h: Handles the 9 Tic-Tac-Toe slots players can place their piece on
 
 - Player.cpp/h: Defines player attributes and behaviors
 
@@ -154,9 +155,9 @@ You can also clean the binaries and CMake files via:
 
 - Implements the Minimax algorithm to make optimal moves, resulting in an unbeatable gameplay. The AI with either win or force a draw.
   
-## Game Statistics (NEW!!)
+## Game Statistics 
 
-- The game now includes a comprehensive statistics tracking system that records the results of each game played. This feature allows players to review their game history and track performance over time.
+- The game includes a comprehensive statistics tracking system that records the results of each game played. This feature allows players to review their game history and track performance over time.
 
 ### Features
 
@@ -178,30 +179,19 @@ You can also clean the binaries and CMake files via:
 
 - Players can view their game history by opening the GameStats.txt file, which provides detailed information about each game in an easy-to-read format.
 
-## Future Improvements
-
-- **Network Play**
-
-- **Master Game Stats File**:
-  - Create a comprehensive statistical dashboard that aggregates data from all played games
-  - Generate visual representations of win rates and game patterns using graphical libraries
-  - Track player progression over time with performance trends and improvement metrics
-  - Implement filterable views to analyze statistics by different parameters (time period, player combinations, etc.)
-  - Export statistics in multiple formats (CSV, PDF, PNG) for sharing or external analysis
-  - Add session-based statistics to compare performance across different gaming sessions
-  - Calculate and display advanced metrics like average moves per game, most common winning patterns, and position heat maps
-
-	- **AI vs Human Win Rate**: Track and analyze the performance of AI players compared to human players to measure AI effectiveness and difficulty levels.
-
-	- **X vs O Win Rate**: Determine if there's a statistical advantage to playing as X or O to balance game fairness.
-
-	- **First Player Advantage Analysis**: Measure win rates based on turn order to quantify the first-move advantage and potentially implement handicap features.
-
-- **GUI??**
+## Future Improvements (In order of priority) 
 
 - **Windows Build option**
 
+- **Network Play**
+
 ## Learnings
+
+### GTKMM Library
+- This was my first project ever using a GUI library. It was really fun to learn and now I feel confident in my ability to make other programs with a GUI!
+
+### Templates and Callbacks 
+- This was also the first project where I used a template and callback. 
 
 ### Data Structure Optimizations
 - Implementing a bitmap to track player moves proved more efficient than individual character tracking. This insight came after having to convert all character representations to `std::string` to support the GameStats system, highlighting how initial design choices impact later extensibility.
