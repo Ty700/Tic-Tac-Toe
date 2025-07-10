@@ -8,6 +8,7 @@
 #include "Player.h"
 #include "TicTacToeWindow.h"
 #include "GameStats.h"
+#include "httplib.h"
 
 /**
  * @FUNCTION:	Sets up the blank game state GUI 
@@ -325,24 +326,29 @@ void TicTacToeWindow::setupSinglePlayerMainMenuGUI()
     menuBox->append(*p2Box);
     menuBox->append(*goesFirstBox);
 
-    /* =========== START BUTTON SECTION =========== */
-    
+    /* =========== SPACE BOX =========== */
     /* Menu to start button spacer */
     auto spacerBox2 = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
     spacerBox2->set_vexpand(true);
     spacerBox2->set_hexpand(false);
     
-    auto startButtonBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
-    startButtonBox->set_halign(Gtk::Align::CENTER);
-    startButtonBox->set_valign(Gtk::Align::END);
+    /* =========== START BUTTON SECTION =========== */
+    auto buttonBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
+    buttonBox->set_halign(Gtk::Align::CENTER);
+    buttonBox->set_valign(Gtk::Align::END);
 
     auto startButton = Gtk::make_managed<Gtk::Button>();    
     startButton->set_label("Start Game!");
-    startButtonBox->append(*startButton);
+    buttonBox->append(*startButton);
+
+    /* =========== BACK BUTTON SECTION =========== */
+    auto backButton = Gtk::make_managed<Gtk::Button>("Back");
+    buttonBox->append(*backButton);
 
     /* =========== APPLY CSS STYLING =========== */
     welcomeTitle->add_css_class("title-label");
     startButton->add_css_class("start-button");
+    backButton->add_css_class("radio-button");
     
     /* Player 1 styling */
     p1NameLbl->add_css_class("menu");
@@ -371,13 +377,108 @@ void TicTacToeWindow::setupSinglePlayerMainMenuGUI()
     p_mainWindowBox->append(*titleMenuSpace);
     p_mainWindowBox->append(*menuBox);
     p_mainWindowBox->append(*spacerBox2);
-    p_mainWindowBox->append(*startButtonBox);
+    p_mainWindowBox->append(*buttonBox);
     set_child(*p_mainWindowBox);
 
     /* =========== SIGNAL CONNECTIONS =========== */
     startButton->signal_clicked().connect([this, startButton]() {
         startButton->set_label("Starting Game!");
         Glib::signal_timeout().connect_once(sigc::mem_fun(*this, &TicTacToeWindow::onStartButtonClick), 1500);
+    });
+
+    backButton->signal_clicked().connect([this]() {
+        deleteBoxContents(p_mainWindowBox);
+        setupModeSelectionGUI();
+    });
+}
+
+/**
+ * @FUNCTION: Sets up the Host Online GUI
+ * @PARAMS:   VOID
+ * @RET:      VOID
+ */
+void TicTacToeWindow::setupHostOnlineGUI()
+{
+    /* =========== TITLE SECTION =========== */
+    auto titleBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
+    titleBox->set_halign(Gtk::Align::CENTER);
+
+    auto welcomeTitle = Gtk::make_managed<Gtk::Label>("Host Online Game");
+    welcomeTitle->add_css_class("title-label");
+    titleBox->append(*welcomeTitle);
+
+    /* =========== PLAYER NAME INPUT =========== */
+    auto nameBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::HORIZONTAL);
+    nameBox->set_halign(Gtk::Align::CENTER);
+    nameBox->set_spacing(10);
+
+    auto nameEntry = Gtk::make_managed<Gtk::Entry>();
+    nameEntry->set_name("hostPlayerName");
+    nameEntry->set_placeholder_text("Enter your name");
+    nameEntry->add_css_class("entry");
+
+    nameBox->append(*nameEntry);
+
+    /* =========== CREATE GAME BUTTON =========== */
+    auto buttonBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
+    buttonBox->set_halign(Gtk::Align::CENTER);
+    buttonBox->set_spacing(20);
+
+    auto createButton = Gtk::make_managed<Gtk::Button>("Create Game");
+    createButton->add_css_class("start-button");
+
+    /* =========== CREATE BACK BUTTON =========== */
+    auto backButton = Gtk::make_managed<Gtk::Button>("Back");
+    backButton->add_css_class("radio-button");
+
+    buttonBox->append(*createButton);
+    buttonBox->append(*backButton);
+
+    /* =========== ASSEMBLE WINDOW =========== */
+    p_mainWindowBox->append(*titleBox);
+    p_mainWindowBox->append(*nameBox);
+    p_mainWindowBox->append(*buttonBox);
+    set_child(*p_mainWindowBox);
+
+    /* =========== SIGNAL CONNECTIONS =========== */
+    createButton->signal_clicked().connect([this, nameEntry, createButton]() {
+        std::string playerName = nameEntry->get_text();
+
+        if(playerName.empty()) {
+            std::cout << "Please enter your name!" << std::endl;
+            return;
+        }
+      	
+	createButton->set_label("Creating...");
+	createButton->set_sensitive(false);
+
+    	/* =========== Server Init  =========== */
+	/* TODO: MOVE INTO STANDALONE FUNCTION */
+	httplib::Client client("localhost", 8080);
+	auto resCode = client.Post(
+			"/create-game", 
+			"{}",
+			"application/json"
+		);
+
+	if(resCode->status == 200)
+	{
+		std::cout << "Game created successfully!" << "\n";
+		std::cout << "Server Response: " << resCode->body << std::endl;
+	} 
+	else 
+	{
+		std::cout << "Failed to create game!" << std::endl;
+		createButton->set_label("Create Game!");
+		createButton->set_sensitive(true);
+
+		/* Prob should throw an error but this'll work for now */
+	}
+    });
+
+    backButton->signal_clicked().connect([this]() {
+        deleteBoxContents(p_mainWindowBox);
+        setupModeSelectionGUI();
     });
 }
 
@@ -430,9 +531,9 @@ void TicTacToeWindow::setupModeSelectionGUI()
 			});
 
 	hostOnlineButton->signal_clicked().connect([this]() {
-			// TODO: Create host online UI
 			deleteBoxContents(p_mainWindowBox);
-			std::cout << "Host Online clicked!" << std::endl;
+			setupHostOnlineGUI();
+			// std::cout << "Host Online clicked!" << std::endl;
 			});
 
 	joinOnlineButton->signal_clicked().connect([this]() {
@@ -493,21 +594,6 @@ TicTacToeWindow::TicTacToeWindow()
 {
 	setTicTacToeWindowProperties();
 	applyCSSMainMenu();
-
-	/* TODO:
-	 * BRANCH FROM HERE 
-	 * IF PLAYER SELECTS 
-	 * 	1. Local Game 
-	 * 		- Creates a single player player with existing functionality.
-	 * 	2. Host Online 
-	 * 		- Creates a new Game ID, and showcases that to the player (allowing them to share it)
-	 * 			and game will start once two players have joined 
-	 * 	3. Join Online 
-	 * 		- Prompt allowing user to enter in a valid game ID to join and play against another player 
-	 *
-	 * ONLINE Games will ONLY be PvP while local can be PvP OR PvE 
-	 *
-	 */
 	setupModeSelectionGUI();
 }
 
