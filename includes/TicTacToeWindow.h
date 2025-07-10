@@ -14,7 +14,8 @@ class TicTacToeWindow : public Gtk::Window
 
 	private:
 		void onStartButtonClick();
-		void setupMainMenuGUI();
+		void setupModeSelectionGUI();
+		void setupSinglePlayerMainMenuGUI();
 		void applyCSSMainMenu();
 		void setTicTacToeWindowProperties();
 		void startGame();

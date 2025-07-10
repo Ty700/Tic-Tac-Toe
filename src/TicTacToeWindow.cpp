@@ -43,6 +43,25 @@ void TicTacToeWindow::startGame()
 	p_mainGame->playGame();
 }
 
+/** 
+ * @FUNCTION: 	Used to clear all childs of a given box 
+ * 			Mostly used for when the user goes from one "screen" to the next.
+ * 			Example:
+ * 				User clicks on Local Game. So we need to delete all contents within 
+ * 				main window box 
+ * @PARAMS: 	Gtk Box pointer
+ * @RET:	VOID
+ */
+void deleteBoxContents(Gtk::Box* win)
+{
+	/* After extracting data, delete all GUI elements to prepare for TicTacToe grid */
+	auto box = win->get_first_child();
+	while(box){
+		win->remove(*box);
+		box = win->get_first_child();
+	}
+}
+
 /**
  * @FUNCTION:	Responsible for updating the GUI to display who's turn it is.
  * @PARAMS: 	VOID 
@@ -152,24 +171,20 @@ void TicTacToeWindow::onStartButtonClick()
 	#endif
 
 	p_mainGame = std::make_unique<Game>(gameParams);
-	
-	/* After extracting data, delete all GUI elements to prepare for TicTacToe grid */
-	auto box = p_mainWindowBox->get_first_child();
-	while(box){
-		p_mainWindowBox->remove(*box);
-		box = p_mainWindowBox->get_first_child();
-	}
-	
+
+	/* Clear screen */
+	deleteBoxContents(p_mainWindowBox);
+
 	/* Start Game */
 	startGame();
 }
 
 /**
- * @FUNCTION: Sets up the main menu GUI with player configuration options
+ * @FUNCTION: Sets up the main menu GUI for single player
  * @PARAMS:   VOID
  * @RET:      VOID
  */
-void TicTacToeWindow::setupMainMenuGUI()
+void TicTacToeWindow::setupSinglePlayerMainMenuGUI()
 {
     /* =========== TITLE SECTION =========== */
     auto titleBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
@@ -177,6 +192,7 @@ void TicTacToeWindow::setupMainMenuGUI()
 
     auto welcomeTitle = Gtk::make_managed<Gtk::Label>("TicTacToe!"); 
     titleBox->append(*welcomeTitle);
+    welcomeTitle->add_css_class("title-label");
 
     /* Title to menu spacer */
     auto titleMenuSpace = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
@@ -365,6 +381,66 @@ void TicTacToeWindow::setupMainMenuGUI()
     });
 }
 
+/**
+ * @FUNCTION: Sets up the GUI allowing user to select 
+ * 		Local Game 
+ * 		Host Online
+ * 		Join Online 
+ * @PARAMS:   VOID
+ * @RET:      VOID
+ */
+void TicTacToeWindow::setupModeSelectionGUI()
+{
+	/* =========== TITLE SELECTION =========== */
+	auto titleBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
+	titleBox->set_halign(Gtk::Align::CENTER);
+
+	auto welcomeTitle = Gtk::make_managed<Gtk::Label>("TicTacToe!");
+    	welcomeTitle->add_css_class("title-label");
+	titleBox->append(*welcomeTitle);	
+
+	/* =========== MODE SELECTION BUTTONS =========== */
+	auto buttonBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
+	buttonBox->set_halign(Gtk::Align::CENTER);
+	buttonBox->set_valign(Gtk::Align::CENTER);
+	buttonBox->set_spacing(20);
+
+	auto localGameButton = Gtk::make_managed<Gtk::Button>("Local Game");
+	auto hostOnlineButton = Gtk::make_managed<Gtk::Button>("Host Online");
+	auto joinOnlineButton = Gtk::make_managed<Gtk::Button>("Join Online");
+
+	localGameButton->add_css_class("start-button");
+	hostOnlineButton->add_css_class("start-button");
+	joinOnlineButton->add_css_class("start-button");
+
+	buttonBox->append(*localGameButton);
+	buttonBox->append(*hostOnlineButton);
+	buttonBox->append(*joinOnlineButton);
+
+	/* =========== ASSEMBLE WINDOW =========== */
+	p_mainWindowBox->append(*titleBox);
+	p_mainWindowBox->append(*buttonBox);
+	set_child(*p_mainWindowBox);
+
+	/* =========== SIGNAL CONNECTIONS =========== */
+	localGameButton->signal_clicked().connect([this]() {
+			// Clear current UI and show single player setup
+			deleteBoxContents(p_mainWindowBox);
+			setupSinglePlayerMainMenuGUI();
+			});
+
+	hostOnlineButton->signal_clicked().connect([this]() {
+			// TODO: Create host online UI
+			deleteBoxContents(p_mainWindowBox);
+			std::cout << "Host Online clicked!" << std::endl;
+			});
+
+	joinOnlineButton->signal_clicked().connect([this]() {
+			// TODO: Create join online UI  
+			deleteBoxContents(p_mainWindowBox);
+			std::cout << "Join Online clicked!" << std::endl;
+			});
+}
 void TicTacToeWindow::applyCSSMainMenu()
 {
 	/* CSS File for TicTacToeWindow */
@@ -417,7 +493,22 @@ TicTacToeWindow::TicTacToeWindow()
 {
 	setTicTacToeWindowProperties();
 	applyCSSMainMenu();
-	setupMainMenuGUI();
+
+	/* TODO:
+	 * BRANCH FROM HERE 
+	 * IF PLAYER SELECTS 
+	 * 	1. Local Game 
+	 * 		- Creates a single player player with existing functionality.
+	 * 	2. Host Online 
+	 * 		- Creates a new Game ID, and showcases that to the player (allowing them to share it)
+	 * 			and game will start once two players have joined 
+	 * 	3. Join Online 
+	 * 		- Prompt allowing user to enter in a valid game ID to join and play against another player 
+	 *
+	 * ONLINE Games will ONLY be PvP while local can be PvP OR PvE 
+	 *
+	 */
+	setupModeSelectionGUI();
 }
 
 TicTacToeWindow::~TicTacToeWindow()
