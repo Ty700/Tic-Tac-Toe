@@ -8,6 +8,7 @@
 #include "Player.h"
 #include "TicTacToeWindow.h"
 #include "GameStats.h"
+#include "Server.h"
 #include "httplib.h"
 
 /**
@@ -456,15 +457,27 @@ void TicTacToeWindow::setupHostOnlineGUI()
 	/* TODO: MOVE INTO STANDALONE FUNCTION */
 	httplib::Client client("localhost", 8080);
 	auto resCode = client.Post(
-			"/create-game", 
+			"/create", 
 			"{}",
 			"application/json"
 		);
 
-	if(resCode->status == 200)
+	if(resCode->status == server::DESKTOP_CREATE_GAME_SUCCESS)
 	{
-		std::cout << "Game created successfully!" << "\n";
-		std::cout << "Server Response: " << resCode->body << std::endl;
+		std::string gameIDLoc = resCode->get_header_value("Location");
+
+		/* 
+		 * Server will respond with "/game/XXXX"
+		 * This will remove '/game/' leaving just the Id 
+		 */
+		std::string gameID = gameIDLoc.substr(6);
+
+		/* TODO: CHANGE THIS TO IFDEF DEBUG */
+		std::cout << "Game created successfully!";
+		std::cout << "Game ID: " << gameID << std::endl;
+
+		/* Starts network game */
+		// startNetworkGame(gameID);
 	} 
 	else 
 	{
@@ -533,7 +546,10 @@ void TicTacToeWindow::setupModeSelectionGUI()
 	hostOnlineButton->signal_clicked().connect([this]() {
 			deleteBoxContents(p_mainWindowBox);
 			setupHostOnlineGUI();
-			// std::cout << "Host Online clicked!" << std::endl;
+			
+			#ifdef DEBUG 
+				 std::cout << "Host Online clicked!" << std::endl;
+			#endif /* DEBUG */
 			});
 
 	joinOnlineButton->signal_clicked().connect([this]() {

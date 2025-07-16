@@ -26,7 +26,10 @@
 #               [X] TicTacToe binary located in ./bin    #
 #               [X] Debug statements throughout runtime  #
 #                                                        #
-#                                                        #
+#   Server:                                              #
+#       -s                                               # 
+#           Feature:                                     #
+#               [X] Server binary located in ./bin       #
 #   Help:                                                #
 #       -h                                               #
 #           Features:                                    #
@@ -50,7 +53,8 @@ def print_help_menu():
            None     Production Binary 
            -c       Clean Project 
            -d       Debug Binary 
-           -h       Help Menu""")
+           -h       Help Menu
+           -s       Server Binary""")
 
 def make_build_dir():
     cmd = "mkdir build"
@@ -70,7 +74,6 @@ def make_prod():
         print(f"Running: cd build/ && {cmd}")
         subprocess.run(cmd, shell=True, cwd="./build")
 
-
 def make_debug():
     make_clean()
     make_build_dir()
@@ -78,6 +81,34 @@ def make_debug():
     cmd = "cmake -DCMAKE_BUILD_TYPE=Debug .. && cmake --build ."
     print(f"Running: cd build/ && {cmd}")
     subprocess.run(cmd, shell=True, cwd="./build")
+
+def make_and_run_server():
+    _SERVER_SRC_NAME = "TestServer.cpp"
+    _SERVER_SRC_PATH = f"./src/{_SERVER_SRC_NAME}"
+
+    _SERVER_BIN_NAME = "server"
+    _SERVER_BIN_PATH = f"./bin/{_SERVER_BIN_NAME}"
+    _SERVER_MV_PATH  = f"./src/{_SERVER_BIN_NAME}" 
+
+    _INCLUDE_PATH    = "./includes/"
+
+    make_clean()
+
+    cmd = f"g++ {_SERVER_SRC_PATH} -I{_INCLUDE_PATH} -o {_SERVER_MV_PATH}"
+    print(f"Running: {cmd}")
+    subprocess.run(cmd, shell=True, cwd=".")
+
+    cmd = f"mkdir -p {_SERVER_BIN_PATH}" 
+    print(f"Running: {cmd}")
+    subprocess.run(cmd, shell=True, cwd=".")
+
+    cmd = f"mv {_SERVER_MV_PATH} {_SERVER_BIN_PATH}" 
+    print(f"Running: {cmd}")
+    subprocess.run(cmd, shell=True, cwd=".")
+
+    cmd = f"{_SERVER_BIN_PATH}/{_SERVER_BIN_NAME}"
+    print(f"Running: {cmd}")
+    subprocess.run(cmd, shell=True, cwd=".")
 
 def run(version):
     cmd = f"./bin/{version}/TicTacToe"
@@ -94,6 +125,8 @@ def main():
         elif(sys.argv[1] == "-d"):
             make_debug()
             run("debug")
+        elif(sys.argv[1] == "-s"):
+            make_and_run_server()
         else:
             print_help_menu()
 
