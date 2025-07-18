@@ -83,12 +83,12 @@ def make_debug():
     subprocess.run(cmd, shell=True, cwd="./build")
 
 def make_and_run_server():
-    _SERVER_SRC_NAME = "TestServer.cpp"
-    _SERVER_SRC_PATH = f"./src/{_SERVER_SRC_NAME}"
+    _SERVER_SRC_NAME = "Server.cpp"
+    _SERVER_SRC_PATH = f"./src/Server/{_SERVER_SRC_NAME}"
 
     _SERVER_BIN_NAME = "server"
     _SERVER_BIN_PATH = f"./bin/{_SERVER_BIN_NAME}"
-    _SERVER_MV_PATH  = f"./src/{_SERVER_BIN_NAME}" 
+    _SERVER_MV_PATH  = f"./src/Server/{_SERVER_BIN_NAME}" 
 
     _INCLUDE_PATH    = "./includes/"
 

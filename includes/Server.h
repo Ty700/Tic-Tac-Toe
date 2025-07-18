@@ -10,7 +10,7 @@ namespace server {
 	const size_t retryLimit = 5000;
 
 	struct NetworkGame {
-		std::string gameId;
+		std::string gameID;
 		std::string hostName;
 		std::string guestName;
 		bool gameStarted = false;
