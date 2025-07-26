@@ -79,7 +79,7 @@ int main()
 	std::unordered_map<std::string, std::unique_ptr<server::NetworkGame>> masterGameList;
 
 	/* Home page */
-	svr.Get("/", [](const httplib::Request&, httplib::Response& res) {
+	svr.Get("/tictactoe", [](const httplib::Request&, httplib::Response& res) {
 			res.status = 302; 
 			res.set_header("Location", "/game");
 			std::cout << "[GET /] Hello endpoint accessed." << std::endl;
@@ -257,6 +257,6 @@ int main()
 		});
 
 	std::cout << "[LOCAL] Server Started!" << std::endl;
-	svr.listen("localhost", 8080);
+	svr.listen("0.0.0.0", 8085);
 	return 0;
 }
