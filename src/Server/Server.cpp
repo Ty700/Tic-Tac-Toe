@@ -18,7 +18,7 @@
  *
  * @ERROR:    	Returns empty string when 5000 attempts to generate valid ID are made 
  */
-static std::string createGameId(const std::unordered_map<std::string, std::unique_ptr<server::NetworkGame>>& masterGameList)
+std::string server::NetworkGame::createGameId(const std::unordered_map<std::string, std::unique_ptr<server::NetworkGame>>& masterGameList)
 {
 	std::random_device rd;
 	std::mt19937 gen(rd());
@@ -47,7 +47,7 @@ static std::string createGameId(const std::unordered_map<std::string, std::uniqu
  *         	string | ID of the game to create
  * @RETS:    	0 -> Success in creating game || 1 -> Error creating game
  */
-static int createGame(const httplib::Request& req, 
+int server::NetworkGame::createGame(const httplib::Request& req, 
 		httplib::Response& res, 
 		std::unordered_map<std::string, std::unique_ptr<server::NetworkGame>>& masterGameList,
 		const std::string& gameID)
@@ -62,7 +62,7 @@ static int createGame(const httplib::Request& req,
 	 * Desktop will extract gameID from header and
 	 * ignore request.
 	 */
-	res.status = 302; 
+	res.status = DESKTOP_CREATE_GAME_SUCCESS; 
 	res.set_header("Location", "/game/" + gameID);
 	return 0;
 }
@@ -156,7 +156,7 @@ int main()
             }
 
             .web-container {
-                background: rgba(255, 255, 255, 0.05);
+                background: rgba(112, 128, 144, 0.05);
                 backdrop-filter: blur(10px);
                 border: 1px solid rgba(255, 255, 255, 0.1);
                 border-radius: 20px;
@@ -200,11 +200,15 @@ int main()
         )";
 		res.set_content(html, "text/html");
 	});
+
 	/* Creating game via desktop app */
 	svr.Post("/create", [&masterGameList](const httplib::Request& req, httplib::Response& res)
 			{
+			
+			/* TODO: CAPTURE ENTRY NAME IF WEB SERVER. */
+
 			/* Generate new gameID */
-			std::string  newID = createGameId(masterGameList);
+			std::string  newID = server::NetworkGame::createGameId(masterGameList);
 			std::string resp = "";
 			if(newID == "")
 			{
@@ -243,12 +247,8 @@ int main()
 			if(masterGameList.find(gameID) != masterGameList.end())
 			{
 				/* Game is valid */	
-				std::string gameData = "{\n";
-				gameData += " \"gameID\": \"" + gameID + "\", \n";
-				gameData += " \"status\": \"in-progress\", \n";
-				gameData += " \"currentPlayer\": \"Player1\"\n";
-				gameData += "}";
-				res.set_content(gameData, "application/json");
+				server::NetworkGame* game = masterGameList[gameID];			
+
 			} else {
 				/* TODO: Convert to HTML/JSON/CS */
 				std::string msg = "Game ID: " + gameID + " is not valid.";

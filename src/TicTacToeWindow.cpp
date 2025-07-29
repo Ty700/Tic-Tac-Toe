@@ -108,11 +108,11 @@ void TicTacToeWindow::onStartButtonClick()
 	 * Pretty cool ig
 	 */
 	
-	auto p1NameEntry = findWidget<Gtk::Entry>(p_mainWindowBox, "p1NameEntry");
-	auto p2NameEntry = findWidget<Gtk::Entry>(p_mainWindowBox, "p2NameEntry");
-	auto p1SymX = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "symbolX");
-	auto p1FirstBut = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "p1FirstBut");	
-	auto p2FirstBut = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "p2FirstBut");	
+	auto p1NameEntry    = findWidget<Gtk::Entry>(p_mainWindowBox, "p1NameEntry");
+	auto p2NameEntry    = findWidget<Gtk::Entry>(p_mainWindowBox, "p2NameEntry");
+	auto p1SymX 	    = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "symbolX");
+	auto p1FirstBut     = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "p1FirstBut");	
+	auto p2FirstBut     = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "p2FirstBut");	
 	auto p2TypeHumanBut = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "p2TypeHuman");
 
 	#ifdef DEBUG 
@@ -494,6 +494,111 @@ void TicTacToeWindow::setupHostOnlineGUI()
         setupModeSelectionGUI();
     });
 }
+/**
+ * @FUNCTION:	Determines if the entry given via user is a possible game ID
+ * @PARAMS:	Game ID Entry via user
+ * @RET:	gameID back as it was if no err || empty str if error 
+ */
+std::string filterGameID(const std::string &gameId)
+{
+
+}
+/** 
+ * @FUNCTION: 
+ * @PARAMS:
+ * @RET:
+ */
+void TicTacToeWindow::setupJoinGUI()
+{
+    /* =========== PLAYER NAME INPUT =========== */
+    auto nameBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::HORIZONTAL);
+    nameBox->set_halign(Gtk::Align::CENTER);
+    nameBox->set_spacing(10);
+
+    auto nameEntry = Gtk::make_managed<Gtk::Entry>();
+    nameEntry->set_name("hostPlayerName");
+    nameEntry->set_placeholder_text("Enter your name");
+    nameEntry->add_css_class("entry");
+
+    nameBox->append(*nameEntry);
+	
+    /* =========== GAME ID BUTTON ============= */
+    auto idBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::HORIZONTAL);
+    idBox->set_halign(Gtk::Align::CENTER);
+    idBox->set_spacing(20);
+
+    auto idEntry = Gtk::make_managed<Gtk::Entry>();
+    idEntry->set_placeholder_text("Enter Game ID");
+    idEntry->add_css_class("entry");
+
+    idBox->append(*idEntry);
+
+    /* =========== JOIN GAME BUTTON =========== */
+    auto buttonBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
+    buttonBox->set_halign(Gtk::Align::CENTER);
+    buttonBox->set_spacing(20);
+
+    auto joinButton = Gtk::make_managed<Gtk::Button>("Join Game");
+    joinButton->add_css_class("join-button");
+
+    /* =========== CREATE BACK BUTTON =========== */
+    auto backButton = Gtk::make_managed<Gtk::Button>("Back");
+    backButton->add_css_class("radio-button");
+
+    buttonBox->append(*joinButton);
+    buttonBox->append(*backButton);
+
+    /* =========== ASSEMBLE WINDOW =========== */
+    p_mainWindowBox->append(*nameBox);
+    p_mainWindowBox->append(*idBox);
+    p_mainWindowBox->append(*buttonBox);
+    set_child(*p_mainWindowBox);
+
+    /* =========== SIGNAL CONNECTIONS =========== */
+    joinButton->signal_clicked().connect([this, nameEntry, idEntry, joinButton]() {
+        std::string playerName = nameEntry->get_text();
+	std::string gameID     = idEntry->get_text();
+
+	filterGameID(gameID);
+
+        if(playerName.empty()) {
+            std::cout << "Please enter your name!" << std::endl;
+            return;
+        }
+      	
+	joinButton->set_label("Joining...");
+	joinButton->set_sensitive(false);
+
+    	/* =========== Server Join  =========== */
+	/* TODO: MOVE INTO STANDALONE FUNCTION */
+	httplib::Client client("localhost", 8080);
+	std::string joinId = "/game/" + gameID + "/join";
+	std::string idBodyJson = R"({"playerName": ")" + playerName + R"("})";
+
+	auto resCode = client.Post(
+			joinId,
+			idBodyJson,
+			"application/json"
+		);
+	if(resCode && resCode->status == server::DESKTOP_JOIN_GAME_SUCCESS)
+	{
+		/* Join was successfully completed */
+	}
+	else 
+	{
+		std::cout << "Failed to join game!" << std::endl;
+		joinButton->set_label("Join Game!");
+		joinButton->set_sensitive(true);
+
+		/* Prob should throw an error but this'll work for now */
+	}
+    });
+
+    backButton->signal_clicked().connect([this]() {
+        deleteBoxContents(p_mainWindowBox);
+    });
+
+}
 
 /**
  * @FUNCTION: Sets up the GUI allowing user to select 
@@ -553,9 +658,11 @@ void TicTacToeWindow::setupModeSelectionGUI()
 			});
 
 	joinOnlineButton->signal_clicked().connect([this]() {
-			// TODO: Create join online UI  
 			deleteBoxContents(p_mainWindowBox);
-			std::cout << "Join Online clicked!" << std::endl;
+			setupJoinGUI();
+			#ifdef DEBUG 
+				std::cout << "Join Online clicked!" << std::endl;
+			#endif /* DEBUG */
 			});
 }
 void TicTacToeWindow::applyCSSMainMenu()
