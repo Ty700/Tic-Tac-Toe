@@ -6,7 +6,8 @@
 #include <iterator>
 #include <memory>
 
-#include "../../includes/httplib.h"    
+#include "../../includes/httplib.h"
+#include "../../includes/NetworkGame.h"
 #include "../../includes/Server.h"
 
 /**
@@ -18,7 +19,7 @@
  *
  * @ERROR:    	Returns empty string when 5000 attempts to generate valid ID are made 
  */
-std::string server::NetworkGame::createGameId(const std::unordered_map<std::string, std::unique_ptr<server::NetworkGame>>& masterGameList)
+std::string Server::createGameId()
 {
 	std::random_device rd;
 	std::mt19937 gen(rd());
@@ -26,7 +27,7 @@ std::string server::NetworkGame::createGameId(const std::unordered_map<std::stri
 	std::string gameID =  std::to_string(dis(gen));
 
     size_t retryAttempt = 0; 
-    while(retryAttempt < server::retryLimit)
+    while(retryAttempt <this->retryLimit)
     {
         gameID = std::to_string(dis(gen));
         if(masterGameList.count(gameID) == 0)
@@ -43,102 +44,90 @@ std::string server::NetworkGame::createGameId(const std::unordered_map<std::stri
  * @FUNCTION:	Creates a new game instance    
  * @PARMS:    	Rhttplib::Request | Server Request
  *         	httplib::Response | Server Response
- *         	unordered_map | current games in play    
  *         	string | ID of the game to create
  * @RETS:    	0 -> Success in creating game || 1 -> Error creating game
  */
-int server::NetworkGame::createGame(const httplib::Request& req, 
-		httplib::Response& res, 
-		std::unordered_map<std::string, std::unique_ptr<server::NetworkGame>>& masterGameList,
-		const std::string& gameID)
+int Server::createGame(const httplib::Request& req, 
+	 	       httplib::Response& res, 
+		       const std::string& gameID)
 {
 	/* Creates game */
-	auto newGame = std::make_unique<server::NetworkGame>();
+	auto newGame = std::make_unique<NetworkGame>();
 	newGame->gameID = gameID;
-	masterGameList[gameID] = std::move(newGame);
+	this->masterGameList[gameID] = std::move(newGame);
 
 	/*
 	 * Always tries to redirect to new url.
 	 * Desktop will extract gameID from header and
 	 * ignore request.
 	 */
-	res.status = DESKTOP_CREATE_GAME_SUCCESS; 
+	res.status = ServerCodes::DESKTOP_CREATE_GAME_SUCCESS; 
 	res.set_header("Location", "/game/" + gameID);
 	return 0;
 }
 
-int main()
+void Server::getHomepage(const httplib::Request& req, httplib::Response &res)
 {
-	/* Creates the server instance */
-	httplib::Server svr;
+	res.status = 302; 
+	res.set_header("Location", "/game");
+	std::cout << "[GET /] Hello endpoint accessed." << std::endl;
+}
 
-	/*
-	 * Key:     GameID 
-	 * Value:    Game instance ptr
-	 */
-	std::unordered_map<std::string, std::unique_ptr<server::NetworkGame>> masterGameList;
+void Server::getCssStyles(const httplib::Request& req, httplib::Response &res)
+{
+	std::ifstream file("./styles/tictactoe.css");
+	if (file.is_open()) 
+	{
+		std::string css_content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+		res.set_content(css_content, "text/css");
+	} else {
+		res.status = 404;
+		res.set_content("CSS file not found", "text/plain");
+	}
+}
 
-	/* Home page */
-	svr.Get("/tictactoe", [](const httplib::Request&, httplib::Response& res) {
-			res.status = 302; 
-			res.set_header("Location", "/game");
-			std::cout << "[GET /] Hello endpoint accessed." << std::endl;
-			});
+void Server::getStaticStyles(const httplib::Request& req, httplib::Response &res)
+{
+	std::string file_path = "./" + req.matches[1].str();
+	std::ifstream file(file_path, std::ios::binary);
+	if (file.is_open()) {
+		std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 
-	/* CSS */
-	svr.Get("/styles/tictactoe.css", [](const httplib::Request&, httplib::Response& res)
-			{
-			std::ifstream file("./styles/tictactoe.css");
-			if (file.is_open()) 
-			{
-			std::string css_content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-			res.set_content(css_content, "text/css");
-			} else {
-			res.status = 404;
-			res.set_content("CSS file not found", "text/plain");
-			}
-			});
-
-	svr.Get(R"(/static/(.))", [](const httplib::Request& req, httplib::Response& res) {
-			std::string file_path = "./" + req.matches[1].str();
-			std::ifstream file(file_path, std::ios::binary);
-			if (file.is_open()) {
-			std::string content((std::istreambuf_iterator<char>(file)),
-					std::istreambuf_iterator<char>());
-			// Set content type based on file extension
-			std::string extension = file_path.substr(file_path.find_last_of(".") + 1);
-			if (extension == "css") {
+		// Set content type based on file extension
+		std::string extension = file_path.substr(file_path.find_last_of(".") + 1);
+		if (extension == "css") {
 			res.set_content(content, "text/css");
-			} else if (extension == "js") {
+		} else if (extension == "js") {
 			res.set_content(content, "application/javascript");
-			} else if (extension == "png") {
+		} else if (extension == "png") {
 			res.set_content(content, "image/png");
-			} else {
+		} else {
 			res.set_content(content, "text/plain");
-			}
-			} else {
-			res.status = 404;
-			res.set_content("File not found", "text/plain");
-			}
-	});
-	/* Get health of the server */
-	svr.Get("/health", [](const httplib::Request&, httplib::Response& res) {
-			std::cout << "[GET /health] Hello endpoint accessed." << std::endl;
-			res.set_content("Server is running!", "text/plain");
-			});
-	/* Instructions if someone views webpage, and needs instructions */
-	svr.Get("/game", [](const httplib::Request&, httplib::Response& res) {
-			std::cout << "[GET /game] Endpoint accessed." << std::endl;
-			std::string resp = "Enter in game ID via url.\n";
-			resp += "To connect to a game ID of 1234:\n";
-			resp += "game/1234";
-			res.set_content(resp, "text/plain");
-			});
+		}
+	} else {
+		res.status = 404;
+		res.set_content("File not found", "text/plain");
+	}
+}
 
-	/* Creating game via website */
-	svr.Get("/create-game", [](const httplib::Request&, httplib::Response& res) {
-			std::string html = R"(
-        <!DOCTYPE html>
+void Server::getServerHealth(const httplib::Request& req, httplib::Response &res)
+{
+	std::cout << "[GET /health] Hello endpoint accessed." << std::endl;
+	res.set_content("Server is running!", "text/plain");
+}
+
+void Server::getInstructions(const httplib::Request& req, httplib::Response &res)
+{
+	std::cout << "[GET /game] Endpoint accessed." << std::endl;
+	std::string resp = "Enter in game ID via url.\n";
+	resp += "To connect to a game ID of 1234:\n";
+	resp += "game/1234";
+	res.set_content(resp, "text/plain");
+}
+
+void Server::getCreateGame(const httplib::Request& req, httplib::Response &res)
+{
+	std::string html = R"( <!DOCTYPE html>
         <html>
         <head>
             <title>Create TicTacToe Game</title>
@@ -182,7 +171,7 @@ int main()
                 <label class="menu">Your Name:</label>
                 <input 
                     type="text" 
-                    name="playerName" 
+                    name="pla&yerName" 
                     class="entry"
                     placeholder="Enter your name" 
                     required 
@@ -198,65 +187,106 @@ int main()
         </body>
         </html>
         )";
-		res.set_content(html, "text/html");
-	});
 
-	/* Creating game via desktop app */
-	svr.Post("/create", [&masterGameList](const httplib::Request& req, httplib::Response& res)
-			{
-			
-			/* TODO: CAPTURE ENTRY NAME IF WEB SERVER. */
+	res.set_content(html, "text/html");
+}
 
-			/* Generate new gameID */
-			std::string  newID = server::NetworkGame::createGameId(masterGameList);
-			std::string resp = "";
-			if(newID == "")
-			{
-			/* Console logging */
-			std::cout << "[POST /create-game] ERROR: GAME ID" << std::endl;
-			resp += "ERROR CREATING GAME ID!";
-			res.status = server::CREATE_GAME_ID_FAILED;
-			res.set_content(resp, "text/plain");
-			return;
-			} else 
-			{
-			int result = createGame(req, res, masterGameList, newID);
-			if(result)
-			{
+void Server::postCreateGame(const httplib::Request& req, httplib::Response &res)
+{
+	/* TODO: CAPTURE ENTRY NAME IF WEB SERVER. */
+	/* Generate new gameID */
+	std::string  newID = this->createGameId();
+	std::string resp = "";
+
+	if(newID == "")
+	{
+		/* Console logging */
+		std::cout << "[POST /create-game] ERROR: GAME ID" << std::endl;
+		resp += "ERROR CREATING GAME ID!";
+		res.status = ServerCodes::CREATE_GAME_ID_FAILED;
+		res.set_content(resp, "text/plain");
+		return;
+	} else {
+		int result = this->createGame(req, res, newID);
+
+		if(result)
+		{
 			/* Console logging */
 			std::cout << "[POST /create-game] ERROR: GAME CREATION" << std::endl;
 
-                        resp += "ERROR CREATING GAME!";
-                        res.status = server::CREATE_GAME_FAILED;
-                        res.set_content(resp, "text/plain");
-                    } else {
-                        /* createGame handled res status /
-                        / Console logging */
-                        std::cout << "[POST /create-game] SUCCESS: GAME CREATED! ID: " << newID <<  std::endl;
-                    }
-                }
-        });
+			resp += "ERROR CREATING GAME!";
+			res.status = ServerCodes::CREATE_GAME_FAILED;
+			res.set_content(resp, "text/plain");
+		} else {
+			/* createGame handled res status /
+			   / Console logging */
+			std::cout << "[POST /create-game] SUCCESS: GAME CREATED! ID: " << newID <<  std::endl;
+		}
+	}
+}
 
-	/* Once game has been created, we can view the status */
-	svr.Get(R"(/game/(.+))", [&masterGameList](const httplib::Request& req, httplib::Response& res) 
-		{
-			std::string gameID = req.matches[1];
-			std::cout << "[GET /game/" << gameID << " endpoint was accessed." << std::endl;
+void Server::getGameStatus(const httplib::Request& req, httplib::Response& res)
+{
+	std::string gameID = req.matches[1];
+	std::cout << "[GET /game/" << gameID << " endpoint was accessed." << std::endl;
 
-			auto it = masterGameList.find(gameID);
-			if(masterGameList.find(gameID) != masterGameList.end())
-			{
-				/* Game is valid */	
-				server::NetworkGame* game = masterGameList[gameID];			
+	auto it = masterGameList.find(gameID);
 
-			} else {
-				/* TODO: Convert to HTML/JSON/CS */
-				std::string msg = "Game ID: " + gameID + " is not valid.";
-				res.set_content(msg, "text/plain");
-			}
-		});
+	if(masterGameList.find(gameID) != masterGameList.end())
+	{
+		/* Game is valid */	
+		std::unique_ptr<NetworkGame> game = std::move(it->second);
+
+	} else {
+		/* TODO: Convert to HTML/JSON/CS */
+		std::string msg = "Game ID: " + gameID + " is not valid.";
+		res.set_content(msg, "text/plain");
+	}
+}
+
+/**
+ * @FUNCTION:	Responsible for starting the server and listening on SERVER_PORT 
+ * @PARAMS:	VOID 
+ * @RET:	0 -> Server ran and shutdown successfully || -1 -> Server Crashed 
+ */
+int Server::run()
+{
+	svr.Get("/", [this](const httplib::Request& req, httplib::Response& res) {
+		this->getHomepage(req, res);
+	});
+
+	svr.Get("/health", [this](const httplib::Request& req, httplib::Response& res) {
+		this->getServerHealth(req, res);
+	});
+
+	svr.Get("/styles/tictactoe.css", [this](const httplib::Request& req, httplib::Response& res) {
+		this->getCssStyles(req, res);
+	});
+
+	svr.Get("/create-game", [this](const httplib::Request& req, httplib::Response& res) {
+		this->getCreateGame(req, res);
+	});
+
+	svr.Post("/create", [this](const httplib::Request& req, httplib::Response& res) {
+		this->postCreateGame(req, res);
+	});
+
+//	svr.Post("/join", [this](const httplib::Request& req, httplib::Response& res) {
+//		this->postJoinGame(req, res);
+//	});
+
+	svr.Get(R"(/game/(.+))", [this](const httplib::Request& req, httplib::Response& res) {
+		this->getGameStatus(req, res);
+	});
 
 	std::cout << "[LOCAL] Server Started!" << std::endl;
-	svr.listen("0.0.0.0", 8085);
+	if(!svr.listen("0.0.0.0", SERVER_PORT))
+	{
+		std::cout << "[LOCAL] SERVER CRASHED!" << std::endl;
+		return -1;
+	}
+
 	return 0;
 }
+
+
