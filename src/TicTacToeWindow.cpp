@@ -3,6 +3,7 @@
 #include <gtkmm/accelkey.h>
 #include <iostream>
 #include <memory.h>
+#include <string.h>
 
 #include "Game.h"
 #include "Player.h"
@@ -462,7 +463,7 @@ void TicTacToeWindow::setupHostOnlineGUI()
 			"application/json"
 		);
 
-	if(resCode->status == server::DESKTOP_CREATE_GAME_SUCCESS)
+	if(resCode->status == ServerCodes::DESKTOP_CREATE_GAME_SUCCESS)
 	{
 		std::string gameIDLoc = resCode->get_header_value("Location");
 
@@ -494,14 +495,29 @@ void TicTacToeWindow::setupHostOnlineGUI()
         setupModeSelectionGUI();
     });
 }
+
 /**
  * @FUNCTION:	Determines if the entry given via user is a possible game ID
  * @PARAMS:	Game ID Entry via user
  * @RET:	gameID back as it was if no err || empty str if error 
  */
 std::string filterGameID(const std::string &gameId)
-{
+{	
+	if(gameId.length() != 4)
+	{
+		return "";
+	}
+	std::string::const_iterator it = gameId.begin();
 
+	while(it != gameId.end())
+	{
+		if(!std::isdigit(static_cast<unsigned char>(*it)))
+		{
+			return "";
+		}
+	}
+
+	return gameId;
 }
 /** 
  * @FUNCTION: 
@@ -558,8 +574,14 @@ void TicTacToeWindow::setupJoinGUI()
     joinButton->signal_clicked().connect([this, nameEntry, idEntry, joinButton]() {
         std::string playerName = nameEntry->get_text();
 	std::string gameID     = idEntry->get_text();
-
-	filterGameID(gameID);
+	
+	/* TODO: Change return; */
+	if(filterGameID(gameID).empty())
+	{
+		std::cout << "Please enter valid Game ID!" << std::endl;
+		return;
+	}
+	
 
         if(playerName.empty()) {
             std::cout << "Please enter your name!" << std::endl;
@@ -580,7 +602,7 @@ void TicTacToeWindow::setupJoinGUI()
 			idBodyJson,
 			"application/json"
 		);
-	if(resCode && resCode->status == server::DESKTOP_JOIN_GAME_SUCCESS)
+	if(resCode && resCode->status == ServerCodes::DESKTOP_JOIN_GAME_SUCCESS)
 	{
 		/* Join was successfully completed */
 	}
