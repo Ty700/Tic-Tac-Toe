@@ -318,6 +318,37 @@ void Server::getGameStatus(const httplib::Request& req, httplib::Response& res)
 		std::string msg = "Game ID: " + gameID + " is not valid.";
 		res.set_content(msg, "text/plain");
 	}
+	
+	/* Game is valid -> Respond with game information */
+	auto& game = this->masterGameList[gameID];
+	
+	/* Will be using JSON to send data between nodes & server */
+	/* NOTE: JSON Parser needed on client side */
+
+	/* Building board */
+	std::string boardJson = "[";
+	for(int i = 0; i < 9; i++) {
+		boardJson += "\"" + game->board[i] + "\"";
+		if(i < 8) boardJson += ",";
+	}
+	boardJson += "]";
+
+	std::string json = R"({
+		"gameID": ")" + gameID + R"(",
+		"hostName": ")" + game->hostName + R"(",
+		"guestName": ")" + game->guestName + R"(",
+		"gameStarted": )" + (game->gameStarted ? "true" : "false") + R"(,
+		"board": )" + boardJson + R"(,
+		"currentPlayerIndex": )" + std::to_string(game->currentPlayerIndex) + R"(,
+		"playerOneSymbol": ")" + game->playerOneSymbol + R"(",
+		"playerTwoSymbol": ")" + game->playerTwoSymbol + R"(",
+		"winner": ")" + game->winner + R"(",
+		"isDraw": )" + (game->isDraw ? "true" : "false") + R"(,
+		"gameFinished": )" + (game->gameFinished ? "true" : "false") + R"(
+	})";
+
+	res.status = ServerCodes::GAME_SUCCESS;
+	res.set_content(json, "application/json");
 }
 
 /**
