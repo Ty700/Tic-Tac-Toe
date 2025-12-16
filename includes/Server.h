@@ -55,5 +55,6 @@ class Server {
 		void getGameStatus(const httplib::Request& req, httplib::Response& res);
 
 		/* ====== POSTs ====== */
+		void postJoinGame(const httplib::Request& req, httplib::Response& res);  
 		void postCreateGame(const httplib::Request& req, httplib::Response& res);  
 };

@@ -69,7 +69,7 @@ int Server::createGame(const httplib::Request& req,
 void Server::getHomepage(const httplib::Request& req, httplib::Response &res)
 {
 	res.status = 302; 
-	res.set_header("Location", "/game");
+	res.set_header("Location", "/create");
 	std::cout << "[GET /] Hello endpoint accessed." << std::endl;
 }
 
@@ -90,7 +90,8 @@ void Server::getStaticStyles(const httplib::Request& req, httplib::Response &res
 {
 	std::string file_path = "./" + req.matches[1].str();
 	std::ifstream file(file_path, std::ios::binary);
-	if (file.is_open()) {
+	if (file.is_open()) 
+	{
 		std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 
 		// Set content type based on file extension
@@ -218,11 +219,39 @@ void Server::postCreateGame(const httplib::Request& req, httplib::Response &res)
 			res.status = ServerCodes::CREATE_GAME_FAILED;
 			res.set_content(resp, "text/plain");
 		} else {
-			/* createGame handled res status /
-			   / Console logging */
+			/* createGame handled res status */
+			/* Console logging */
 			std::cout << "[POST /create-game] SUCCESS: GAME CREATED! ID: " << newID <<  std::endl;
 		}
 	}
+}
+
+bool findGameInGameMap(const std::string& gameID, const std::unordered_map<std::string, std::unique_ptr<NetworkGame>> masterGameList)
+{
+	auto it = masterGameList.find(gameID);
+
+	if(masterGameList.find(gameID) != masterGameList.end())
+	{
+		/* Game is valid */	
+		return true;
+	} 
+	return false;
+}
+
+void Server::postJoinGame(const httplib::Request& req, httplib::Response& res)
+{
+	/* Grab gameID */
+	std::string gameID = req.matches[1];	
+	std::string playerName = req.matches[2];
+	
+	if(!findGameInGameMap(gameID, Server::masterGameList))
+	{
+		/* Game Invalid */	
+		return;
+	}
+	
+	/* Game ID is valid, now grab it */
+	auto gameProperties = std::move(this->masterGameList[gameID]);
 }
 
 void Server::getGameStatus(const httplib::Request& req, httplib::Response& res)
@@ -230,17 +259,13 @@ void Server::getGameStatus(const httplib::Request& req, httplib::Response& res)
 	std::string gameID = req.matches[1];
 	std::cout << "[GET /game/" << gameID << " endpoint was accessed." << std::endl;
 
-	auto it = masterGameList.find(gameID);
-
-	if(masterGameList.find(gameID) != masterGameList.end())
+	if(!findGameInGameMap(gameID, Server::masterGameList))
 	{
-		/* Game is valid */	
-		std::unique_ptr<NetworkGame> game = std::move(it->second);
-
-	} else {
 		/* TODO: Convert to HTML/JSON/CS */
 		std::string msg = "Game ID: " + gameID + " is not valid.";
 		res.set_content(msg, "text/plain");
+
+		/* TODO RESET TO HOME PAGE */
 	}
 }
 
@@ -271,9 +296,9 @@ int Server::run()
 		this->postCreateGame(req, res);
 	});
 
-//	svr.Post("/join", [this](const httplib::Request& req, httplib::Response& res) {
-//		this->postJoinGame(req, res);
-//	});
+	svr.Post("/join", [this](const httplib::Request& req, httplib::Response& res) {
+		this->postJoinGame(req, res);
+	});
 
 	svr.Get(R"(/game/(.+))", [this](const httplib::Request& req, httplib::Response& res) {
 		this->getGameStatus(req, res);
