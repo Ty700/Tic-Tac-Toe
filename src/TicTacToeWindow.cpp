@@ -454,14 +454,14 @@ void TicTacToeWindow::setupHostOnlineGUI()
 	createButton->set_label("Creating...");
 	createButton->set_sensitive(false);
 
-    	/* =========== Server Init  =========== */
+    	/* =========== POST /CREATE DESKTOP SIDE  =========== */
 	/* TODO: MOVE INTO STANDALONE FUNCTION */
-	httplib::Client client("localhost", 8080);
-	auto resCode = client.Post(
-			"/create", 
-			"{}",
-			"application/json"
-		);
+	/* TODO: CHANGE LOCALHOST AND PORT */
+	httplib::Client client("localhost", 8085);
+	httplib::Params params;
+	params.emplace("playerName", playerName);
+
+	auto resCode = client.Post("/create", params);
 
 	if(resCode->status == ServerCodes::DESKTOP_CREATE_GAME_SUCCESS)
 	{
@@ -618,6 +618,7 @@ void TicTacToeWindow::setupJoinGUI()
 
     backButton->signal_clicked().connect([this]() {
         deleteBoxContents(p_mainWindowBox);
+        setupModeSelectionGUI();
     });
 
 }

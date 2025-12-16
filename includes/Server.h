@@ -12,6 +12,8 @@ namespace ServerCodes
 	const int DESKTOP_JOIN_GAME_SUCCESS = 200;
 	const int GAME_SUCCESS = 200;
 	const int CREATE_GAME_ID_FAILED = 501;
+	const int NOT_FOUND = 404;
+	const int CONFLICT = 409;
 
 }
 

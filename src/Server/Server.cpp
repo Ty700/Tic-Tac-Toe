@@ -69,7 +69,7 @@ int Server::createGame(const httplib::Request& req,
 void Server::getHomepage(const httplib::Request& req, httplib::Response &res)
 {
 	res.status = 302; 
-	res.set_header("Location", "/create");
+	res.set_header("Location", "/create-game");
 	std::cout << "[GET /] Hello endpoint accessed." << std::endl;
 }
 
@@ -172,7 +172,7 @@ void Server::getCreateGame(const httplib::Request& req, httplib::Response &res)
                 <label class="menu">Your Name:</label>
                 <input 
                     type="text" 
-                    name="pla&yerName" 
+                    name="playerName" 
                     class="entry"
                     placeholder="Enter your name" 
                     required 
@@ -194,18 +194,17 @@ void Server::getCreateGame(const httplib::Request& req, httplib::Response &res)
 
 void Server::postCreateGame(const httplib::Request& req, httplib::Response &res)
 {
-	/* TODO: CAPTURE ENTRY NAME IF WEB SERVER. */
+	std::string hostName = req.get_param_value("playerName");
+
 	/* Generate new gameID */
 	std::string  newID = this->createGameId();
-	std::string resp = "";
 
 	if(newID == "")
 	{
 		/* Console logging */
 		std::cout << "[POST /create-game] ERROR: GAME ID" << std::endl;
-		resp += "ERROR CREATING GAME ID!";
 		res.status = ServerCodes::CREATE_GAME_ID_FAILED;
-		res.set_content(resp, "text/plain");
+		res.set_content("ERROR CREATING GAME ID!", "text/plain");
 		return;
 	} else {
 		int result = this->createGame(req, res, newID);
@@ -214,44 +213,90 @@ void Server::postCreateGame(const httplib::Request& req, httplib::Response &res)
 		{
 			/* Console logging */
 			std::cout << "[POST /create-game] ERROR: GAME CREATION" << std::endl;
-
-			resp += "ERROR CREATING GAME!";
 			res.status = ServerCodes::CREATE_GAME_FAILED;
-			res.set_content(resp, "text/plain");
+			res.set_content("ERROR CREATING GAME!", "text/plain");
 		} else {
+			if(!hostName.empty())
+			{
+				this->masterGameList[newID]->hostName = hostName;
+			}
+
 			/* createGame handled res status */
 			/* Console logging */
 			std::cout << "[POST /create-game] SUCCESS: GAME CREATED! ID: " << newID <<  std::endl;
+			if(!hostName.empty())
+			{
+				std::cout << "Host: " << this->masterGameList[newID]->hostName << std::endl; 
+			}
 		}
 	}
 }
 
-bool findGameInGameMap(const std::string& gameID, const std::unordered_map<std::string, std::unique_ptr<NetworkGame>> masterGameList)
+bool findGameInGameMap(const std::string& gameID, const std::unordered_map<std::string, std::unique_ptr<NetworkGame>>& masterGameList)
 {
-	auto it = masterGameList.find(gameID);
-
-	if(masterGameList.find(gameID) != masterGameList.end())
-	{
-		/* Game is valid */	
-		return true;
-	} 
-	return false;
+	return masterGameList.find(gameID) != masterGameList.end();
 }
 
 void Server::postJoinGame(const httplib::Request& req, httplib::Response& res)
 {
 	/* Grab gameID */
 	std::string gameID = req.matches[1];	
-	std::string playerName = req.matches[2];
+	
+	std::string playerName = req.get_param_value("playerName");
 	
 	if(!findGameInGameMap(gameID, Server::masterGameList))
 	{
 		/* Game Invalid */	
+		/* Local DEBUG */
+		std::cout << "[POST /join/" << gameID << "] ERROR: Invalid Game ID" << std::endl;
+
+		res.status = ServerCodes::NOT_FOUND;
+		res.set_content("Game not Found", "text/plain");
+
+		/* TODO: Timer to reset back to main page */
 		return;
 	}
-	
+	 
 	/* Game ID is valid, now grab it */
-	auto gameProperties = std::move(this->masterGameList[gameID]);
+	auto& gameProperties = this->masterGameList[gameID];
+	
+	if(gameProperties->gameStarted)
+	{
+		/* Game has started */
+		/* Player can't join */
+		/* Local DEBUG */
+		std::cout << "[POST /join/" << gameID << "] ERROR: Game already in progress." << std::endl;
+
+		res.status = ServerCodes::CONFLICT; 
+		res.set_content("Game already in progress", "text/plain");
+
+		/* TODO: Timer to reset back to main page */
+		return;
+	}
+
+	if(!gameProperties->hostName.empty() && !gameProperties->guestName.empty())
+	{
+		/* Game is full */
+		/* Local DEBUG */
+		std::cout << "[POST /join/" << gameID << "] ERROR: Game is full." << std::endl;
+
+		res.status = ServerCodes::CONFLICT;
+		res.set_content("Game is full.", "text/plain");
+
+		/* TODO: TIMER TO RESET BACK TO MAIN PAGE */
+		return;
+	}
+
+	gameProperties->guestName = playerName;
+	gameProperties->gameStarted = true;
+
+	/* Local DEBUG */
+	std::cout << "[POST /join/" << gameID << "] SUCCESS: " << gameProperties->hostName <<  " & " << 
+		gameProperties->guestName << " Started!" << std::endl;
+
+	res.status = ServerCodes::GAME_SUCCESS;
+	res.set_header("Location", "/game/" + gameID);
+	res.set_content("Joined game successfully", "text/plain");
 }
 
 void Server::getGameStatus(const httplib::Request& req, httplib::Response& res)
@@ -261,11 +306,17 @@ void Server::getGameStatus(const httplib::Request& req, httplib::Response& res)
 
 	if(!findGameInGameMap(gameID, Server::masterGameList))
 	{
+		/* Local DEBUG */
+		std::cout << "[GET /game/" << gameID << "] ERROR: " << gameID << " is invalid." << std::endl;
+
+		res.status = ServerCodes::NOT_FOUND;
+
+		/* TODO RESET TO HOME PAGE */
+		res.set_header("Location", "/create");
+
 		/* TODO: Convert to HTML/JSON/CS */
 		std::string msg = "Game ID: " + gameID + " is not valid.";
 		res.set_content(msg, "text/plain");
-
-		/* TODO RESET TO HOME PAGE */
 	}
 }
 
@@ -296,7 +347,7 @@ int Server::run()
 		this->postCreateGame(req, res);
 	});
 
-	svr.Post("/join", [this](const httplib::Request& req, httplib::Response& res) {
+	svr.Post(R"(/join/(.+))", [this](const httplib::Request& req, httplib::Response& res) {
 		this->postJoinGame(req, res);
 	});
 
