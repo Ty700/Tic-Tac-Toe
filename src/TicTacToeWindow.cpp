@@ -10,6 +10,11 @@
 #include "TicTacToeWindow.h"
 #include "GameStats.h"
 #include "Server.h"
+
+#ifndef CPPHTTPLIB_OPENSSL_SUPPORT
+	#define CPPHTTPLIB_OPENSSL_SUPPORT
+#endif
+
 #include "httplib.h"
 
 /**
@@ -456,12 +461,12 @@ void TicTacToeWindow::setupHostOnlineGUI()
 
     	/* =========== POST /CREATE DESKTOP SIDE  =========== */
 	/* TODO: MOVE INTO STANDALONE FUNCTION */
-	/* TODO: CHANGE LOCALHOST AND PORT */
-	httplib::Client client("localhost", 8085);
+	httplib::Client client("https://tictactoe.ty700.tech");
 	httplib::Params params;
 	params.emplace("playerName", playerName);
 
 	auto resCode = client.Post("/create", params);
+
 
 	if(resCode->status == ServerCodes::DESKTOP_CREATE_GAME_SUCCESS)
 	{
@@ -482,7 +487,13 @@ void TicTacToeWindow::setupHostOnlineGUI()
 	} 
 	else 
 	{
-		std::cout << "Failed to create game!" << std::endl;
+		if (!resCode) {
+			std::cout << "Request failed - no response (SSL issue?)" << std::endl;
+		} else {
+			std::cout << "Rescode: " << resCode->status << std::endl;
+			std::cout << "Failed to create game!" << std::endl;
+		}
+
 		createButton->set_label("Create Game!");
 		createButton->set_sensitive(true);
 
@@ -593,7 +604,7 @@ void TicTacToeWindow::setupJoinGUI()
 
     	/* =========== Server Join  =========== */
 	/* TODO: MOVE INTO STANDALONE FUNCTION */
-	httplib::Client client("localhost", 8080);
+	httplib::Client client("https://tictactoe.ty700.tech");
 	std::string joinId = "/game/" + gameID + "/join";
 	std::string idBodyJson = R"({"playerName": ")" + playerName + R"("})";
 

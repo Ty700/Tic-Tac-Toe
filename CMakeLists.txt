@@ -4,6 +4,8 @@ project(TicTacToe VERSION 1.0.0)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GTKMM REQUIRED gtkmm-4.0)
 
+find_package(OpenSSL REQUIRED)
+
 set(EXE_NAME TicTacToe)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
@@ -16,7 +18,7 @@ include_directories(${GTKMM_INCLUDE_DIRS})
 
 target_compile_options(${EXE_NAME} PRIVATE -Wall -Wextra ${GTK4_CFLAGS})
 target_include_directories(${EXE_NAME} PRIVATE ${GTKMM_INCLUDE_DIRS})
-target_link_libraries(${EXE_NAME} PRIVATE ${GTKMM_LIBRARIES})
+target_link_libraries(${EXE_NAME} PRIVATE ${GTKMM_LIBRARIES} OpenSSL::SSL OpenSSL::Crypto)
 
 target_compile_options(${EXE_NAME} PRIVATE
   $<$<CONFIG:Debug>:-DDEBUG>

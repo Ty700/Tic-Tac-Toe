@@ -2,6 +2,7 @@
 #include <string>
 #include <memory>
 #include <unordered_map>
+#define CPPHTTPLIB_OPENSSL_SUPPORT
 #include "httplib.h"
 
 class NetworkGame {

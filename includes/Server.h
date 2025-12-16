@@ -2,19 +2,23 @@
 #include <string>
 #include <memory>
 #include <unordered_map>
+
+#ifndef CPPHTTPLIB_OPENSSL_SUPPORT
+	#define CPPHTTPLIB_OPENSSL_SUPPORT
+#endif
+
 #include "../includes/httplib.h"
 #include "../includes/NetworkGame.h"
 
 namespace ServerCodes 
 {
-	const int CREATE_GAME_FAILED = 500;
-	const int DESKTOP_CREATE_GAME_SUCCESS = 302;
-	const int DESKTOP_JOIN_GAME_SUCCESS = 200;
-	const int GAME_SUCCESS = 200;
-	const int CREATE_GAME_ID_FAILED = 501;
-	const int NOT_FOUND = 404;
-	const int CONFLICT = 409;
-
+	const int CREATE_GAME_FAILED = httplib::StatusCode::InternalServerError_500;
+	const int DESKTOP_CREATE_GAME_SUCCESS = httplib::StatusCode::Found_302;
+	const int DESKTOP_JOIN_GAME_SUCCESS = httplib::StatusCode::OK_200;
+	const int GAME_SUCCESS = httplib::StatusCode::OK_200;
+	const int CREATE_GAME_ID_FAILED = httplib::StatusCode::NotImplemented_501;
+	const int NOT_FOUND = httplib::StatusCode::NotFound_404;
+	const int CONFLICT = httplib::StatusCode::Conflict_409;
 }
 
 class Server {
