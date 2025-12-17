@@ -312,11 +312,13 @@ void Server::getGameStatus(const httplib::Request& req, httplib::Response& res)
 		res.status = ServerCodes::NOT_FOUND;
 
 		/* TODO RESET TO HOME PAGE */
-		res.set_header("Location", "/create");
+		res.set_header("Location", "/create-game");
 
 		/* TODO: Convert to HTML/JSON/CS */
 		std::string msg = "Game ID: " + gameID + " is not valid.";
 		res.set_content(msg, "text/plain");
+
+		return;
 	}
 	
 	/* Game is valid -> Respond with game information */
