@@ -99,10 +99,10 @@ void Game::validMove(const int& slot_id)
 	/* Update UI */
 	p_updateUICallback(game_status);
 	
-	/* Disable Buttons if winner/tie */
+	/* End of Game */
 	if(game_status == p_gameLogic.GAME_STATUS::WINNER || game_status == p_gameLogic.GAME_STATUS::TIE)
 	{
-		disableAllSlots();
+		processEndOfGame();
 	}
 }
 

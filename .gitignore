@@ -1,7 +1,7 @@
 .vscode/*
 bin/*
 build/*
-GameStats/
+GameStats/*
 compile_commands.json
 .clangd
 .cache/
