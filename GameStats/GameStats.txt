@@ -32,3 +32,67 @@ Game 7 Details:
 	Player One Name: Tyler
 	Player Two Name: Alex
 	Winner: TIE
+Game 8 Details: 
+	Player One Name: Akira
+	Player Two Name: Tyler
+	Winner: TIE
+Game 9 Details: 
+	Player One Name: Akira
+	Player Two Name: Tyler
+	Winner: TIE
+Game 10 Details: 
+	Player One Name: Reby
+	Player Two Name: Tyler
+	Winner: TIE
+Game 11 Details: 
+	Player One Name: Reby
+	Player Two Name: Tyler
+	Winner: TIE
+Game 12 Details: 
+	Player One Name: Reby
+	Player Two Name: Tyler
+	Winner: TIE
+Game 13 Details: 
+	Player One Name: Reby
+	Player Two Name: Tyler
+	Winner: TIE
+Game 14 Details: 
+	Player One Name: Reby
+	Player Two Name: Tyler
+	Winner: TIE
+Game 15 Details: 
+	Player One Name: Tyler
+	Player Two Name: Reby
+	Winner: TIE
+Game 16 Details: 
+	Player One Name: Mike
+	Player Two Name: Anna
+	Winner: TIE
+Game 17 Details: 
+	Player One Name: Mike
+	Player Two Name: Anna
+	Winner: TIE
+Game 18 Details: 
+	Player One Name: Mike
+	Player Two Name: Anna
+	Winner: TIE
+Game 19 Details: 
+	Player One Name: Ty
+	Player Two Name: Maria
+	Winner: TIE
+Game 20 Details: 
+	Player One Name: Mike
+	Player Two Name: Daisuke
+	Winner: TIE
+Game 21 Details: 
+	Player One Name: Chris
+	Player Two Name: Elisa
+	Winner: TIE
+Game 22 Details: 
+	Player One Name: Abby
+	Player Two Name: Daisuke
+	Winner: TIE
+Game 23 Details: 
+	Player One Name: Alex
+	Player Two Name: Ty
+	Winner: TIE

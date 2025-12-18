@@ -27,7 +27,7 @@ void TicTacToeWindow::setupTicTacToeGridGUI()
 	auto spacerBoxTop = Gtk::make_managed<Gtk::Box>();
 	spacerBoxTop->set_margin_bottom(10);
 	
-	updateTurnDisplay(Game::TurnConditions::KeepGoing);
+	updateTurnDisplay(p_mainGame->getGameState());
 	p_turnLabel->set_name("p_turnLabel");
 	p_turnLabel->add_css_class("title-label");
 
@@ -72,19 +72,19 @@ void deleteBoxContents(Gtk::Box* win)
 
 /**
  * @FUNCTION:	Responsible for updating the GUI to display who's turn it is.
- * @PARAMS: 	VOID 
+ * @PARAMS: 	Current state of game	
  * @RET: 	VOID 
  * @INFO: 	Callback for Game.
  */
-void TicTacToeWindow::updateTurnDisplay(const int& condition)
+void TicTacToeWindow::updateTurnDisplay(const TicTacToeCore::GAME_STATUS& game_state)
 {	
 	Glib::ustring turnText;
 
-	if(condition == Game::TurnConditions::HasWinner)
+	if(game_state == TicTacToeCore::GAME_STATUS::WINNER) 
 	{
 		turnText = p_mainGame->getCurrPlayerName() + " has won!";
 		updateOngoingGameStats(p_mainGame);
-	} else if (condition == Game::TurnConditions::Tie)
+	} else if (game_state == TicTacToeCore::GAME_STATUS::TIE) 
 	{
 		turnText = "Tie!";
 		updateOngoingGameStats(p_mainGame);
@@ -117,67 +117,61 @@ void TicTacToeWindow::onStartButtonClick()
 	auto p1NameEntry    = findWidget<Gtk::Entry>(p_mainWindowBox, "p1NameEntry");
 	auto p2NameEntry    = findWidget<Gtk::Entry>(p_mainWindowBox, "p2NameEntry");
 	auto p1SymX 	    = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "symbolX");
-	auto p1FirstBut     = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "p1FirstBut");	
-	auto p2FirstBut     = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "p2FirstBut");	
+	// auto p1FirstBut     = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "p1FirstBut");	/* X will always go first */
+	// auto p2FirstBut     = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "p2FirstBut");	/* X will always go first */
 	auto p2TypeHumanBut = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "p2TypeHuman");
 
 	#ifdef DEBUG 
-		auto randFirstBut = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "randFirstBut");
+		 // auto randFirstBut = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "randFirstBut"); /* X will always go first */
 		std::cout << "Player 1 Name: "     << p1NameEntry->get_text() 
 			  << "\nPlayer 2 Name: "   << p2NameEntry->get_text() 
 			  << "\nPlayer 1 Symbol: " << p1SymX->get_active() 
-			  << "\nP1 first: " 	   << p1FirstBut->get_active() 
-			  << "\nP2 first: " 	   << p2FirstBut->get_active()
-			  << "\nRandom: " 	   << randFirstBut->get_active()
+			  // << "\nP1 first: " 	   << p1FirstBut->get_active() 		/* X will always go first */
+			  // << "\nP2 first: " 	   << p2FirstBut->get_active()		/* X will always go first */
+			  // << "\nRandom: " 	   << randFirstBut->get_active() 	/* X will always go first */
 			  << std::endl << std::endl;
 	#endif
 
-	/* Create Player Objs 
-	 * TODO: Player Option. P2 is AI by default 
-	 */
+	/* Create Player Configs */
 	Player::PlayerParams p1Params{
-		.name  = p1NameEntry->get_text(),
-		.sym   = ((p1SymX->get_active()) ? Player::PlayerSymbol::X : Player::PlayerSymbol::O),
+		.name  = (p1SymX->get_active()) ? p1NameEntry->get_text() : p2NameEntry->get_text(),
+		.sym   = Player::PlayerSymbol::X,
 		.state = Player::PlayerState::Human 
 	};
 
 	Player::PlayerParams p2Params{
-		.name  = p2NameEntry->get_text(),
-		.sym   = (p1Params.sym == Player::PlayerSymbol::X) ? Player::PlayerSymbol::O : Player::PlayerSymbol::X, 
+		.name  = (p1SymX->get_active()) ? p2NameEntry->get_text() : p1NameEntry->get_text(),
+		.sym   = Player::PlayerSymbol::O, 
 		.state = (p2TypeHumanBut->get_active()) ? Player::PlayerState::Human : Player::PlayerState::AI
 	};
-
+	
 	std::shared_ptr<Player> p1 = std::make_shared<Player>(p1Params);
 	std::shared_ptr<Player> p2 = std::make_shared<Player>(p2Params);
-	
+
 	#ifdef DEBUG
 		std::cout << "\nP1 Name: " << p1->getPlayerName() << "\nP1 State: " << static_cast<Player::PlayerState>(p1->getPlayerState()) << "\nP1 Symbol: " << static_cast<Player::PlayerSymbol>(p1->getPlayerSymbol()) << "\n";
 		std::cout << "\nP2 Name: " << p2->getPlayerName() << "\nP2 State: " << static_cast<Player::PlayerState>(p2->getPlayerState()) << "\nP2 Symbol: " << static_cast<Player::PlayerSymbol>(p2->getPlayerSymbol()) << "\n";
 	#endif
 	
-	int turnIdx{-1};
-	if(p1FirstBut->get_active())
-	{
-		turnIdx = 0;
-	} else if (p2FirstBut->get_active())
-	{
-		turnIdx = 1;
-	} else {
-		turnIdx = 2;
-	}
+	/* To align with TicTacToe Rules, X will always go first. */
+	// if(p1FirstBut->get_active())
+	// {
+	// 	turnIdx = 0;
+	// } else if (p2FirstBut->get_active())
+	// {
+	// 	turnIdx = 1;
+	// } else {
+	// 	turnIdx = 2;
+	// }
 
 	/* Create Game Obj */
 	Game::GameParams gameParams{
 		.p1 = p1,
 		.p2 = p2,
-		.turnIdx = turnIdx,
-		.updateUICallback = [this](const int& condition) { updateTurnDisplay(condition); }
+		// .turnIdx = turnIdx, /* X will always go first */
+		.updateUICallback = [this](const TicTacToeCore::GAME_STATUS& game_state) { updateTurnDisplay(game_state); }
 	};
 	
-	#ifdef DEBUG 
-		std::cout << "Turn Idx: " << gameParams.turnIdx << std::endl;
-	#endif
-
 	p_mainGame = std::make_unique<Game>(gameParams);
 
 	/* Clear screen */
@@ -302,36 +296,37 @@ void TicTacToeWindow::setupSinglePlayerMainMenuGUI()
     /* =========== GAME START OPTIONS =========== */
     
     /* Who Goes First Selection */
-    auto goesFirstBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::HORIZONTAL);
-    auto firstLabel = Gtk::make_managed<Gtk::Label>("Who goes first: ");
-    firstLabel->set_halign(Gtk::Align::START);
-    firstLabel->set_size_request(180, -1);
+    /* COMMENTED OUT AS WHOEVER IS X WILL GO FIRST */
+    // auto goesFirstBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::HORIZONTAL);
+    // auto firstLabel = Gtk::make_managed<Gtk::Label>("Who goes first: ");
+    // firstLabel->set_halign(Gtk::Align::START);
+    // firstLabel->set_size_request(180, -1);
 
-    auto p1FirstBut = Gtk::make_managed<Gtk::ToggleButton>("Player 1");
-    auto p2FirstBut = Gtk::make_managed<Gtk::ToggleButton>("Player 2");
-    auto randFirstBut = Gtk::make_managed<Gtk::ToggleButton>("Random");
-    
-    p1FirstBut->set_name("p1FirstBut");
-    p2FirstBut->set_name("p2FirstBut");
-    randFirstBut->set_name("randFirstBut");
+    // auto p1FirstBut = Gtk::make_managed<Gtk::ToggleButton>("Player 1");
+    // auto p2FirstBut = Gtk::make_managed<Gtk::ToggleButton>("Player 2");
+    // auto randFirstBut = Gtk::make_managed<Gtk::ToggleButton>("Random");
+    // 
+    // p1FirstBut->set_name("p1FirstBut");
+    // p2FirstBut->set_name("p2FirstBut");
+    // randFirstBut->set_name("randFirstBut");
 
-    p1FirstBut->set_group(*p2FirstBut);
-    randFirstBut->set_group(*p2FirstBut);
-    randFirstBut->set_active(true);
+    // p1FirstBut->set_group(*p2FirstBut);
+    // randFirstBut->set_group(*p2FirstBut);
+    // randFirstBut->set_active(true);
 
-    goesFirstBox->append(*firstLabel);
-    goesFirstBox->set_margin(5);
-    goesFirstBox->set_halign(Gtk::Align::START);
-    goesFirstBox->append(*p1FirstBut);
-    goesFirstBox->append(*p2FirstBut);
-    goesFirstBox->append(*randFirstBut);
+    // goesFirstBox->append(*firstLabel);
+    // goesFirstBox->set_margin(5);
+    // goesFirstBox->set_halign(Gtk::Align::START);
+    // goesFirstBox->append(*p1FirstBut);
+    // goesFirstBox->append(*p2FirstBut);
+    // goesFirstBox->append(*randFirstBut);
 
-    /* =========== ADD ALL SECTIONS TO MENU =========== */
-    menuBox->append(*p1Box);
-    menuBox->append(*p1SymBox);
-    menuBox->append(*p2TypeBox);
-    menuBox->append(*p2Box);
-    menuBox->append(*goesFirstBox);
+     /* =========== ADD ALL SECTIONS TO MENU =========== */
+     menuBox->append(*p1Box);
+     menuBox->append(*p1SymBox);
+     menuBox->append(*p2TypeBox);
+     menuBox->append(*p2Box);
+    // menuBox->append(*goesFirstBox);
 
     /* =========== SPACE BOX =========== */
     /* Menu to start button spacer */
@@ -374,10 +369,10 @@ void TicTacToeWindow::setupSinglePlayerMainMenuGUI()
     p2NameEntry->add_css_class("entry");
     
     /* Game options styling */
-    firstLabel->add_css_class("menu");
-    p1FirstBut->add_css_class("radio-button");
-    p2FirstBut->add_css_class("radio-button");
-    randFirstBut->add_css_class("radio-button");
+   // firstLabel->add_css_class("menu");
+   // p1FirstBut->add_css_class("radio-button");
+   // p2FirstBut->add_css_class("radio-button");
+   // randFirstBut->add_css_class("radio-button");
 
     /* =========== ASSEMBLE MAIN WINDOW =========== */
     p_mainWindowBox->append(*titleBox);

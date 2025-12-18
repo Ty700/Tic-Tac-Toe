@@ -13,10 +13,10 @@ class TicTacToeCore
 		};
 		
 		enum GAME_STATUS {
-			IN_PROGRESS, 
-			WINNER,
-			TIE,
-			ERROR_MOVE
+			IN_PROGRESS 	= 0b00, 
+			WINNER 		= 0b01,
+			TIE		= 0b10,
+			ERROR_MOVE	= 0b11
 		};
 
 		/* Bitmap Board */
@@ -27,10 +27,11 @@ class TicTacToeCore
 		/* XXXXXXXXXXXXXX XX  8  7  6  5  4  3  2  1  0 */
 
 		/* Memory layout (32 bits total):
-		 * [8 bits unused][2 bit symbol][4 bits moves][18 bits Board]
+		 * [7 bits unused] | [2 bit game status] | [2 bit symbol] | [4 bits moves] | [18 bits Board]
 		 */
 		struct gameProperties {
-			uint32_t RESERVED	:9;	/* Unused */
+			uint32_t RESERVED	:7;	/* Unused */
+			uint32_t game_state	:2;	/* 00 -> IN_PROGRESS || 01 -> WINNER || -> 10 -> TIE */
 			uint32_t current_symbol	:2;	/* 01 -> X || 10 -> O */
 			uint32_t move_counter	:4;	/* Track # of rounds passed */
 			uint32_t board		:18;	/* Comment above */
@@ -39,8 +40,9 @@ class TicTacToeCore
 		/* Constructor & Destructor */
 		TicTacToeCore() {
 			props.board = 0;
-			props.move_counter = 1;
+			props.move_counter = 0;
 			props.current_symbol = CELL_STATES::X;
+			props.game_state = GAME_STATUS::IN_PROGRESS;
 		};	
 
 		~TicTacToeCore() {};
@@ -49,6 +51,10 @@ class TicTacToeCore
 
 		/* Methods */
 		GAME_STATUS makeMove(const int& pos, const CELL_STATES& symbol);
+		int getPlayerTurn() { return props.move_counter % 2; }
+		GAME_STATUS getGameState() { return (GAME_STATUS)props.game_state; }
+		CELL_STATES getCurrentSymbol() { return (CELL_STATES)props.current_symbol; }
+		CELL_STATES getCell(const int& pos);
 
 	private:
 		/* Members */
@@ -62,9 +68,7 @@ class TicTacToeCore
 		bool checkForWinner();
 		bool checkForTie();
 		
-		/* Get/Set cell vals */
 		bool setCell(const int& pos, const CELL_STATES& symbol);
-		CELL_STATES getCell(const int& pos);
 		
 		/* End Game */
 		void endGame(const GAME_STATUS& status);

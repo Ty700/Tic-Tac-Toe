@@ -130,7 +130,7 @@ TicTacToeCore::CELL_STATES TicTacToeCore::getCell(const int& pos)
  */
 bool TicTacToeCore::checkForTie()
 {
-	return (props.move_counter == 9);
+	return (props.move_counter == 8);
 }
 
 /**
