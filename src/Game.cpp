@@ -12,29 +12,6 @@
 #include "GameStats.h"
 
 /**
- * @FUNCTION: 	Gets AI move based on difficulty
- * @PARAMS: 	VOID 
- * @RET:	Array with row, col coordinates
- */
-std::array<int, 2> Game::processAIMove()
-{
-	/* TODO AI MOVES WITH REFACTOR */
-	// switch(p_PlayerArr[p_turnIdx]->getPlayerDiff())
-	// {
-	//     case Player::PlayerDiff::EASY:
-	//         return randomAIMove(p_boardSlots);
-	//         break;
-	//     case Player::PlayerDiff::MEDIUM:
-	//         return mediumAIMove(p_boardSlots, p_playerOne->getPlayerSymbol(), p_playerTwo->getPlayerSymbol());
-	//         break;
-	//     case Player::PlayerDiff::HARD:
-	//         return hardAIMove(p_boardSlots, p_playerOne->getPlayerSymbol(), p_playerTwo->getPlayerSymbol());
-	//         break;
-	// }
-	return {-1, -1};
-}
-
-/**
  * @FUNCTION: 	Enables all board slots
  * @PARAMS: 	VOID 
  * @RET:	VOID 
@@ -103,7 +80,10 @@ void Game::validMove(const int& slot_id)
 	if(game_status == p_gameLogic.GAME_STATUS::WINNER || game_status == p_gameLogic.GAME_STATUS::TIE)
 	{
 		processEndOfGame();
+		return;
 	}
+
+	playGame();
 }
 
 /**
@@ -148,10 +128,8 @@ void Game::playGame()
 		disableAllSlots();
 
 		Glib::signal_timeout().connect_once([this]() {
-				// std::array<int, 2> aiMove = processAIMove();
-				// p_currPlayerChoice[0] = aiMove[0];
-				// p_currPlayerChoice[1] = aiMove[1];
-				// p_boardSlots[aiMove[0]][aiMove[1]]->updateSymbol(p_PlayerArr[p_gameLogic.getPlayerTurn()]->getPlayerSymbol());
+				int ai_move = AIEngine::handleMove(this->p_gameLogic, p_PlayerArr[p_gameLogic.getPlayerTurn()]->getPlayerDiff());
+				validMove(ai_move);
 				}, 1500);
 	}
 	else

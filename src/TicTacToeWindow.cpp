@@ -94,6 +94,7 @@ void TicTacToeWindow::updateTurnDisplay(const TicTacToeCore::GAME_STATUS& game_s
 
 	p_turnLabel->set_text(turnText);
 }
+
 /** 
  * @FUNCTION: 	Runs when the player presses "Start Game"
  * 		  - Grabs important info from main menu 
@@ -119,7 +120,8 @@ void TicTacToeWindow::onStartButtonClick()
 	auto p1SymX 	    = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "symbolX");
 	// auto p1FirstBut     = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "p1FirstBut");	/* X will always go first */
 	// auto p2FirstBut     = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "p2FirstBut");	/* X will always go first */
-	auto p2TypeHumanBut = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "p2TypeHuman");
+	auto p1TypeBut = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "p1TypeHuman");
+	auto p2TypeBut = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "p2TypeHuman");
 
 	#ifdef DEBUG 
 		 // auto randFirstBut = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "randFirstBut"); /* X will always go first */
@@ -136,15 +138,20 @@ void TicTacToeWindow::onStartButtonClick()
 	Player::PlayerParams p1Params{
 		.name  = (p1SymX->get_active()) ? p1NameEntry->get_text() : p2NameEntry->get_text(),
 		.sym   = Player::PlayerSymbol::X,
-		.state = Player::PlayerState::Human 
+		.state = (p1SymX->get_active()) ? 
+		((p1TypeBut->get_active()) ? Player::PlayerState::Human : Player::PlayerState::AI) :
+		((p2TypeBut->get_active()) ? Player::PlayerState::Human : Player::PlayerState::AI)	
 	};
 
 	Player::PlayerParams p2Params{
 		.name  = (p1SymX->get_active()) ? p2NameEntry->get_text() : p1NameEntry->get_text(),
 		.sym   = Player::PlayerSymbol::O, 
-		.state = (p2TypeHumanBut->get_active()) ? Player::PlayerState::Human : Player::PlayerState::AI
+		.state = (p1SymX->get_active()) ? 
+		((p2TypeBut->get_active()) ? Player::PlayerState::Human : Player::PlayerState::AI) :
+		((p1TypeBut->get_active()) ? Player::PlayerState::Human : Player::PlayerState::AI)	
 	};
-	
+
+
 	std::shared_ptr<Player> p1 = std::make_shared<Player>(p1Params);
 	std::shared_ptr<Player> p2 = std::make_shared<Player>(p2Params);
 
@@ -208,23 +215,53 @@ void TicTacToeWindow::setupSinglePlayerMainMenuGUI()
 
     /* =========== PLAYER 1 CONFIGURATION =========== */
     
-    /* Player 1 Name */
-    auto p1Box = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::HORIZONTAL);
-    p1Box->set_halign(Gtk::Align::START);
+    /* Player 1 Type Selection */
+    auto p1TypeBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::HORIZONTAL);    
+
+    auto p1TypeLabel = Gtk::make_managed<Gtk::Label>("Player 1 is a: ");
+    p1TypeLabel->set_halign(Gtk::Align::START);
+    p1TypeLabel->set_size_request(180, -1);
+
+    auto p1TypeBut = Gtk::make_managed<Gtk::ToggleButton>("Human");
+    p1TypeBut->set_name("p1TypeHuman");
+
+    auto p1TypeAIBut = Gtk::make_managed<Gtk::ToggleButton>("AI");
+    p1TypeAIBut->set_active(true);
+    p1TypeAIBut->set_name("p1TypeAI");
+    p1TypeBut->set_group(*p1TypeAIBut);
+
+    p1TypeBox->append(*p1TypeLabel);
+    p1TypeBox->set_margin(5);
+    p1TypeBox->set_halign(Gtk::Align::START);
+    p1TypeBox->append(*p1TypeBut);
+    p1TypeBox->append(*p1TypeAIBut);
     
+    /* Player 1 Name (conditionally visible) */
+    auto p1Box = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::HORIZONTAL);
+
     auto p1NameLbl = Gtk::make_managed<Gtk::Label>("Player 1 Name: ");
     p1NameLbl->set_halign(Gtk::Align::START);
     p1NameLbl->set_size_request(180, -1);
 
     auto p1NameEntry = Gtk::make_managed<Gtk::Entry>();
-    p1NameEntry->set_name("p1NameEntry");
     p1NameEntry->set_placeholder_text("David");
-    p1NameEntry->set_halign(Gtk::Align::START);
-    p1NameEntry->set_hexpand(true);
-    
+    p1NameEntry->set_name("p1NameEntry");
+
     p1Box->append(*p1NameLbl);
     p1Box->append(*p1NameEntry);
-    
+
+    /* Signal to hide/show P2 name entry based on type selection */
+    p1TypeBut->signal_toggled().connect([p1Box, p1TypeBut]() {
+        if (p1TypeBut->get_active()) {
+            p1Box->set_visible(true);   // Show name entry for human
+        } else {
+            p1Box->set_visible(false);  // Hide name entry for AI
+        }
+    });
+
+    // Set initial state (since AI is default, hide the name box)
+    p1Box->set_visible(false);
+   
     /* Player 1 Symbol Selection */
     auto p1SymBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::HORIZONTAL);
     auto p1SymLbl = Gtk::make_managed<Gtk::Label>("Player 1 Symbol: ");
@@ -253,18 +290,18 @@ void TicTacToeWindow::setupSinglePlayerMainMenuGUI()
     p2TypeLabel->set_halign(Gtk::Align::START);
     p2TypeLabel->set_size_request(180, -1);
 
-    auto p2TypeHumanBut = Gtk::make_managed<Gtk::ToggleButton>("Human");
-    p2TypeHumanBut->set_name("p2TypeHuman");
+    auto p2TypeBut = Gtk::make_managed<Gtk::ToggleButton>("Human");
+    p2TypeBut->set_name("p2TypeHuman");
 
     auto p2TypeAIBut = Gtk::make_managed<Gtk::ToggleButton>("AI");
     p2TypeAIBut->set_active(true);
     p2TypeAIBut->set_name("p2TypeAI");
-    p2TypeHumanBut->set_group(*p2TypeAIBut);
+    p2TypeBut->set_group(*p2TypeAIBut);
 
     p2TypeBox->append(*p2TypeLabel);
     p2TypeBox->set_margin(5);
     p2TypeBox->set_halign(Gtk::Align::START);
-    p2TypeBox->append(*p2TypeHumanBut);
+    p2TypeBox->append(*p2TypeBut);
     p2TypeBox->append(*p2TypeAIBut);
     
     /* Player 2 Name (conditionally visible) */
@@ -282,8 +319,8 @@ void TicTacToeWindow::setupSinglePlayerMainMenuGUI()
     p2Box->append(*p2NameEntry);
 
     /* Signal to hide/show P2 name entry based on type selection */
-    p2TypeHumanBut->signal_toggled().connect([p2Box, p2TypeHumanBut]() {
-        if (p2TypeHumanBut->get_active()) {
+    p2TypeBut->signal_toggled().connect([p2Box, p2TypeBut]() {
+        if (p2TypeBut->get_active()) {
             p2Box->set_visible(true);   // Show name entry for human
         } else {
             p2Box->set_visible(false);  // Hide name entry for AI
@@ -321,11 +358,12 @@ void TicTacToeWindow::setupSinglePlayerMainMenuGUI()
     // goesFirstBox->append(*p2FirstBut);
     // goesFirstBox->append(*randFirstBut);
 
-     /* =========== ADD ALL SECTIONS TO MENU =========== */
-     menuBox->append(*p1Box);
-     menuBox->append(*p1SymBox);
-     menuBox->append(*p2TypeBox);
-     menuBox->append(*p2Box);
+    /* =========== ADD ALL SECTIONS TO MENU =========== */
+    menuBox->append(*p1TypeBox); 
+    menuBox->append(*p1Box);
+    menuBox->append(*p1SymBox);
+    menuBox->append(*p2TypeBox);
+    menuBox->append(*p2Box);
     // menuBox->append(*goesFirstBox);
 
     /* =========== SPACE BOX =========== */
@@ -353,6 +391,9 @@ void TicTacToeWindow::setupSinglePlayerMainMenuGUI()
     backButton->add_css_class("radio-button");
     
     /* Player 1 styling */
+    p1TypeLabel->add_css_class("menu");
+    p1TypeBut->add_css_class("radio-button");
+    p1TypeAIBut->add_css_class("radio-button");
     p1NameLbl->add_css_class("menu");
     p1NameEntry->add_css_class("menu");
     p1NameEntry->add_css_class("entry");
@@ -362,7 +403,7 @@ void TicTacToeWindow::setupSinglePlayerMainMenuGUI()
 
     /* Player 2 styling */
     p2TypeLabel->add_css_class("menu");
-    p2TypeHumanBut->add_css_class("radio-button");
+    p2TypeBut->add_css_class("radio-button");
     p2TypeAIBut->add_css_class("radio-button");
     p2NameLbl->add_css_class("menu");
     p2NameEntry->add_css_class("menu");

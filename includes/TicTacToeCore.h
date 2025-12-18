@@ -52,9 +52,9 @@ class TicTacToeCore
 		/* Methods */
 		GAME_STATUS makeMove(const int& pos, const CELL_STATES& symbol);
 		int getPlayerTurn() { return props.move_counter % 2; }
-		GAME_STATUS getGameState() { return (GAME_STATUS)props.game_state; }
-		CELL_STATES getCurrentSymbol() { return (CELL_STATES)props.current_symbol; }
-		CELL_STATES getCell(const int& pos);
+		GAME_STATUS getGameState() const { return (GAME_STATUS)props.game_state; }
+		CELL_STATES getCurrentSymbol() const { return (CELL_STATES)props.current_symbol; }
+		CELL_STATES getCell(const int& pos) const;
 
 	private:
 		/* Members */
