@@ -8,7 +8,7 @@
 #include "TicTacToeCore.h"
 #include "Game.h"
 #include "Slot.h"
-#include "AIMoves.h"
+#include "AIEngine.h"
 #include "GameStats.h"
 
 /**
