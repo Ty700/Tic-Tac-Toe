@@ -6,9 +6,9 @@
 #include <iterator>
 #include <memory>
 
-#include "../../includes/httplib.h"
-#include "../../includes/NetworkGame.h"
-#include "../../includes/Server.h"
+#include "httplib.h"
+#include "NetworkGame.h"
+#include "Server.h"
 
 /**
  * @FUNCTION:	Creates a unique ID for a new game 
@@ -47,14 +47,17 @@ std::string Server::createGameId()
  *         	string | ID of the game to create
  * @RETS:    	0 -> Success in creating game || 1 -> Error creating game
  */
-int Server::createGame(const httplib::Request& req, 
+std::unique_ptr<NetworkGame> Server::createGame(const httplib::Request& req, 
 	 	       httplib::Response& res, 
 		       const std::string& gameID)
 {
 	/* Creates game */
 	auto newGame = std::make_unique<NetworkGame>();
-	newGame->gameID = gameID;
-	this->masterGameList[gameID] = std::move(newGame);
+
+	if(!newGame)
+		return nullptr;
+
+	newGame->setGameID(gameID);
 
 	/*
 	 * Always tries to redirect to new url.
@@ -63,7 +66,8 @@ int Server::createGame(const httplib::Request& req,
 	 */
 	res.status = ServerCodes::DESKTOP_CREATE_GAME_SUCCESS; 
 	res.set_header("Location", "/game/" + gameID);
-	return 0;
+
+	return newGame;
 }
 
 void Server::getHomepage(const httplib::Request& req, httplib::Response &res)
@@ -197,39 +201,46 @@ void Server::postCreateGame(const httplib::Request& req, httplib::Response &res)
 	std::string hostName = req.get_param_value("playerName");
 
 	/* Generate new gameID */
-	std::string  newID = this->createGameId();
+	std::string newID = this->createGameId();
 
-	if(newID == "")
+	if(newID.empty())
 	{
 		/* Console logging */
 		std::cout << "[POST /create-game] ERROR: GAME ID" << std::endl;
 		res.status = ServerCodes::CREATE_GAME_ID_FAILED;
 		res.set_content("ERROR CREATING GAME ID!", "text/plain");
 		return;
-	} else {
-		int result = this->createGame(req, res, newID);
-
-		if(result)
-		{
-			/* Console logging */
-			std::cout << "[POST /create-game] ERROR: GAME CREATION" << std::endl;
-			res.status = ServerCodes::CREATE_GAME_FAILED;
-			res.set_content("ERROR CREATING GAME!", "text/plain");
-		} else {
-			if(!hostName.empty())
-			{
-				this->masterGameList[newID]->hostName = hostName;
-			}
-
-			/* createGame handled res status */
-			/* Console logging */
-			std::cout << "[POST /create-game] SUCCESS: GAME CREATED! ID: " << newID <<  std::endl;
-			if(!hostName.empty())
-			{
-				std::cout << "Host: " << this->masterGameList[newID]->hostName << std::endl; 
-			}
-		}
 	}
+
+	std::unique_ptr<NetworkGame> game = this->createGame(req, res, newID);
+
+	if(!game)
+	{
+		/* Console logging */
+		std::cout << "[POST /create-game] ERROR: GAME CREATION" << std::endl;
+		res.status = ServerCodes::CREATE_GAME_FAILED;
+		res.set_content("ERROR CREATING GAME!", "text/plain");
+		return;
+	} 
+
+	if(!hostName.empty())
+	{
+		Player::PlayerParams p1Params = {
+			.name = hostName,
+			.sym = Player::PlayerSymbol::X,
+			.state = Player::PlayerState::Human
+		};
+
+		this->masterGameList[newID] = std::move(game);
+	}
+	else 
+	{
+		
+	}
+
+	/* createGame handled res status */
+	/* Console logging */
+	std::cout << "[POST /create-game] SUCCESS: GAME CREATED! ID: " << newID <<  std::endl;
 }
 
 bool findGameInGameMap(const std::string& gameID, const std::unordered_map<std::string, std::unique_ptr<NetworkGame>>& masterGameList)
@@ -326,31 +337,10 @@ void Server::getGameStatus(const httplib::Request& req, httplib::Response& res)
 	
 	/* Will be using JSON to send data between nodes & server */
 	/* NOTE: JSON Parser needed on client side */
-
-	/* Building board */
-	std::string boardJson = "[";
-	for(int i = 0; i < 9; i++) {
-		boardJson += "\"" + game->board[i] + "\"";
-		if(i < 8) boardJson += ",";
-	}
-	boardJson += "]";
-
-	std::string json = R"({
-		"gameID": ")" + gameID + R"(",
-		"hostName": ")" + game->hostName + R"(",
-		"guestName": ")" + game->guestName + R"(",
-		"gameStarted": )" + (game->gameStarted ? "true" : "false") + R"(,
-		"board": )" + boardJson + R"(,
-		"currentPlayerIndex": )" + std::to_string(game->currentPlayerIndex) + R"(,
-		"playerOneSymbol": ")" + game->playerOneSymbol + R"(",
-		"playerTwoSymbol": ")" + game->playerTwoSymbol + R"(",
-		"winner": ")" + game->winner + R"(",
-		"isDraw": )" + (game->isDraw ? "true" : "false") + R"(,
-		"gameFinished": )" + (game->gameFinished ? "true" : "false") + R"(
-	})";
-
+	
+	if(game->getCurrentState() == NetworkGame:
+	
 	res.status = ServerCodes::GAME_SUCCESS;
-	res.set_content(json, "application/json");
 }
 
 /**

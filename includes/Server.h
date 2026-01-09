@@ -43,10 +43,13 @@ class Server {
 		 */
 		std::unordered_map<std::string, std::unique_ptr<NetworkGame>> masterGameList;
 
+		/* Mutex to protect the masterGameList */
+		std::mutex masterGameListMutex;	
+
 		/* Server Utilites */
 
 		std::string createGameId();
-		int createGame(const httplib::Request& req, 
+		std::unique_ptr<NetworkGame> createGame(const httplib::Request& req, 
 				httplib::Response& res, 
 				const std::string& gameID);
 
