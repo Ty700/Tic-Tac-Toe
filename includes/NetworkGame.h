@@ -12,6 +12,14 @@
 #include "Player.h"
 
 class NetworkGame {
+	public:
+		/* Tracks game status */
+		enum SESSION_STATE {
+			WAITING,
+			ACTIVE,
+			FINISHED 
+		}; 
+
 	private:
 		/* 4 Digit gameID used for hash map key */
 		std::string gameID;
@@ -26,12 +34,7 @@ class NetworkGame {
 		
 		std::mutex gameMutex;
 
-		/* Tracks game status */
-		enum SESSION_STATE {
-			WAITING,
-			ACTIVE,
-			FINISHED 
-		} p_currentState;
+		SESSION_STATE p_currentState;
 
 	public:
 		/* Returns the state of the game */
@@ -54,9 +57,10 @@ class NetworkGame {
 		/* Top level game call */
 		void initGame() 
 		{ 
-			p_gameLogic = std::unique_ptr<TicTacToeCore>();
+			p_gameLogic = std::make_unique<TicTacToeCore>();
 		 	p_currentState = SESSION_STATE::ACTIVE;
 		}
+
 
 		NetworkGame(const std::shared_ptr<Player> p1 = nullptr, const std::shared_ptr<Player> p2 = nullptr)
 			: p_playerOne(p1), p_playerTwo(p2)

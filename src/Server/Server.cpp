@@ -1,4 +1,5 @@
 #include <iostream>
+#include <mutex>
 #include <string>
 #include <random>
 #include <unordered_map>
@@ -231,6 +232,9 @@ void Server::postCreateGame(const httplib::Request& req, httplib::Response &res)
 			.state = Player::PlayerState::Human
 		};
 
+		auto player1 = std::make_shared<Player>(p1Params);
+		game->setPlayer(player1, 1);
+
 		this->masterGameList[newID] = std::move(game);
 	}
 	else 
@@ -270,22 +274,9 @@ void Server::postJoinGame(const httplib::Request& req, httplib::Response& res)
 	 
 	/* Game ID is valid, now grab it */
 	auto& gameProperties = this->masterGameList[gameID];
-	
-	if(gameProperties->gameStarted)
-	{
-		/* Game has started */
-		/* Player can't join */
-		/* Local DEBUG */
-		std::cout << "[POST /join/" << gameID << "] ERROR: Game already in progress." << std::endl;
-
-		res.status = ServerCodes::CONFLICT; 
-		res.set_content("Game already in progress", "text/plain");
-
-		/* TODO: Timer to reset back to main page */
-		return;
-	}
-
-	if(!gameProperties->hostName.empty() && !gameProperties->guestName.empty())
+		
+	/* Both players have joined, thus can't join */
+	if(gameProperties->getCurrentState() == NetworkGame::SESSION_STATE::ACTIVE)
 	{
 		/* Game is full */
 		/* Local DEBUG */
@@ -298,16 +289,50 @@ void Server::postJoinGame(const httplib::Request& req, httplib::Response& res)
 		return;
 	}
 
-	gameProperties->guestName = playerName;
-	gameProperties->gameStarted = true;
+	/* Game has finished */
+	if(gameProperties->getCurrentState() == NetworkGame::SESSION_STATE::FINISHED)
+	{
+		/* Game is full */
+		/* Local DEBUG */
+		std::cout << "[POST /join/" << gameID << "] ERROR: Game is finished." << std::endl;
+
+		res.status = ServerCodes::CONFLICT;
+		res.set_content("Game is finished.", "text/plain");
+
+		/* TODO: TIMER TO RESET BACK TO MAIN PAGE */
+		return;
+	}
+
+	/* Has player 2 joined? */
+	if(gameProperties->waitingToStart())
+	{
+		Player::PlayerParams p2Params = 
+		{
+			.name	= playerName,
+			.sym 	= Player::PlayerSymbol::O,
+			.state 	= Player::PlayerState::Human
+		};
+
+		auto player2 = std::make_shared<Player>(p2Params);
+		gameProperties->setPlayer(player2, 2);
+		gameProperties->initGame();
+
+		/* Local DEBUG */
+		std::cout << "[POST /join/" << gameID << "] SUCCESS: " << gameProperties->getPlayer(1)->getPlayerName() <<  " & " << 
+			gameProperties->getPlayer(2)->getPlayerName() << " Started!" << std::endl;
+
+		res.status = ServerCodes::GAME_SUCCESS;
+		res.set_header("Location", "/game/" + gameID);
+		res.set_content("Joined game successfully", "text/plain");
+
+		return;
+	}
 
 	/* Local DEBUG */
-	std::cout << "[POST /join/" << gameID << "] SUCCESS: " << gameProperties->hostName <<  " & " << 
-		gameProperties->guestName << " Started!" << std::endl;
+	std::cout << "[POST /join/" << gameID << "] FAILURE: UNKNOWN" << std::endl;
 
-	res.status = ServerCodes::GAME_SUCCESS;
-	res.set_header("Location", "/game/" + gameID);
-	res.set_content("Joined game successfully", "text/plain");
+	res.status = ServerCodes::CONFLICT;
+	res.set_content("Joined game failed", "text/plain");
 }
 
 void Server::getGameStatus(const httplib::Request& req, httplib::Response& res)
@@ -337,10 +362,14 @@ void Server::getGameStatus(const httplib::Request& req, httplib::Response& res)
 	
 	/* Will be using JSON to send data between nodes & server */
 	/* NOTE: JSON Parser needed on client side */
-	
-	if(game->getCurrentState() == NetworkGame:
-	
-	res.status = ServerCodes::GAME_SUCCESS;
+	std::string json = R"({
+	    "gameID": ")" + gameID + R"(",
+	    "status": ")" + (game->waitingToStart() ? "waiting" : "active") + R"(",
+	    "player1": ")" + (game->getPlayer(1) ? game->getPlayer(1)->getPlayerName() : "null") + R"(",
+	    "player2": ")" + (game->getPlayer(2) ? game->getPlayer(2)->getPlayerName() : "null") + R"("
+	})";
+
+	res.set_content(json, "application/json");
 }
 
 /**

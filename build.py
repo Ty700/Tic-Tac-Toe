@@ -86,20 +86,23 @@ def make_and_run_server():
     _NETWORK_GAME_SRC_NAME  = "NetworkGame.cpp"
     _MAIN_SRC_NAME          = "TicTacToeServer.cpp"
     _SERVER_SRC_NAME        = "Server.cpp"
+    _PLAYER_SRC_NAME        = "Player.cpp"
 
     _NETWORK_GAME_PATH  = f"./src/Server/{_NETWORK_GAME_SRC_NAME}"
     _SERVER_SRC_PATH    = f"./src/Server/{_SERVER_SRC_NAME}"
     _MAIN_SER_PATH      = f"./src/Server/{_MAIN_SRC_NAME}"
+    _PLAYER_SRC_PATH    = f"./src/{_PLAYER_SRC_NAME}"
 
     _SERVER_BIN_NAME = "server"
     _SERVER_BIN_PATH = f"./bin/{_SERVER_BIN_NAME}"
     _SERVER_MV_PATH  = f"./src/Server/{_SERVER_BIN_NAME}" 
 
     _INCLUDE_PATH    = "./includes/"
-
+    
+    _LINK_LIBS       = "-lssl -lcrypto -pthread"
     make_clean()
 
-    cmd = f"g++ {_MAIN_SER_PATH} {_NETWORK_GAME_PATH} {_SERVER_SRC_PATH} -I{_INCLUDE_PATH} -o {_SERVER_MV_PATH}"
+    cmd = f"g++ {_MAIN_SER_PATH} {_NETWORK_GAME_PATH} {_SERVER_SRC_PATH} {_PLAYER_SRC_PATH} -I{_INCLUDE_PATH} -o {_SERVER_MV_PATH} {_LINK_LIBS}"
     print(f"Running: {cmd}")
     subprocess.run(cmd, shell=True, cwd=".")
 
