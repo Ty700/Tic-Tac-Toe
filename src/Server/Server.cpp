@@ -335,6 +335,59 @@ void Server::postJoinGame(const httplib::Request& req, httplib::Response& res)
 	res.set_content("Joined game failed", "text/plain");
 }
 
+void Server::postMakeMove(const httplib::Request& req, httplib::Response& res)
+{
+    std::string gameID = req.matches[1];
+    
+    // Parse request - expecting form data: playerName and position
+    std::string playerName = req.get_param_value("playerName");
+    std::string posStr = req.get_param_value("position");
+    
+    if (playerName.empty() || posStr.empty()) {
+        res.status = 400;
+        res.set_content(R"({"error": "Missing playerName or position"})", "application/json");
+        return;
+    }
+    
+    int position = std::stoi(posStr);
+    
+    // Find game
+    std::lock_guard<std::mutex> lock(masterGameListMutex);
+    
+    if (!findGameInGameMap(gameID, masterGameList)) {
+        res.status = ServerCodes::NOT_FOUND;
+        res.set_content(R"({"error": "Game not found"})", "application/json");
+        return;
+    }
+    
+    auto& game = masterGameList[gameID];
+    
+    // Determine which player this is (1 or 2)
+    int playerNum = 0;
+    if (game->getPlayer(1) && game->getPlayer(1)->getPlayerName() == playerName) {
+        playerNum = 1;
+    } else if (game->getPlayer(2) && game->getPlayer(2)->getPlayerName() == playerName) {
+        playerNum = 2;
+    } else {
+        res.status = 400;
+        res.set_content(R"({"error": "Player not in this game"})", "application/json");
+        return;
+    }
+    
+    // Make the move
+    bool success = game->makeMove(position, playerNum);
+    
+    if (!success) {
+        res.status = 400;
+        res.set_content(R"({"error": "Invalid move"})", "application/json");
+        return;
+    }
+    
+    // Return updated game state
+    res.status = ServerCodes::GAME_SUCCESS;
+    res.set_content(game->getGameStatusJson(), "application/json");
+}
+
 void Server::getGameStatus(const httplib::Request& req, httplib::Response& res)
 {
 	std::string gameID = req.matches[1];
@@ -362,13 +415,8 @@ void Server::getGameStatus(const httplib::Request& req, httplib::Response& res)
 	
 	/* Will be using JSON to send data between nodes & server */
 	/* NOTE: JSON Parser needed on client side */
-	std::string json = R"({
-	    "gameID": ")" + gameID + R"(",
-	    "status": ")" + (game->waitingToStart() ? "waiting" : "active") + R"(",
-	    "player1": ")" + (game->getPlayer(1) ? game->getPlayer(1)->getPlayerName() : "null") + R"(",
-	    "player2": ")" + (game->getPlayer(2) ? game->getPlayer(2)->getPlayerName() : "null") + R"("
-	})";
-
+	std::string json = game->getGameStatusJson();
+    
 	res.set_content(json, "application/json");
 }
 
@@ -402,6 +450,10 @@ int Server::run()
 	svr.Post(R"(/join/(.+))", [this](const httplib::Request& req, httplib::Response& res) {
 		this->postJoinGame(req, res);
 	});
+    
+    svr.Post(R"(/game/(.+)/move)", [this](const httplib::Request& req, httplib::Response& res) {
+        this->postMakeMove(req, res);
+    });
 
 	svr.Get(R"(/game/(.+))", [this](const httplib::Request& req, httplib::Response& res) {
 		this->getGameStatus(req, res);
