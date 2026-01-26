@@ -8,6 +8,10 @@
 #endif
 
 #include "httplib.h"
+
+#include "json.hpp"
+using json = nlohmann::json; 
+
 #include "TicTacToeCore.h"
 #include "Player.h"
 
@@ -32,7 +36,7 @@ class NetworkGame {
 		/* This will be initialized once both players join... for now nullptr */
 		std::unique_ptr<TicTacToeCore> p_gameLogic;
 		
-		std::mutex gameMutex;
+		mutable std::mutex gameMutex;
 
 		SESSION_STATE p_currentState;
 
@@ -60,7 +64,12 @@ class NetworkGame {
 			p_gameLogic = std::make_unique<TicTacToeCore>();
 		 	p_currentState = SESSION_STATE::ACTIVE;
 		}
-
+		
+		/* Wraps core makeMove to perform moves */
+		bool makeMove(const int& pos, const int& playerNum);
+		
+		/* Generates a JSON string that contains all game information */
+		std::string getGameStatusJson() const;
 
 		NetworkGame(const std::shared_ptr<Player> p1 = nullptr, const std::shared_ptr<Player> p2 = nullptr)
 			: p_playerOne(p1), p_playerTwo(p2)
