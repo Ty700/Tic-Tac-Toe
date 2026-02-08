@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#include "Player.h"
+#include "TicTacToeCore.h"
 
 #pragma once
 /** 
@@ -21,25 +21,24 @@ class Slot
 {
 
 private:
-	std::array<int,2> p_id = {-1, -1};
+	uint32_t p_id = -1;
 	Gtk::Button* p_button;
 	Glib::ustring p_symbolStr{""};
 	void setButtonProperties();
-	std::function<void(int, int)> p_onSlotClickedCallback;
+	std::function<void(const int&)> p_onSlotClickedCallback;
 public:
-	Slot(int row, int col, Gtk::Button *but, std::function<void(int, int)> callback)
-		: p_id{row, col}, p_button(but), p_onSlotClickedCallback(callback)
+	Slot(const int& slotID, Gtk::Button *but, std::function<void(const int&)> callback)
+		: p_id(slotID), p_button(but), p_onSlotClickedCallback(callback)
 	{
-		assert(row >= 0);
-		assert(col >= 0);
+		assert(slotID >= 0);
 		assert(but != nullptr);
 		assert(callback);
 		setButtonProperties();
 	}
 
-	std::array<int, 2> getID() const { return p_id; } 
+	int getID() const { return p_id; } 
 	Gtk::Button* getButton() const { return this->p_button; }
-	void updateSymbol(const Player::PlayerSymbol& sym);
+	void updateSymbol(const TicTacToeCore::CELL_STATES& sym);
 	void onSlotClick();
 	Glib::ustring getSymbol() const { return this->p_symbolStr; }
 };

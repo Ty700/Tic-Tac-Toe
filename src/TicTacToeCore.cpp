@@ -115,7 +115,7 @@ bool TicTacToeCore::setCell(const int& pos, const CELL_STATES& symbol)
  * @PARAMS:	Position to extract 
  * @RETURNS:	Value (00, 01, || 10) @ pos 
  */
-TicTacToeCore::CELL_STATES TicTacToeCore::getCell(const int& pos)
+TicTacToeCore::CELL_STATES TicTacToeCore::getCell(const int& pos) const 
 {
 	if(pos < 0 || pos > 8)
 		return CELL_STATES::ERROR_STATE;

@@ -1,8 +1,9 @@
 set(TICTACTOE_SRC
-    "AIMoves.cpp"
+   "AIEngine.cpp"
     "Game.cpp"
     "Player.cpp"
     "GameStats.cpp"
+    "TicTacToeCore.cpp"
     "TicTacToeWindow.cpp"
     "Slot.cpp"
 )

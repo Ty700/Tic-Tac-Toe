@@ -1,8 +1,0 @@
-0,PlayerOneName,PlayerTwoName,WinnerName,WinnerAI,WinnerSymbol
-1,TylerTest,Andy,TIE,N/A,N/A
-2,Tyler,Mike,TIE,N/A,N/A
-3,Tyler,Abby,TIE,N/A,N/A
-4,Tyler,Chris,Chris,true,O
-5,Tyler,Daisuke,Tyler,false,X
-6,Tyler,Ai,TIE,N/A,N/A
-7,Tyler,Alex,TIE,N/A,N/A
