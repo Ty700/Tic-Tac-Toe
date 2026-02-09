@@ -60,7 +60,10 @@ bool NetworkGame::makeMove(const int& pos, const int& playerNum)
 	/* player null */
 	if(!player)
 		return false;
-	
+    
+    if(!p_gameLogic)
+        return false;
+
 	/* Grab player sym */
 	TicTacToeCore::CELL_STATES playerSym = (player->getPlayerSymbol() == Player::PlayerSymbol::X) 
 		? TicTacToeCore::CELL_STATES::X : TicTacToeCore::CELL_STATES::O;
@@ -88,11 +91,28 @@ bool NetworkGame::makeMove(const int& pos, const int& playerNum)
 std::string NetworkGame::getGameStatusJson() const 
 {
 	std::lock_guard<std::mutex> lock(gameMutex);
-
+    
 	json res;
-	
-	res["gameID"] = gameID;
+        
+    if(!p_gameLogic)
+    {
+        res["gameID"] = gameID;
+        res["gameStatus"] = "waiting";
+        res["board"] = json::array({"", "", "", "", "", "", "", "", ""});
+        res["currentTurn"] = "";
+        res["player1"] = p_playerOne ? 
+            json{
+                    {"name", p_playerOne->getPlayerName()}, 
+                    {"symbol", (p_playerOne->getPlayerSymbol() == Player::PlayerSymbol::X) ? "X" : "O"}
+            } : nullptr;
 
+        res["player2"] = nullptr;
+
+        return res.dump();
+    }
+
+	res["gameID"] = gameID;
+    
 	if(p_currentState == SESSION_STATE::WAITING)
 		res["status"] = "waiting";
 	else if(p_currentState == SESSION_STATE::ACTIVE)
@@ -101,21 +121,23 @@ std::string NetworkGame::getGameStatusJson() const
 		res["status"] = "finished";
 	
 	/* Board State */
-	json board = json::array();
+    json board = json::array();
+    
+    if(!p_gameLogic)
+    {
+        for(int i = 0; i < 9; i++)
+        {
+            auto cell = p_gameLogic->getCell(i);
+            if(cell == TicTacToeCore::CELL_STATES::X)
+                board.push_back("X");
+            else if(cell == TicTacToeCore::CELL_STATES::O)
+                board.push_back("O");
+            else 
+                board.push_back("");
+        }
+    } 
 
-	for(int i = 0; i < 9; i++)
-	{
-		auto cell = p_gameLogic->getCell(i);
-		if(cell == TicTacToeCore::CELL_STATES::X)
-			board.push_back("X");
-		else if(cell == TicTacToeCore::CELL_STATES::O)
-			board.push_back("O");
-		else 
-			board.push_back("");
-	}
-
-	res["board"] = board;
-
+   	res["board"] = board;
 	res["currentTurn"] = p_gameLogic->getPlayerTurn();
 
 	if(p_playerOne)
@@ -137,7 +159,7 @@ std::string NetworkGame::getGameStatusJson() const
 	{
 		res["player2"] = nullptr;
 	}
-
+    
 	auto gameStatus = p_gameLogic->getGameState();
 	
 	if(gameStatus == TicTacToeCore::GAME_STATUS::WINNER)

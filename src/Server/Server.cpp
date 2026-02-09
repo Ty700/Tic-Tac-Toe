@@ -409,7 +409,9 @@ void Server::getGameStatus(const httplib::Request& req, httplib::Response& res)
 
 		return;
 	}
-	
+    
+    std::cout << "[GET /game/" << gameID << "] SUCCESS: " << gameID << " is valid." << std::endl;
+
 	/* Game is valid -> Respond with game information */
 	auto& game = this->masterGameList[gameID];
 	
