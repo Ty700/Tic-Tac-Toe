@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TicTacToe — Game</title>
+    <link rel="stylesheet" href="/styles/game.css">
+</head>
+<body>
+    <!-- Loading overlay -->
+    <div class="loader" id="loader">
+        <div class="loader-content">
+            <svg class="circle-loader" viewBox="0 0 100 100">
+                <circle class="circle-bg" cx="50" cy="50" r="45"></circle>
+                <circle class="circle-progress" cx="50" cy="50" r="45"></circle>
+            </svg>
+            <div class="loader-text">Connecting...</div>
+        </div>
+    </div>
+
+    <div class="content" id="content">
+        <!-- Nav -->
+        <nav class="nav">
+            <a href="/create-game" class="logo">TicTacToe</a>
+            <div class="nav-meta">
+                <span class="game-id-display" id="gameIdDisplay">Game #----</span>
+                <span class="connection-dot" id="connectionDot" title="Connection status"></span>
+            </div>
+        </nav>
+
+        <main class="game-container">
+            <!-- Status Banner -->
+            <div class="status-banner" id="statusBanner">
+                <span class="status-text" id="statusText">Waiting for opponent...</span>
+            </div>
+
+            <!-- Player Info Bar -->
+            <div class="players-bar">
+                <div class="player-card" id="player1Card">
+                    <div class="player-symbol">X</div>
+                    <div class="player-info">
+                        <span class="player-name" id="player1Name">—</span>
+                        <span class="player-label">Player 1</span>
+                    </div>
+                </div>
+                <div class="vs-divider">vs</div>
+                <div class="player-card" id="player2Card">
+                    <div class="player-info" style="text-align: right;">
+                        <span class="player-name" id="player2Name">Waiting...</span>
+                        <span class="player-label">Player 2</span>
+                    </div>
+                    <div class="player-symbol">O</div>
+                </div>
+            </div>
+
+            <!-- Board -->
+            <div class="board-wrapper">
+                <div class="board" id="board">
+                    <button class="cell top-row left-col" data-pos="0"></button>
+                    <button class="cell top-row" data-pos="1"></button>
+                    <button class="cell top-row right-col" data-pos="2"></button>
+                    <button class="cell left-col" data-pos="3"></button>
+                    <button class="cell" data-pos="4"></button>
+                    <button class="cell right-col" data-pos="5"></button>
+                    <button class="cell bottom-row left-col" data-pos="6"></button>
+                    <button class="cell bottom-row" data-pos="7"></button>
+                    <button class="cell bottom-row right-col" data-pos="8"></button>
+                </div>
+            </div>
+
+            <!-- Action Area -->
+            <div class="action-area" id="actionArea">
+                <!-- Populated dynamically: share link, play again, etc. -->
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>&copy; 2025 Tyler Scotti &middot; <a href="https://ty700.tech">ty700.tech</a></p>
+        </footer>
+    </div>
+
+    <script src="/styles/game.js"></script>
+</body>
+</html>

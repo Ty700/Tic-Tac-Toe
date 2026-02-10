@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TicTacToe — Join Game</title>
+    <link rel="stylesheet" href="/styles/game.css">
+</head>
+<body>
+    <div class="content" style="opacity: 1;">
+        <nav class="nav">
+            <a href="/create-game" class="logo">TicTacToe</a>
+        </nav>
+
+        <main class="game-container">
+            <div class="join-card">
+                <h1 class="join-title">Join Game</h1>
+                <p class="join-subtitle">Game #<span id="joinGameId">----</span></p>
+
+                <div class="join-host-info" id="hostInfo">
+                    <span class="join-host-label">Hosted by</span>
+                    <span class="join-host-name" id="hostName">—</span>
+                </div>
+
+                <form id="joinForm" class="join-form">
+                    <label class="form-label" for="playerName">Your Name</label>
+                    <input 
+                        type="text" 
+                        id="playerName" 
+                        name="playerName" 
+                        class="form-input" 
+                        placeholder="Enter your name" 
+                        required 
+                        maxlength="20"
+                        autocomplete="off"
+                    >
+                    <button type="submit" class="btn btn-primary btn-full" id="joinBtn">
+                        Join Game
+                    </button>
+                </form>
+
+                <a href="/create-game" class="back-link">&larr; Create your own game</a>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>&copy; 2025 Tyler Scotti &middot; <a href="https://ty700.tech">ty700.tech</a></p>
+        </footer>
+    </div>
+
+    <script>
+        const gameID = window.location.pathname.split('/').pop();
+        document.getElementById('joinGameId').textContent = gameID;
+
+        // Fetch game info to show host name
+        fetch('/api/game/' + gameID)
+            .then(r => r.json())
+            .then(data => {
+                if (data.player1 && data.player1.name) {
+                    document.getElementById('hostName').textContent = data.player1.name;
+                }
+            })
+            .catch(() => {});
+
+        document.getElementById('joinForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('joinBtn');
+            const name = document.getElementById('playerName').value.trim();
+            
+            if (!name) return;
+
+            btn.textContent = 'Joining...';
+            btn.disabled = true;
+
+            try {
+                const formData = new URLSearchParams();
+                formData.append('playerName', name);
+
+                const res = await fetch('/join/' + gameID, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData.toString()
+                });
+
+                if (res.ok) {
+                    // Store our name and redirect to game view
+                    sessionStorage.setItem('ttt_playerName', name);
+                    sessionStorage.setItem('ttt_playerNum', '2');
+                    sessionStorage.setItem('ttt_gameID', gameID);
+                    window.location.href = '/play/' + gameID;
+                } else {
+                    const text = await res.text();
+                    alert('Could not join: ' + text);
+                    btn.textContent = 'Join Game';
+                    btn.disabled = false;
+                }
+            } catch (err) {
+                alert('Connection error. Please try again.');
+                btn.textContent = 'Join Game';
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

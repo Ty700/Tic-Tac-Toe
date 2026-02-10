@@ -53,15 +53,22 @@ class Server {
 				httplib::Response& res, 
 				const std::string& gameID);
 
+		/* Helper: Read file to string */
+		std::string readFile(const std::string& path);
+
 		/* ====== REST APIs ====== */
 		/* ====== GETs ====== */
 		void getHomepage(const httplib::Request& req, httplib::Response& res);
-		void getCssStyles(const httplib::Request& req, httplib::Response& res);
-		void getStaticStyles(const httplib::Request& req, httplib::Response& res);
 		void getServerHealth(const httplib::Request& req, httplib::Response& res);
-		void getInstructions(const httplib::Request& req, httplib::Response& res);
 		void getCreateGame(const httplib::Request& req, httplib::Response& res);
-		void getGameStatus(const httplib::Request& req, httplib::Response& res);
+		void getStaticFile(const httplib::Request& req, httplib::Response& res);
+
+		/* Web game pages */
+		void getPlayPage(const httplib::Request& req, httplib::Response& res);
+		void getJoinPage(const httplib::Request& req, httplib::Response& res);
+
+		/* JSON API */
+		void getGameStatusAPI(const httplib::Request& req, httplib::Response& res);
 
 		/* ====== POSTs ====== */
 		void postJoinGame(const httplib::Request& req, httplib::Response& res);  

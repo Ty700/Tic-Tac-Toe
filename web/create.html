@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TicTacToe — Create Game</title>
+    <link rel="stylesheet" href="/styles/game.css">
+</head>
+<body>
+    <div class="content" style="opacity: 1;">
+        <nav class="nav">
+            <a href="/create-game" class="logo">TicTacToe</a>
+            <div class="nav-links">
+                <a href="https://ty700.tech">Portfolio</a>
+                <a href="https://github.com/Ty700/Tic-Tac-Toe" target="_blank">Source</a>
+            </div>
+        </nav>
+
+        <main class="game-container">
+            <div class="hero-mini">
+                <h1 class="hero-title">TicTacToe</h1>
+                <p class="hero-sub">Play the classic game online with a friend.</p>
+            </div>
+
+            <div class="create-grid">
+                <!-- Create Game Card -->
+                <div class="action-card">
+                    <div class="action-card-icon">
+                        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <line x1="50" y1="25" x2="50" y2="75" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+                            <line x1="25" y1="50" x2="75" y2="50" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <h2>Create Game</h2>
+                    <p>Start a new game and invite a friend with your game code.</p>
+                    <form id="createForm" class="inline-form">
+                        <input 
+                            type="text" 
+                            name="playerName" 
+                            id="createName"
+                            class="form-input" 
+                            placeholder="Your name" 
+                            required
+                            maxlength="20"
+                            autocomplete="off"
+                        >
+                        <button type="submit" class="btn btn-primary btn-full" id="createBtn">
+                            Create Game
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Join Game Card -->
+                <div class="action-card">
+                    <div class="action-card-icon">
+                        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M30 50 L45 65 L70 35" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <h2>Join Game</h2>
+                    <p>Have a game code? Enter it below to join your friend's game.</p>
+                    <form id="joinForm" class="inline-form">
+                        <input 
+                            type="text" 
+                            name="playerName" 
+                            id="joinName"
+                            class="form-input" 
+                            placeholder="Your name" 
+                            required
+                            maxlength="20"
+                            autocomplete="off"
+                        >
+                        <input 
+                            type="text" 
+                            name="gameId" 
+                            id="joinGameId"
+                            class="form-input" 
+                            placeholder="4-digit game code" 
+                            required
+                            maxlength="4"
+                            pattern="[0-9]{4}"
+                            inputmode="numeric"
+                            autocomplete="off"
+                        >
+                        <button type="submit" class="btn btn-secondary btn-full" id="joinBtn">
+                            Join Game
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>&copy; 2025 Tyler Scotti &middot; <a href="https://ty700.tech">ty700.tech</a></p>
+        </footer>
+    </div>
+
+    <script>
+        // Create game
+        document.getElementById('createForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('createBtn');
+            const name = document.getElementById('createName').value.trim();
+            if (!name) return;
+
+            btn.textContent = 'Creating...';
+            btn.disabled = true;
+
+            try {
+                const formData = new URLSearchParams();
+                formData.append('playerName', name);
+
+                const res = await fetch('/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData.toString(),
+                    redirect: 'manual'  // Don't follow the 302
+                });
+
+                // Server responds with 302 and Location: /game/XXXX
+                const location = res.headers.get('Location');
+                if (location) {
+                    const gameID = location.replace('/game/', '');
+                    sessionStorage.setItem('ttt_playerName', name);
+                    sessionStorage.setItem('ttt_playerNum', '1');
+                    sessionStorage.setItem('ttt_gameID', gameID);
+                    window.location.href = '/play/' + gameID;
+                } else {
+                    // Fallback: if redirect was followed, extract from URL
+                    if (res.redirected) {
+                        const gameID = new URL(res.url).pathname.replace('/game/', '');
+                        sessionStorage.setItem('ttt_playerName', name);
+                        sessionStorage.setItem('ttt_playerNum', '1');
+                        sessionStorage.setItem('ttt_gameID', gameID);
+                        window.location.href = '/play/' + gameID;
+                    } else {
+                        throw new Error('No game ID returned');
+                    }
+                }
+            } catch (err) {
+                alert('Failed to create game. Please try again.');
+                btn.textContent = 'Create Game';
+                btn.disabled = false;
+            }
+        });
+
+        // Join game
+        document.getElementById('joinForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('joinBtn');
+            const name = document.getElementById('joinName').value.trim();
+            const gameID = document.getElementById('joinGameId').value.trim();
+
+            if (!name || !gameID || gameID.length !== 4) return;
+
+            btn.textContent = 'Joining...';
+            btn.disabled = true;
+
+            try {
+                const formData = new URLSearchParams();
+                formData.append('playerName', name);
+
+                const res = await fetch('/join/' + gameID, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData.toString()
+                });
+
+                if (res.ok) {
+                    sessionStorage.setItem('ttt_playerName', name);
+                    sessionStorage.setItem('ttt_playerNum', '2');
+                    sessionStorage.setItem('ttt_gameID', gameID);
+                    window.location.href = '/play/' + gameID;
+                } else {
+                    const text = await res.text();
+                    alert('Could not join: ' + text);
+                    btn.textContent = 'Join Game';
+                    btn.disabled = false;
+                }
+            } catch (err) {
+                alert('Connection error. Please try again.');
+                btn.textContent = 'Join Game';
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
