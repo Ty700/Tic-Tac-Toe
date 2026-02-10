@@ -34,3 +34,40 @@ set_target_properties(${EXE_NAME} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}/../bin/debug"
     RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/../bin/release"
 )
+
+option(BUILD_TESTS "Build unit tests" ON)
+
+if(BUILD_TESTS)
+    enable_testing()
+    
+    find_package(GTest REQUIRED)
+    set(TEST_NAME TicTacToeTests)
+
+    
+    add_executable(${TEST_NAME}
+        tests/NetworkGameTests.cpp
+        tests/TicTacToeCoreTests.cpp
+        src/TicTacToeCore.cpp
+        src/Player.cpp
+        src/Server/NetworkGame.cpp
+    )
+    
+    target_include_directories(${TEST_NAME} PRIVATE 
+        ${CMAKE_SOURCE_DIR}/includes
+        ${GTKMM_INCLUDE_DIRS}
+    )
+    
+    target_link_libraries(${TEST_NAME} PRIVATE
+        gtest
+        gtest_main
+        pthread
+        OpenSSL::SSL
+        OpenSSL::Crypto
+    )
+    include(GoogleTest) 
+    gtest_discover_tests(${TEST_NAME})
+
+    set_target_properties(${TEST_NAME} PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/../bin/test"
+    )
+endif()

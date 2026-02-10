@@ -82,6 +82,19 @@ def make_debug():
     print(f"Running: cd build/ && {cmd}")
     subprocess.run(cmd, shell=True, cwd="./build")
 
+def make_tests():
+    make_clean()
+    make_build_dir()
+    
+    cmd = "cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON .. && cmake --build ."
+    print(f"Running: cd build/ && {cmd}")
+    subprocess.run(cmd, shell=True, cwd="./build")
+    
+    # Run tests
+    cmd = "../bin/test/TicTacToeTests"
+    print(f"Running tests: {cmd}")
+    subprocess.run(cmd, shell=True, cwd="./build")
+
 def make_and_run_server():
     _NETWORK_GAME_SRC_NAME  = "NetworkGame.cpp"
     _MAIN_SRC_NAME          = "TicTacToeServer.cpp"
@@ -137,6 +150,8 @@ def main():
             run("debug")
         elif(sys.argv[1] == "-s"):
             make_and_run_server()
+        elif(sys.argv[1] == "-t"):
+            make_tests()
         else:
             print_help_menu()
 

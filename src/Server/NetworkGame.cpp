@@ -88,6 +88,7 @@ bool NetworkGame::makeMove(const int& pos, const int& playerNum)
 	}
 }
 
+/* TODO: CLEAN NAME ENTERED BY USER */
 std::string NetworkGame::getGameStatusJson() const 
 {
 	std::lock_guard<std::mutex> lock(gameMutex);
@@ -114,28 +115,25 @@ std::string NetworkGame::getGameStatusJson() const
 	res["gameID"] = gameID;
     
 	if(p_currentState == SESSION_STATE::WAITING)
-		res["status"] = "waiting";
+		res["gameStatus"] = "waiting";
 	else if(p_currentState == SESSION_STATE::ACTIVE)
-		res["status"] = "active";
+		res["gameStatus"] = "active";
 	else
-		res["status"] = "finished";
+		res["gameStatus"] = "finished";
 	
 	/* Board State */
     json board = json::array();
     
-    if(!p_gameLogic)
+    for(int i = 0; i < 9; i++)
     {
-        for(int i = 0; i < 9; i++)
-        {
-            auto cell = p_gameLogic->getCell(i);
-            if(cell == TicTacToeCore::CELL_STATES::X)
-                board.push_back("X");
-            else if(cell == TicTacToeCore::CELL_STATES::O)
-                board.push_back("O");
-            else 
-                board.push_back("");
-        }
-    } 
+        auto cell = p_gameLogic->getCell(i);
+        if(cell == TicTacToeCore::CELL_STATES::X)
+            board.push_back("X");
+        else if(cell == TicTacToeCore::CELL_STATES::O)
+            board.push_back("O");
+        else 
+            board.push_back("");
+    }
 
    	res["board"] = board;
 	res["currentTurn"] = p_gameLogic->getPlayerTurn();
