@@ -333,9 +333,11 @@ int AIEngine::handleMove(const TicTacToeCore& game_logic, const Player::PlayerDi
 			ai_move = randomMove(game_logic);
 			break;
 		case Player::PlayerDiff::MEDIUM :
-			// ai_move = mediumMove(game_logic);
+			ai_move = mediumMove(game_logic);
+			break;
 		case Player::PlayerDiff::HARD :
-			// ai_move = hardMove(game_logic);
+			ai_move = hardMove(game_logic);
+			break;
 		default:
 			ai_move = randomMove(game_logic);
 			break;
@@ -343,4 +345,3 @@ int AIEngine::handleMove(const TicTacToeCore& game_logic, const Player::PlayerDi
 
 	return ai_move;
 }
-
