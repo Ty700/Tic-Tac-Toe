@@ -153,17 +153,22 @@ TicTacToeCore::GAME_STATUS TicTacToeCore::makeMove(const int& pos, const CELL_ST
 	if(!setCell(pos, symbol)) return GAME_STATUS::ERROR_MOVE;
 	
 	/* Winner Detection */
-	if(checkForWinner())
+	if(checkForWinner()){
+		props.game_state =  GAME_STATUS::WINNER;
 		return GAME_STATUS::WINNER;
+	}
 	
 	/* Tie? */
-	if(checkForTie())
+	if(checkForTie()){
+		props.game_state = GAME_STATUS::TIE;
 		return GAME_STATUS::TIE;
+	}
 
 	/* Update props */
 	props.current_symbol = (props.current_symbol == CELL_STATES::X) ? CELL_STATES::O : CELL_STATES::X;
 	props.move_counter += 1;
 
+	props.game_state = GAME_STATUS::IN_PROGRESS;
 	return GAME_STATUS::IN_PROGRESS; 
 }
 
