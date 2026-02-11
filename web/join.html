@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TicTacToe — Join Game</title>
-    <link rel="stylesheet" href="/styles/game.css">
+    <link rel="stylesheet" href="/tictactoe/styles/game.css">
 </head>
 <body>
     <div class="content" style="opacity: 1;">
         <nav class="nav">
-            <a href="/create-game" class="logo">TicTacToe</a>
+            <a href="/tictactoe/create-game" class="logo">TicTacToe</a>
         </nav>
 
         <main class="game-container">
@@ -39,7 +39,7 @@
                     </button>
                 </form>
 
-                <a href="/create-game" class="back-link">&larr; Create your own game</a>
+                <a href="/tictactoe/create-game" class="back-link">&larr; Create your own game</a>
             </div>
         </main>
 
@@ -49,11 +49,12 @@
     </div>
 
     <script>
-        const gameID = window.location.pathname.split('/').pop();
+        const BASE = '/tictactoe';
+        const gameID = window.location.pathname.replace(BASE, '').split('/').pop();
         document.getElementById('joinGameId').textContent = gameID;
 
         // Fetch game info to show host name
-        fetch('/api/game/' + gameID)
+        fetch(BASE + '/api/game/' + gameID)
             .then(r => r.json())
             .then(data => {
                 if (data.player1 && data.player1.name) {
@@ -76,18 +77,17 @@
                 const formData = new URLSearchParams();
                 formData.append('playerName', name);
 
-                const res = await fetch('/join/' + gameID, {
+                const res = await fetch(BASE + '/join/' + gameID, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: formData.toString()
                 });
 
                 if (res.ok) {
-                    // Store our name and redirect to game view
                     sessionStorage.setItem('ttt_playerName', name);
                     sessionStorage.setItem('ttt_playerNum', '2');
                     sessionStorage.setItem('ttt_gameID', gameID);
-                    window.location.href = '/play/' + gameID;
+                    window.location.href = BASE + '/play/' + gameID;
                 } else {
                     const text = await res.text();
                     alert('Could not join: ' + text);

@@ -73,5 +73,5 @@ class Server {
 		/* ====== POSTs ====== */
 		void postJoinGame(const httplib::Request& req, httplib::Response& res);  
 		void postCreateGame(const httplib::Request& req, httplib::Response& res);  
-        void postMakeMove(const httplib::Request& req, httplib::Response& res);
+        	void postMakeMove(const httplib::Request& req, httplib::Response& res);
 };

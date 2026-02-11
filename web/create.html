@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TicTacToe — Create Game</title>
-    <link rel="stylesheet" href="/styles/game.css">
+    <titleTicTacToe> — Create Game</title>
+    <link rel="stylesheet" href="/tictactoe/styles/game.css">
 </head>
 <body>
     <div class="content" style="opacity: 1;">
         <nav class="nav">
-            <a href="/create-game" class="logo">TicTacToe</a>
+            <a href="/tictactoe/create-game" class="logo">TicTacToe</a>
             <div class="nav-links">
                 <a href="https://ty700.tech">Portfolio</a>
                 <a href="https://github.com/Ty700/Tic-Tac-Toe" target="_blank">Source</a>
@@ -96,6 +96,8 @@
     </div>
 
     <script>
+        const BASE = '/tictactoe';
+
         // Create game
         document.getElementById('createForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -110,29 +112,27 @@
                 const formData = new URLSearchParams();
                 formData.append('playerName', name);
 
-                const res = await fetch('/create', {
+                const res = await fetch(BASE + '/create', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: formData.toString(),
-                    redirect: 'manual'  // Don't follow the 302
+                    redirect: 'manual'
                 });
 
-                // Server responds with 302 and Location: /game/XXXX
                 const location = res.headers.get('Location');
                 if (location) {
                     const gameID = location.replace('/game/', '');
                     sessionStorage.setItem('ttt_playerName', name);
                     sessionStorage.setItem('ttt_playerNum', '1');
                     sessionStorage.setItem('ttt_gameID', gameID);
-                    window.location.href = '/play/' + gameID;
+                    window.location.href = BASE + '/play/' + gameID;
                 } else {
-                    // Fallback: if redirect was followed, extract from URL
                     if (res.redirected) {
-                        const gameID = new URL(res.url).pathname.replace('/game/', '');
+                        const gameID = new URL(res.url).pathname.replace(BASE + '/game/', '').replace('/game/', '');
                         sessionStorage.setItem('ttt_playerName', name);
                         sessionStorage.setItem('ttt_playerNum', '1');
                         sessionStorage.setItem('ttt_gameID', gameID);
-                        window.location.href = '/play/' + gameID;
+                        window.location.href = BASE + '/play/' + gameID;
                     } else {
                         throw new Error('No game ID returned');
                     }
@@ -160,7 +160,7 @@
                 const formData = new URLSearchParams();
                 formData.append('playerName', name);
 
-                const res = await fetch('/join/' + gameID, {
+                const res = await fetch(BASE + '/join/' + gameID, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: formData.toString()
@@ -170,7 +170,7 @@
                     sessionStorage.setItem('ttt_playerName', name);
                     sessionStorage.setItem('ttt_playerNum', '2');
                     sessionStorage.setItem('ttt_gameID', gameID);
-                    window.location.href = '/play/' + gameID;
+                    window.location.href = BASE + '/play/' + gameID;
                 } else {
                     const text = await res.text();
                     alert('Could not join: ' + text);

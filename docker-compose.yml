@@ -1,0 +1,7 @@
+services:
+  tictactoe:
+    build: .
+    container_name: tictactoe
+    restart: unless-stopped
+    ports:
+      - "8085:8085"

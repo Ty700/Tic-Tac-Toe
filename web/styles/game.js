@@ -12,9 +12,10 @@
     'use strict';
 
     // ===== CONFIG =====
-    const POLL_INTERVAL_WAITING = 1500;  // ms between polls while waiting for opponent
-    const POLL_INTERVAL_ACTIVE  = 1000;  // ms between polls during active game
-    const POLL_INTERVAL_IDLE    = 5000;  // ms when it's our turn (we already see the state)
+    const BASE = '/tictactoe';
+    const POLL_INTERVAL_WAITING = 1500;
+    const POLL_INTERVAL_ACTIVE  = 1000;
+    const POLL_INTERVAL_IDLE    = 5000;
 
     // ===== STATE =====
     let gameID     = sessionStorage.getItem('ttt_gameID');
@@ -41,30 +42,25 @@
 
     // ===== INIT =====
     function init() {
-        // Extract gameID from URL if not in session
         if (!gameID) {
-            const pathParts = window.location.pathname.split('/');
+            const pathParts = window.location.pathname.replace(BASE, '').split('/');
             gameID = pathParts[pathParts.length - 1];
         }
 
         if (!gameID || !playerName) {
-            window.location.href = '/create-game';
+            window.location.href = BASE + '/create-game';
             return;
         }
 
-        // Display game ID
         if (gameIdDisplay) {
             gameIdDisplay.textContent = 'Game #' + gameID;
         }
 
-        // Bind cell clicks
         cells.forEach(cell => {
             cell.addEventListener('click', () => onCellClick(cell));
         });
 
-        // Initial fetch then start polling
         fetchGameState().then(() => {
-            // Remove loader
             hideLoader();
             startPolling();
         }).catch(() => {
@@ -105,7 +101,7 @@
     // ===== FETCH GAME STATE =====
     async function fetchGameState() {
         try {
-            const res = await fetch('/api/game/' + gameID);
+            const res = await fetch(BASE + '/api/game/' + gameID);
             
             if (!res.ok) {
                 setConnectionStatus('error');
@@ -126,7 +122,6 @@
 
     // ===== UPDATE UI FROM SERVER STATE =====
     function updateUI(data) {
-        // Player names
         if (data.player1 && player1Name) {
             player1Name.textContent = data.player1.name;
         }
@@ -136,12 +131,10 @@
             player2Name.textContent = 'Waiting...';
         }
 
-        // Board
         if (data.board && Array.isArray(data.board)) {
             updateBoard(data.board);
         }
 
-        // Game status
         const status = data.gameStatus;
 
         if (status === 'waiting') {
@@ -154,12 +147,9 @@
         else if (status === 'active' || status === 'in_progress') {
             gameOver = false;
             
-            // Determine whose turn it is
-            // currentTurn: 0 = player1 (X), 1 = player2 (O)
             const currentTurnIdx = data.currentTurn;
             isMyTurn = (currentTurnIdx === playerNum - 1);
 
-            // Highlight active player card
             player1Card.classList.toggle('active-turn', currentTurnIdx === 0);
             player2Card.classList.toggle('active-turn', currentTurnIdx === 1);
 
@@ -176,8 +166,6 @@
             }
             
             clearActionArea();
-            
-            // Adjust polling speed
             startPolling();
         } 
         else if (status === 'winner') {
@@ -185,11 +173,7 @@
             disableBoard();
             stopPolling();
 
-            // Figure out who won — the player who just moved
-            // currentTurn shows whose turn it WOULD be next
-            const winnerTurnIdx = data.currentTurn; // The symbol that won
-            // Actually, after a win the turn doesn't advance,
-            // so currentTurn is the turn of the player who just won
+            const winnerTurnIdx = data.currentTurn;
             const winnerNum = winnerTurnIdx + 1;
             const winnerData = winnerNum === 1 ? data.player1 : data.player2;
             const winnerName = winnerData ? winnerData.name : 'Player ' + winnerNum;
@@ -200,7 +184,6 @@
                 setStatus(winnerName + ' wins!', 'winner');
             }
 
-            // Highlight winner card
             if (winnerNum === 1) {
                 player1Card.classList.add('winner-highlight');
             } else {
@@ -231,14 +214,12 @@
             const cell = cells[i];
             if (!cell) return;
 
-            // Only animate newly placed pieces
             if (val !== lastBoard[i] && val !== '') {
                 cell.textContent = val;
                 cell.classList.add('placed');
                 cell.classList.toggle('x-cell', val === 'X');
                 cell.classList.toggle('o-cell', val === 'O');
             } else if (val === '' && lastBoard[i] !== '') {
-                // Board was reset
                 cell.textContent = '';
                 cell.classList.remove('placed', 'x-cell', 'o-cell', 'win-cell');
             }
@@ -268,7 +249,6 @@
         const pos = parseInt(cell.dataset.pos, 10);
         if (lastBoard[pos] !== '') return;
 
-        // Optimistic UI update
         const mySymbol = playerNum === 1 ? 'X' : 'O';
         cell.textContent = mySymbol;
         cell.classList.add('placed', mySymbol === 'X' ? 'x-cell' : 'o-cell');
@@ -282,7 +262,7 @@
             formData.append('playerName', playerName);
             formData.append('position', pos.toString());
 
-            const res = await fetch('/game/' + gameID + '/move', {
+            const res = await fetch(BASE + '/game/' + gameID + '/move', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: formData.toString()
@@ -292,7 +272,6 @@
                 const data = await res.json();
                 updateUI(data);
             } else {
-                // Revert optimistic update
                 cell.textContent = '';
                 cell.classList.remove('placed', 'x-cell', 'o-cell');
                 isMyTurn = true;
@@ -302,7 +281,6 @@
                 setStatus('Invalid move: ' + (errData.error || 'Try again'), 'active');
             }
         } catch (err) {
-            // Revert on network error
             cell.textContent = '';
             cell.classList.remove('placed', 'x-cell', 'o-cell');
             isMyTurn = true;
@@ -310,7 +288,6 @@
             setStatus('Connection error. Try again.', 'active');
         }
 
-        // Resume polling for opponent's response
         startPolling();
     }
 
@@ -337,7 +314,7 @@
 
     function showShareInfo() {
         if (!actionArea) return;
-        const joinURL = window.location.origin + '/game/' + gameID;
+        const joinURL = window.location.origin + BASE + '/game/' + gameID;
         actionArea.innerHTML = 
             '<div class="share-box">' +
                 '<p>Share this code with your friend:</p>' +
@@ -349,7 +326,7 @@
     function showPlayAgain() {
         if (!actionArea) return;
         actionArea.innerHTML = 
-            '<a href="/create-game" class="btn btn-primary" style="margin-top: 1rem;">Play Again</a>';
+            '<a href="' + BASE + '/create-game" class="btn btn-primary" style="margin-top: 1rem;">Play Again</a>';
     }
 
     // ===== BOOT =====
