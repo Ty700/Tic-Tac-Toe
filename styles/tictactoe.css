@@ -1,161 +1,338 @@
-/* ========== Global Window Styling ========== */
+/* ============================================================
+ *   TicTacToe GTK4 Theme
+ *   Matches ty700.tech portfolio design system
+ *   Colors: cream, warm-brown, off-white, dark-brown
+ * ============================================================ */
+
+/* ===== Global Window ===== */
 window {
-    background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+    background-color: #FAF8F3;
+    color: #2D2D2A;
 }
 
-/* ========== Title Label ========== */
-.title-label {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 64px;
-    font-weight: 700;
-    color: #ffffff;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-    margin: 30px;
-    letter-spacing: 2px;
+/* ===== Header Bar ===== */
+headerbar {
+    background-color: #FFFEF9;
+    border-bottom: 1px solid #E8E3DA;
+    color: #2D2D2A;
 }
 
-/* ========== Start Game Button ========== */
-.start-button {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 24px;
+headerbar label {
     font-weight: 600;
-    margin: 25px;
-    padding: 15px 30px;
-    background: linear-gradient(45deg, #4CAF50, #45a049);
-    color: white;
-    border: none;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    transition: all 0.3s ease;
-}
-
-.start-button:hover {
-    background: linear-gradient(45deg, #45a049, #4CAF50);
-    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
-    transform: translateY(-2px);
-}
-
-.start-button:active {
-    transform: translateY(0px);
-    box-shadow: 0 2px 10px rgba(76, 175, 80, 0.3);
-}
-
-/* ========== TicTacToe Grid Buttons ========== */
-.button-grid {
-    background: linear-gradient(135deg, #ffffff, #f8f9fa);
-    border: 3px solid #2c3e50;
-    border-radius: 8px;
-    font-size: 48px;
-    font-weight: 900;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    min-height: 120px;
-    min-width: 120px;
-    padding: 0px;
-    color: #2c3e50;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transition: all 0.2s ease;
-}
-
-.button-grid:hover {
-    background: linear-gradient(135deg, #e3f2fd, #bbdefb);
-    transform: scale(1.05);
-    box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
-    border-color: #2196F3;
-}
-
-.button-grid:active {
-    transform: scale(0.98);
-}
-
-/* ========== Grid Border  ========== */
-.top-row    { border-top: none; }
-.bottom-row { border-bottom: none; }
-.left-col   { border-left: none; }
-.right-col  { border-right: none; }
-
-/* ========== Menu Styling ========== */
-.menu {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 18px;
-    font-weight: 500;
-    margin: 8px;
-    color: #ffffff;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
-    background-color: transparent; 
-}
-
-/* ========== Entry Fields ========== */
-.entry {
-    background: rgba(255, 255, 255, 0.95);
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-radius: 8px;
-    padding: 10px 15px;
     font-size: 16px;
+    color: #2D2D2A;
+}
+
+/* ===== Typography ===== */
+.title-label {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 48px;
+    font-weight: 400;
+    color: #2D2D2A;
+    margin: 16px;
+}
+
+.subtitle-label {
+    font-size: 15px;
+    color: #6B6B68;
+    margin-bottom: 8px;
+}
+
+.footer-label {
+    font-size: 13px;
+    color: #6B6B68;
+}
+
+/* ===== Nav ===== */
+.nav-logo {
+    font-size: 18px;
+    font-weight: 600;
+    color: #2D2D2A;
+}
+
+.game-id-label {
+    font-size: 13px;
+    color: #6B6B68;
     font-weight: 500;
-    color: #2c3e50;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
 }
 
-.entry:focus {
-    background: rgba(255, 255, 255, 1);
-    border-color: #2196F3;
-    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.2);
-    outline: none;
+/* ===== Primary Button ===== */
+.btn-primary {
+    background-color: #8B7355;
+    color: #FFFEF9;
+    border: 2px solid #8B7355;
+    border-radius: 6px;
+    padding: 12px 28px;
+    font-size: 15px;
+    font-weight: 500;
+    min-width: 200px;
 }
 
-/* ========== Toggle/Radio Buttons ========== */
-.radio-button {
-    background: rgba(255, 255, 255, 0.1);
-    border: 2px solid rgba(255, 255, 255, 0.3);
+.btn-primary:hover {
+    background-color: #75614A;
+    border-color: #75614A;
+}
+
+.btn-primary:active {
+    background-color: #65533E;
+}
+
+/* ===== Secondary Button ===== */
+.btn-secondary {
+    background-color: transparent;
+    color: #8B7355;
+    border: 2px solid #8B7355;
+    border-radius: 6px;
+    padding: 12px 28px;
+    font-size: 15px;
+    font-weight: 500;
+    min-width: 200px;
+}
+
+.btn-secondary:hover {
+    background-color: #8B7355;
+    color: #FFFEF9;
+}
+
+/* ===== Menu Labels ===== */
+.menu {
+    font-size: 15px;
+    font-weight: 500;
+    margin: 6px;
+    color: #2D2D2A;
+    background-color: transparent;
+}
+
+/* ===== Entry Fields ===== */
+entry {
+    background-color: #FFFEF9;
+    border: 2px solid #E8E3DA;
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 15px;
+    color: #2D2D2A;
+    min-height: 20px;
+}
+
+entry:focus {
+    border-color: #8B7355;
+    box-shadow: 0 0 0 3px rgba(139, 115, 85, 0.1);
+}
+
+entry placeholder {
+    color: #D4C4B0;
+}
+
+.game-code-entry {
+    font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 8px;
+}
+
+/* ===== Form Elements ===== */
+.form-card {
+    background-color: #FFFEF9;
+    border: 1px solid #E8E3DA;
     border-radius: 8px;
-    padding: 12px 20px;
-    margin: 5px 8px;
-    color: #ffffff;
+    padding: 32px;
+    min-width: 340px;
+}
+
+.form-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #6B6B68;
+    margin-bottom: 4px;
+}
+
+.error-label {
+    font-size: 13px;
+    color: #C0392B;
+    font-weight: 500;
+}
+
+/* ===== Radio/Toggle Buttons ===== */
+.radio-button {
+    background-color: rgba(139, 115, 85, 0.05);
+    border: 2px solid #E8E3DA;
+    border-radius: 6px;
+    padding: 10px 18px;
+    margin: 4px 6px;
+    color: #2D2D2A;
     font-weight: 500;
     min-width: 60px;
 }
 
 .radio-button:hover {
-    background: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 255, 255, 0.5);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    background-color: rgba(139, 115, 85, 0.1);
+    border-color: #D4C4B0;
 }
 
 .radio-button:checked {
-    background: linear-gradient(45deg, #4CAF50, #45a049);
-    border-color: #4CAF50;
-    color: white;
+    background-color: #8B7355;
+    border-color: #8B7355;
+    color: #FFFEF9;
     font-weight: 600;
-    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.3);
 }
 
-/* ========== Header Bar ========== */
-headerbar {
-    background: linear-gradient(90deg, #2c3e50, #34495e);
-    color: white;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+/* ===== Status Banner ===== */
+.status-banner-label {
+    font-size: 15px;
+    font-weight: 500;
+    color: #2D2D2A;
+    padding: 10px 20px;
+    background-color: #FFFEF9;
+    border: 1px solid #E8E3DA;
+    border-radius: 8px;
+    margin: 4px 40px;
 }
 
-headerbar label {
+/* ===== Player Cards ===== */
+.player-card {
+    background-color: #FFFEF9;
+    border: 2px solid #E8E3DA;
+    border-radius: 8px;
+    padding: 10px 14px;
+    min-width: 150px;
+}
+
+.player-card.active-turn {
+    border-color: #8B7355;
+}
+
+.player-card.winner-highlight {
+    border-color: #6B8E5A;
+    background-color: rgba(107, 142, 90, 0.04);
+}
+
+.player-symbol-label {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #8B7355;
+    background-color: #FAF8F3;
+    border-radius: 6px;
+    padding: 4px 10px;
+    min-width: 36px;
+    min-height: 36px;
+}
+
+.player-name-label {
     font-weight: 600;
-    font-size: 18px;
+    font-size: 14px;
+    color: #2D2D2A;
 }
 
-/* ========== Close Button in Header ========== */
-.header-close {
-    background: #e74c3c;
-    color: white;
+.player-sub-label {
+    font-size: 11px;
+    color: #6B6B68;
+}
+
+.vs-label {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 13px;
+    color: #6B6B68;
+    font-style: italic;
+}
+
+/* ===== Board Cells ===== */
+.cell {
+    background-color: #FFFEF9;
+    border: 2px solid #2D2D2A;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 42px;
+    font-weight: 700;
+    color: #2D2D2A;
+    min-width: 120px;
+    min-height: 120px;
+    padding: 0px;
+}
+
+.cell:hover:not(:disabled) {
+    background-color: rgba(139, 115, 85, 0.06);
+}
+
+.cell:disabled {
+    opacity: 1;
+}
+
+.cell.x-cell {
+    color: #8B7355;
+}
+
+.cell.o-cell {
+    color: #2D2D2A;
+}
+
+.cell.win-cell {
+    background-color: rgba(107, 142, 90, 0.1);
+    border-color: #6B8E5A;
+}
+
+/* Grid borders — classic TicTacToe look */
+.cell.top-row    { border-top-width: 0; }
+.cell.bottom-row { border-bottom-width: 0; }
+.cell.left-col   { border-left-width: 0; }
+.cell.right-col  { border-right-width: 0; }
+
+/* ===== Waiting / Share Code ===== */
+.share-code-label {
+    font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+    font-size: 42px;
+    font-weight: 700;
+    letter-spacing: 8px;
+    color: #8B7355;
+    margin: 12px;
+}
+
+.share-link-label {
+    font-size: 12px;
+    color: #6B6B68;
+}
+
+.waiting-status {
+    font-size: 14px;
+    color: #6B6B68;
+    font-style: italic;
+    margin-top: 8px;
+}
+
+/* ===== Start Button (legacy class still used in local game) ===== */
+.start-button {
+    background-color: #8B7355;
+    color: #FFFEF9;
     border: none;
-    border-radius: 50%;
-    min-width: 30px;
-    min-height: 30px;
-    font-weight: bold;
+    border-radius: 6px;
+    padding: 14px 28px;
+    font-size: 18px;
+    font-weight: 500;
 }
 
-.header-close:hover {
-    background: #c0392b;
+.start-button:hover {
+    background-color: #75614A;
 }
+
+/* ===== TicTacToe Grid Buttons (local game uses button-grid) ===== */
+.button-grid {
+    background-color: #FFFEF9;
+    border: 2px solid #2D2D2A;
+    border-radius: 0px;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 42px;
+    font-weight: 700;
+    color: #2D2D2A;
+    min-height: 120px;
+    min-width: 120px;
+    padding: 0px;
+}
+
+.button-grid:hover {
+    background-color: rgba(139, 115, 85, 0.06);
+}
+
+/* Grid Border (local game) */
+.top-row    { border-top-width: 0; }
+.bottom-row { border-bottom-width: 0; }
+.left-col   { border-left-width: 0; }
+.right-col  { border-right-width: 0; }

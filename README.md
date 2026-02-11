@@ -1,202 +1,204 @@
-
 # Tic-Tac-Toe
 
-~~A command-line implementation of the classic Tic-Tac-Toe game where players can play against an AI opponent with multiple difficulty settings.~~
+A feature-rich Tic-Tac-Toe game with both a native GTK4 desktop client and a web client, connected through a networked game server. Play locally against AI opponents with multiple difficulty levels, or play online with friends across desktop and web.
 
-This was a CLI Implementation of the classic Tic-Tac-Toe game (click <a href="https://github.com/Ty700/Tic-Tac-Toe/tree/cli">here</a> for the CLI version) but now it has upgraded with the recent implementation of a GUI using the GTKMM 4.0 library!
+## Live Demo
+
+**Play now at [ty700.tech/tictactoe](https://ty700.tech/tictactoe)**
 
 ## Back Story
 
-This was my first "big" project when I was learning C++ and programming fundamentals. I decided to revisit it and enhance it with some new features. If you're curious about the original version, switch to the [TicTacToe2023 branch](https://github.com/Ty700/TicTacToeVsCPU/tree/TicTacToe2023) and prepare your eyes for that monstrosity. This was prior to my knowledge of git, so I straight up copied and pasted the code into GitHub, forgetting to add the .cpp extension for color formatting. Hence, the latest commit is only a few months old (at the time of this writing).
+This was my first "big" project when I was learning C++ and programming fundamentals. It started as a simple CLI game (still available on the [cli branch](https://github.com/Ty700/Tic-Tac-Toe/tree/cli)), then grew into a full GUI application with GTKMM 4.0, and has now evolved into a networked multiplayer game with both desktop and web clients. If you're curious about the original version, check the [TicTacToe2023 branch](https://github.com/Ty700/TicTacToeVsCPU/tree/TicTacToe2023) — fair warning, it was before I knew about git or file extensions.
 
 ## Features
 
-- Player vs. AI gameplay
-
-- Three AI difficulty levels:
-
-- Easy: makes random moves
-
-- Medium: combines strategy with some randomness
-
-- Hard: implements the Minimax algorithm for optimal play (unbeatable)
-
-- Colorized board with red 'X' and blue 'O'
-
+### Local Play (Desktop)
+- Player vs. AI gameplay with three difficulty levels:
+  - **Easy**: Random moves
+  - **Medium**: Strategic play — wins when possible, blocks opponent wins, prioritizes center and corners
+  - **Hard**: Minimax algorithm — unbeatable, will always win or force a draw
+- Player vs. Player on the same machine
 - Configurable player names and symbols
+- Game statistics tracking (CSV + human-readable logs)
 
-- Option to select which player goes first
+### Online Play (New!)
+- **Cross-platform multiplayer** — Desktop client ↔ Web client
+- Create a game and share a 4-digit code with a friend
+- Real-time game state via polling
+- Web client at [ty700.tech/tictactoe](https://ty700.tech/tictactoe)
+- Desktop client connects to the same server
 
-## Building the Game
+### Technical Highlights
+- **Bitmap board representation** — entire game state packed into a single 32-bit integer using bitfields (board, turn, move count, game status)
+- **C++ HTTP server** using [cpp-httplib](https://github.com/yhirose/cpp-httplib) with REST API
+- **Docker deployment** with multi-stage builds
+- **GTK4/GTKMM 4.0** native desktop UI
+- **Vanilla JS web client** — no frameworks, just clean HTML/CSS/JS
 
-### Prerequisites  
+## Architecture
 
-- A Linux-based operating system
+```
+┌──────────────┐         HTTPS          ┌──────────────────┐
+│ Desktop App  │ ◄───────────────────►  │   Game Server    │
+│ (GTK4 + C++) │                        │   (C++ httplib)  │
+└──────────────┘                        │                  │
+                                        │  ┌────────────┐  │
+┌──────────────┐         HTTPS          │  │ NetworkGame │  │
+│  Web Client  │ ◄───────────────────►  │  │  instances  │  │
+│  (Browser)   │                        │  └────────────┘  │
+└──────────────┘                        └──────────────────┘
+                                               │
+                                        Nginx Proxy Manager
+                                               │
+                                        Docker (port 8085)
+```
 
-- C++ compiler with C++17 or later support
+### REST API
 
-- Python 3.6 or later
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/create-game` | Serve create/join page |
+| `GET` | `/api/game/:id` | Get game state (JSON) |
+| `GET` | `/game/:id` | Join page (HTML) or game state (JSON) |
+| `GET` | `/play/:id` | Game board page |
+| `POST` | `/create` | Create a new game |
+| `POST` | `/join/:id` | Join an existing game |
+| `POST` | `/game/:id/move` | Make a move |
 
-- <a href="https://gnome.pages.gitlab.gnome.org/gtkmm-documentation/chapter-installation.html">GTKMM 4.0</a> and its dependencies
+## Building
 
-### This game doesn't compile for Windows (YET). This is in-progress. 
+### Prerequisites
 
-### Compilation
+- Linux-based OS
+- C++17 compiler
+- Python 3.6+
+- [GTKMM 4.0](https://gnome.pages.gitlab.gnome.org/gtkmm-documentation/chapter-installation.html) (for desktop client)
+- OpenSSL development libraries
+- Docker & Docker Compose (for server deployment)
 
-You can compile the program using the automated python build script: 
+### Desktop Client
 
-#### Production Version
+```bash
+# Production build
+python3 build.py
 
-```python3 build.py```
+# Debug build
+python3 build.py -d
 
-#### Debug Version 
+# Clean
+python3 build.py -c
+```
 
-```python3 build.py -d```
+### Game Server (Local)
 
-You can also clean the binaries and CMake files via:
+```bash
+python3 build.py -s
+```
 
-```python3 build.py -c```
+### Game Server (Docker)
 
-## Gameplay  
+```bash
+docker compose up -d --build
+```
 
-1. Configure the game through the setup menu:
+The server runs on port 8085. Configure your reverse proxy to forward traffic to this port.
 
-- Set your name
+### Tests
 
-- Select your symbol
+```bash
+python3 build.py -t
+```
 
-- Choose to play against an AI or Player
+Runs unit tests for `TicTacToeCore` and `NetworkGame` using Google Test.
 
-- Decide who goes first
+## Gameplay
 
-2. During the game:
+### Local Game
+1. Launch the desktop app and select **Local Game**
+2. Configure players (names, symbols, human/AI, AI difficulty)
+3. Click **Start Game** and take turns clicking cells
+4. Game ends on three-in-a-row or a tie
 
-- Select one of the 9 slots to put your symbol (X/O)
+### Online Game (Web)
+1. Go to [ty700.tech/tictactoe](https://ty700.tech/tictactoe)
+2. Enter your name and click **Create Game**
+3. Share the 4-digit code (or link) with your friend
+4. Your friend enters the code on the join page
+5. Play!
 
-3. The game ends when either:
-
-- A player gets three of their symbols in a row, column, or diagonal
-
-- All positions are filled, resulting in a tie
-
-## Screenshots
-
-#### Game Setup vs AI:
-
-<img src="./img/Human_vs_AI.png" width="275" alt="Game Setup vs AI">
-
-<img src="./img/Human_vs_Human.png" width="275" alt="Game Setup vs Human">
-
-#### Gameplay:
-
-<img src="./img/start_game.png" width="275" alt="Start of the game">
-
-<img src="./img/end_game.png" width="275" alt="End of game">
-
-#### Game Statistics CSV 
-
-<img src="./img/Screenshot from 2025-04-03 23-32-26.png" width="500" alt="Game Stats CSV DB">
-
-#### Game Statistics Text 
-
-<img src="./img/Screenshot from 2025-04-03 23-32-46.png" width="250" alt="Human Readable Game Stats">
+### Online Game (Desktop)
+1. Launch the desktop app and select **Create Online Game** or **Join Online Game**
+2. For hosting: enter your name, share the generated code
+3. For joining: enter your name and the 4-digit code
+4. The game board appears once both players are connected
 
 ## File Structure
 
-- tictactoe.cpp: main program entry point
+```
+├── includes/               # Header files
+│   ├── TicTacToeCore.h     # Core game logic (bitmap board)
+│   ├── NetworkGame.h       # Server-side game session
+│   ├── NetworkGameClient.h # Desktop HTTP client
+│   ├── Server.h            # HTTP server & routing
+│   ├── Player.h            # Player attributes
+│   ├── AIEngine.h          # AI move algorithms
+│   └── ...
+├── src/
+│   ├── TicTacToeCore.cpp   # Board state, win detection, move validation
+│   ├── TicTacToeWindow.cpp # GTK4 UI (local + network screens)
+│   ├── NetworkGameClient.cpp # Desktop-side HTTP polling
+│   ├── AIEngine.cpp        # Easy/Medium/Hard AI
+│   ├── Server/
+│   │   ├── Server.cpp      # REST API routes
+│   │   ├── NetworkGame.cpp # Game session management
+│   │   └── TicTacToeServer.cpp # Server entry point
+│   └── ...
+├── web/                    # Web client
+│   ├── create.html         # Create/join game page
+│   ├── join.html           # Join game page
+│   ├── game.html           # Game board page
+│   └── styles/
+│       ├── game.css        # Portfolio design system
+│       └── game.js         # Client-side game logic
+├── styles/
+│   └── tictactoe.css       # GTK4 theme (matches web design)
+├── tests/                  # Google Test suites
+├── Dockerfile              # Multi-stage Docker build
+├── docker-compose.yml
+├── CMakeLists.txt
+└── build.py                # Build automation script
+```
 
-- tactactoewindow.cpp/h: Controls the bulk of the GUI
-
-- Game.cpp/h: Handles the game logic and board state
-
-- Slot.cpp/h: Handles the 9 Tic-Tac-Toe slots players can place their piece on
-
-- Player.cpp/h: Defines player attributes and behaviors
-
-- AIMoves.cpp/h: Contains AI algorithms for different difficulty levels
-
-- GameStats.cpp/h: Logic behind the tracking of game statistics 
-
-- GameStatsDB.csv: The CSV file contains the following columns:
-
-	- Game ID 
-
-	- Player One Name 
-
-	- Player Two Name
-	
-	- Winner Name 
-
-	- Whether Winner is AI (T/F)
-
-	- Winner Symbol (X/O)
- 
-## AI Implementation  
+## AI Implementation
 
 ### Easy Mode
-
-- Makes a completely random moves with no strategy.  
+Random valid moves with no strategy.
 
 ### Medium Mode
-
-- Uses a prioritized strategy:
-
-1. Tries to win if possible
-
-2. Blocks the player if they're about to win
-
-3. Takes the center position if avaliable
-
-4. Takes a corner position if avaliable
-
-5. Makes a random move if none of the above applies
+Prioritized strategy: win if possible → block opponent → take center → take corner → random.
 
 ### Hard Mode
+Minimax algorithm for optimal play. The AI will either win or force a draw — it is unbeatable.
 
-- Implements the Minimax algorithm to make optimal moves, resulting in an unbeatable gameplay. The AI with either win or force a draw.
-  
-## Game Statistics 
+## Design
 
-- The game includes a comprehensive statistics tracking system that records the results of each game played. This feature allows players to review their game history and track performance over time.
+Both the desktop and web clients share the same visual design system, inspired by the [ty700.tech](https://ty700.tech) portfolio:
 
-### Features
-
-1. Automatically tracks all game results
-
-2. Records player names, and winner information
-
-3. Maintains both a structured CSV database and human-readable game logs 
-
-### Implementation Details 
-
-- Game statistics are updated automatically at the end of each game. 
-
-- The system handles file creation, reading, and writing operations with robous error handling.
-
-- Data integrity is mainted through careful file state management
-
-### Viewing Statistics 
-
-- Players can view their game history by opening the GameStats.txt file, which provides detailed information about each game in an easy-to-read format.
-
-## Future Improvements (In order of priority) 
-
-- **Windows Build option**
-
-- **Network Play**
+- **Colors**: Cream (`#FAF8F3`), warm brown (`#8B7355`), off-white (`#FFFEF9`)
+- **Typography**: Georgia for headings, system fonts for body
+- **Board**: Classic grid with clean borders, no background fills
 
 ## Learnings
 
-### GTKMM Library
-- This was my first project ever using a GUI library. It was really fun to learn and now I feel confident in my ability to make other programs with a GUI!
+This project has been a continuous learning experience across multiple iterations:
 
-### Templates and Callbacks 
-- This was also the first project where I used a template and callback. 
+- **Bitmap data structures** — packing the entire game state into a 32-bit integer using bitfields for efficient storage and manipulation
+- **GTK4/GTKMM** — first GUI project, building reactive interfaces with signal-based architecture
+- **Network programming** — REST API design, HTTP polling, handling proxy quirks (302 redirects through reverse proxies), cross-origin considerations
+- **Docker & deployment** — multi-stage builds, container networking, reverse proxy configuration with Nginx Proxy Manager
+- **Web development** — vanilla HTML/CSS/JS client with no framework dependencies, matching a design system across platforms
+- **Testing** — Google Test for unit testing core game logic and network session management
+- **The importance of braces in C++** — a hard-won lesson in why braceless `if` statements with multiple lines will ruin your day (see commit a659acb9b14819427f07fd7b9c657c693407595b)...
+## License
 
-### Data Structure Optimizations
-- Implementing a bitmap to track player moves proved more efficient than individual character tracking. This insight came after having to convert all character representations to `std::string` to support the GameStats system, highlighting how initial design choices impact later extensibility.
-- The bitmap approach enables cleaner game state representation: positions can be checked with simple bit operations, and display logic becomes more straightforward (e.g., "if position bit is 0, display X; otherwise display O").
-
-### Coding Style Evolution
-- Throughout this project (which expanded beyond its initial scope as I explored different aspects of C++), my coding style transitioned from K&R to Allman bracing style.
-- While the adjustment still feels somewhat unnatural, adopting the Allman style aligns with my workplace standards, making this project a valuable opportunity to build new muscle memory for professional coding practices.
+This project is open source. Feel free to fork, learn from, or build upon it.

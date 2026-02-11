@@ -17,10 +17,10 @@ void Slot::setButtonProperties()
 	p_button->set_valign(Gtk::Align::CENTER);
 	p_button->add_css_class("button-grid");
 
-	if(p_id[0] == 0) p_button->add_css_class("top-row");
-	if(p_id[0] == 2) p_button->add_css_class("bottom-row");
-	if(p_id[1] == 0) p_button->add_css_class("left-col");
-	if(p_id[1] == 2) p_button->add_css_class("right-col");
+	if(p_id == 0 || p_id == 1 || p_id == 2) p_button->add_css_class("top-row");
+	if(p_id == 6 || p_id == 7 || p_id == 8) p_button->add_css_class("bottom-row");
+	if(p_id == 0 || p_id == 3 || p_id == 6) p_button->add_css_class("left-col");
+	if(p_id == 2 || p_id == 5 || p_id == 8) p_button->add_css_class("right-col");
 }
 
 /**
@@ -31,12 +31,12 @@ void Slot::setButtonProperties()
  */
 void Slot::onSlotClick()
 {
-	/* If p_symbolStr length == 0, then slot is avaliable */
+	/* If p_symbolStr length == 0, thenlslot is avaliable */
 	if(p_symbolStr.length() == 0)
 	{
-		p_onSlotClickedCallback(p_id[0], p_id[1]);
+		p_onSlotClickedCallback(p_id);
 	} else {
-		p_onSlotClickedCallback(-1, -1);
+		p_onSlotClickedCallback(-1);
 	}
 }
 
@@ -45,8 +45,8 @@ void Slot::onSlotClick()
  * @PARAMS: 	What symbol to update it to 
  * @RET:	VOID 
  */
-void Slot::updateSymbol(const Player::PlayerSymbol& sym)
+void Slot::updateSymbol(const TicTacToeCore::CELL_STATES& sym)
 {
-	p_symbolStr = (sym == Player::PlayerSymbol::O) ? "O" : "X";
+	p_symbolStr = (sym == TicTacToeCore::CELL_STATES::O) ? "O" : "X";
 	p_button->set_label(p_symbolStr);
 }

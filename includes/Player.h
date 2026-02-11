@@ -5,8 +5,7 @@ class Player
 {
 
 	public: 
-		/* I can already tell this will confuse me later */
-		enum PlayerSymbol {O, X};
+		enum PlayerSymbol {X = 1, O = 2};
 		enum PlayerState  {Human, AI};
 		enum PlayerDiff   {EASY, MEDIUM, HARD};
 
