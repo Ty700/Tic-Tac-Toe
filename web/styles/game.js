@@ -82,13 +82,11 @@
     // ===== POLLING =====
     function startPolling() {
         stopPolling();
-        const interval = gameOver ? 0 : 
-                         isMyTurn ? POLL_INTERVAL_IDLE : 
-                         POLL_INTERVAL_ACTIVE;
-        
-        if (interval > 0) {
-            pollTimer = setInterval(fetchGameState, interval);
-        }
+
+        if (gameOver) return;
+
+        const interval = isMyTurn ? POLL_INTERVAL_IDLE : POLL_INTERVAL_ACTIVE;
+        pollTimer = setInterval(fetchGameState, interval);
     }
 
     function stopPolling() {
@@ -166,13 +164,28 @@
             }
             
             clearActionArea();
-            startPolling();
         } 
         else if (status === 'winner') {
-            gameOver = true;
-            disableBoard();
-            stopPolling();
+            handleGameEnd(data, 'winner');
+        } 
+        else if (status === 'tie') {
+            handleGameEnd(data, 'tie');
+        }
+        else if (status === 'finished') {
+            /* 'finished' is a fallback — treat as game over */
+            handleGameEnd(data, 'finished');
+        }
+    }
 
+    // ===== HANDLE GAME END (winner/tie/finished) =====
+    function handleGameEnd(data, endType) {
+        if (gameOver) return; /* Prevent duplicate end handling */
+
+        gameOver = true;
+        disableBoard();
+        stopPolling();
+
+        if (endType === 'winner') {
             const winnerTurnIdx = data.currentTurn;
             const winnerNum = winnerTurnIdx + 1;
             const winnerData = winnerNum === 1 ? data.player1 : data.player2;
@@ -189,23 +202,15 @@
             } else {
                 player2Card.classList.add('winner-highlight');
             }
-
-            showPlayAgain();
         } 
-        else if (status === 'tie') {
-            gameOver = true;
-            disableBoard();
-            stopPolling();
+        else if (endType === 'tie') {
             setStatus("It's a tie!", 'tie');
-            showPlayAgain();
         }
-        else if (status === 'finished') {
-            gameOver = true;
-            disableBoard();
-            stopPolling();
+        else {
             setStatus('Game finished.', '');
-            showPlayAgain();
         }
+
+        showPlayAgain();
     }
 
     // ===== BOARD RENDERING =====
@@ -250,6 +255,8 @@
         if (lastBoard[pos] !== '') return;
 
         const mySymbol = playerNum === 1 ? 'X' : 'O';
+        
+        /* Optimistic UI update */
         cell.textContent = mySymbol;
         cell.classList.add('placed', mySymbol === 'X' ? 'x-cell' : 'o-cell');
         cell.disabled = true;
@@ -271,24 +278,38 @@
             if (res.ok) {
                 const data = await res.json();
                 updateUI(data);
-            } else {
-                cell.textContent = '';
-                cell.classList.remove('placed', 'x-cell', 'o-cell');
-                isMyTurn = true;
-                enableBoard(lastBoard);
 
-                const errData = await res.json().catch(() => ({}));
-                setStatus('Invalid move: ' + (errData.error || 'Try again'), 'active');
+                /* If game didn't end, restart polling for opponent's move */
+                if (!gameOver) {
+                    startPolling();
+                }
+            } else {
+                /* Move POST failed (e.g. 502 through proxy) — 
+                 * The server may have processed the move anyway.
+                 * DON'T revert — just poll for the real state.
+                 */
+                console.warn('Move POST returned', res.status, '— polling for actual state');
+                
+                /* Immediately fetch real state from server */
+                await fetchGameState();
+
+                /* If still not game over, resume polling */
+                if (!gameOver) {
+                    startPolling();
+                }
             }
         } catch (err) {
-            cell.textContent = '';
-            cell.classList.remove('placed', 'x-cell', 'o-cell');
-            isMyTurn = true;
-            enableBoard(lastBoard);
-            setStatus('Connection error. Try again.', 'active');
+            /* Network error — same strategy: poll for real state */
+            console.warn('Move POST network error — polling for actual state');
+            
+            /* Small delay then fetch real state */
+            setTimeout(async () => {
+                await fetchGameState();
+                if (!gameOver) {
+                    startPolling();
+                }
+            }, 500);
         }
-
-        startPolling();
     }
 
     // ===== STATUS HELPERS =====
