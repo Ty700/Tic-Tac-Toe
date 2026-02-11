@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <titleTicTacToe> — Create Game</title>
+    <title>TicTacToe — Create Game</title>
     <link rel="stylesheet" href="/tictactoe/styles/game.css">
 </head>
 <body>
@@ -112,32 +112,46 @@
                 const formData = new URLSearchParams();
                 formData.append('playerName', name);
 
+                // Use redirect:'follow' so the browser follows the server's 302
+                // The final URL will contain the game ID
                 const res = await fetch(BASE + '/create', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: formData.toString(),
-                    redirect: 'manual'
+                    redirect: 'follow'
                 });
 
-                const location = res.headers.get('Location');
-                if (location) {
-                    const gameID = location.replace('/game/', '');
-                    sessionStorage.setItem('ttt_playerName', name);
-                    sessionStorage.setItem('ttt_playerNum', '1');
-                    sessionStorage.setItem('ttt_gameID', gameID);
-                    window.location.href = BASE + '/play/' + gameID;
-                } else {
-                    if (res.redirected) {
-                        const gameID = new URL(res.url).pathname.replace(BASE + '/game/', '').replace('/game/', '');
+                if (res.ok || res.redirected) {
+                    const finalUrl = res.url;
+                    // Final URL: https://ty700.tech/tictactoe/game/5589
+                    const urlPath = new URL(finalUrl).pathname;
+                    const gameID = urlPath.split('/').pop();
+
+                    if (gameID && /^\d{4}$/.test(gameID)) {
                         sessionStorage.setItem('ttt_playerName', name);
                         sessionStorage.setItem('ttt_playerNum', '1');
                         sessionStorage.setItem('ttt_gameID', gameID);
                         window.location.href = BASE + '/play/' + gameID;
-                    } else {
-                        throw new Error('No game ID returned');
+                        return;
                     }
+
+                    // Fallback: scan response body for a 4-digit ID
+                    const body = await res.text();
+                    const match = body.match(/\b(\d{4})\b/);
+                    if (match) {
+                        sessionStorage.setItem('ttt_playerName', name);
+                        sessionStorage.setItem('ttt_playerNum', '1');
+                        sessionStorage.setItem('ttt_gameID', match[1]);
+                        window.location.href = BASE + '/play/' + match[1];
+                        return;
+                    }
+
+                    throw new Error('Could not extract game ID');
+                } else {
+                    throw new Error('Server returned ' + res.status);
                 }
             } catch (err) {
+                console.error('Create game error:', err);
                 alert('Failed to create game. Please try again.');
                 btn.textContent = 'Create Game';
                 btn.disabled = false;
