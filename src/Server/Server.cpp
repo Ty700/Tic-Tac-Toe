@@ -86,8 +86,8 @@ bool findGameInGameMap(const std::string& gameID,
 void Server::getHomepage(const httplib::Request& req, httplib::Response& res)
 {
 	res.status = 302;
-	res.set_header("Location", "/create-game");
-	std::cout << "[GET /] Redirecting to /create-game" << std::endl;
+	res.set_header("Location", "/tictactoe/create-game");
+	std::cout << "[GET /] Redirecting to /tictactoe/create-game" << std::endl;
 }
 
 void Server::getServerHealth(const httplib::Request& req, httplib::Response& res)
