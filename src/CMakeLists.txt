@@ -5,6 +5,7 @@ set(TICTACTOE_SRC
     "GameStats.cpp"
     "TicTacToeCore.cpp"
     "TicTacToeWindow.cpp"
+    "NetworkGameClient.cpp"
     "Slot.cpp"
 )
 
