@@ -151,15 +151,13 @@ TicTacToeCore::GAME_STATUS TicTacToeCore::makeMove(const int& pos, const CELL_ST
 
 	/* Valid Move Now */
 	if(!setCell(pos, symbol)) return GAME_STATUS::ERROR_MOVE;
-    	
+	
 	/* Winner Detection */
 	if(checkForWinner())
-        props.game_state = GAME_STATUS::WINNER;
 		return GAME_STATUS::WINNER;
 	
 	/* Tie? */
 	if(checkForTie())
-        props.game_state = GAME_STATUS::TIE;
 		return GAME_STATUS::TIE;
 
 	/* Update props */
