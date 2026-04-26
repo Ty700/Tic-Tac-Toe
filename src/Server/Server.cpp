@@ -173,6 +173,7 @@ void Server::getJoinPage(const httplib::Request& req, httplib::Response& res)
 	{
 		/* Desktop/API client → return JSON */
 		auto& game = masterGameList[gameID];
+		game->touch();
 		std::string json = game->getGameStatusJson();
 		res.set_content(json, "application/json");
 	}
@@ -180,7 +181,8 @@ void Server::getJoinPage(const httplib::Request& req, httplib::Response& res)
 
 /**
  * @FUNCTION:	JSON API endpoint: GET /api/game/:id
- *		Always returns game state as JSON (used by JS polling)
+ *		Always returns game state as JSON (used by JS polling).
+ *		Touches lastActivity so the reaper considers polling clients alive.
  */
 void Server::getGameStatusAPI(const httplib::Request& req, httplib::Response& res)
 {
@@ -194,6 +196,7 @@ void Server::getGameStatusAPI(const httplib::Request& req, httplib::Response& re
 	}
 
 	auto& game = masterGameList[gameID];
+	game->touch();
 	std::string json = game->getGameStatusJson();
 	res.set_content(json, "application/json");
 }
@@ -385,6 +388,102 @@ void Server::postMakeMove(const httplib::Request& req, httplib::Response& res)
 	res.set_content(game->getGameStatusJson(), "application/json");
 }
 
+/**
+ * @FUNCTION:	Leave a game. Cleanup behavior depends on current state:
+ *		- WAITING:  erase immediately (host abandoned before anyone joined)
+ *		- ACTIVE:   mark FINISHED so opponent's next poll observes the end;
+ *		            reaper will clean up later
+ *		- FINISHED: erase immediately (both players already know it's over)
+ */
+void Server::postLeaveGame(const httplib::Request& req, httplib::Response& res)
+{
+	std::string gameID = req.matches[1];
+	std::string playerName = req.get_param_value("playerName");
+
+	std::lock_guard<std::mutex> lock(masterGameListMutex);
+
+	auto it = masterGameList.find(gameID);
+	if (it == masterGameList.end())
+	{
+		res.status = ServerCodes::NOT_FOUND;
+		res.set_content(R"({"error":"Game not found"})", "application/json");
+		return;
+	}
+
+	auto& game = it->second;
+	auto state = game->getCurrentState();
+
+	if (state == NetworkGame::SESSION_STATE::WAITING ||
+	    state == NetworkGame::SESSION_STATE::FINISHED)
+	{
+		std::cout << "[POST /game/" << gameID << "/leave] Erased ("
+			  << (state == NetworkGame::SESSION_STATE::WAITING ? "waiting" : "finished")
+			  << ") by " << playerName << std::endl;
+		masterGameList.erase(it);
+	}
+	else
+	{
+		std::cout << "[POST /game/" << gameID << "/leave] Marked FINISHED by "
+			  << playerName << std::endl;
+		game->markFinished();
+	}
+
+	res.status = ServerCodes::GAME_SUCCESS;
+	res.set_content(R"({"ok":true})", "application/json");
+}
+
+/* ====== REAPER ====== */
+
+void Server::reaperLoop()
+{
+	std::cout << "[REAPER] Started (interval " << reaperInterval.count() << "s, "
+		  << "TTLs waiting=" << reaperTTLs.waiting.count()
+		  << "s active=" << reaperTTLs.active.count()
+		  << "s finished=" << reaperTTLs.finished.count() << "s)" << std::endl;
+
+	while (reaperRunning.load())
+	{
+		/* Interruptible sleep: wakes early if stopReaper() notifies. */
+		{
+			std::unique_lock<std::mutex> wakeLock(reaperWakeMutex);
+			reaperWakeCV.wait_for(wakeLock, reaperInterval,
+				[this]{ return !reaperRunning.load(); });
+		}
+		if (!reaperRunning.load()) break;
+
+		std::vector<std::string> victims;
+		{
+			std::lock_guard<std::mutex> lock(masterGameListMutex);
+			victims = ReaperPolicy::findExpired(
+				masterGameList,
+				std::chrono::steady_clock::now(),
+				reaperTTLs);
+
+			for (const auto& id : victims)
+				masterGameList.erase(id);
+		}
+
+		for (const auto& id : victims)
+			std::cout << "[REAPER] Evicted game " << id << std::endl;
+	}
+
+	std::cout << "[REAPER] Stopped" << std::endl;
+}
+
+void Server::stopReaper()
+{
+	if (!reaperRunning.exchange(false))
+		return;
+	reaperWakeCV.notify_all();
+	if (reaperThread.joinable())
+		reaperThread.join();
+}
+
+Server::~Server()
+{
+	stopReaper();
+}
+
 /* ====== SERVER RUN ====== */
 
 int Server::run()
@@ -435,14 +534,25 @@ int Server::run()
 		this->postMakeMove(req, res);
 	});
 
+	svr.Post(R"(/game/(.+)/leave)", [this](const httplib::Request& req, httplib::Response& res) {
+		this->postLeaveGame(req, res);
+	});
+
+	/* Spin up the reaper before accepting traffic so we don't have a
+	 * window where games can be created but not evicted. */
+	reaperRunning.store(true);
+	reaperThread = std::thread(&Server::reaperLoop, this);
+
 	std::cout << "[SERVER] TicTacToe Server Started on port " << SERVER_PORT << std::endl;
 	std::cout << "[SERVER] Web UI: http://localhost:" << SERVER_PORT << "/create-game" << std::endl;
 
 	if (!svr.listen("0.0.0.0", SERVER_PORT))
 	{
 		std::cout << "[SERVER] SERVER CRASHED!" << std::endl;
+		stopReaper();
 		return -1;
 	}
 
+	stopReaper();
 	return 0;
 }

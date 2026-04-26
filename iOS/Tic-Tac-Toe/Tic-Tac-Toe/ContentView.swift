@@ -1,24 +1,21 @@
-//
-//  ContentView.swift
-//  Tic-Tac-Toe
-//
-//  Created by Tyler on 4/25/26.
-//
-
 import SwiftUI
 
 struct ContentView: View {
+    @Environment(AppModel.self) private var app
+
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        switch app.screen {
+        case .home:
+            HomeView()
+        case .join:
+            JoinView()
+        case .game(let id):
+            GameView(gameID: id)
         }
-        .padding()
     }
 }
 
 #Preview {
     ContentView()
+        .environment(AppModel())
 }
