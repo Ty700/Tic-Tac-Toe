@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TicTacToe — Privacy Policy</title>
+    <link rel="stylesheet" href="/tictactoe/styles/game.css">
+    <style>
+        .policy {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: calc(60px + 1.5rem) 1.25rem 4rem;
+            line-height: 1.6;
+        }
+        .policy h2 {
+            margin-top: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        .policy h3 {
+            margin-top: 1.25rem;
+            margin-bottom: 0.25rem;
+            font-size: 1.05rem;
+        }
+        .policy p, .policy li {
+            color: #3a3024;
+        }
+        .policy ul {
+            padding-left: 1.25rem;
+        }
+        .policy a {
+            color: #8B7355;
+        }
+        .policy .effective {
+            color: #6b6353;
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="content" style="opacity: 1;">
+        <nav class="nav">
+            <a href="/tictactoe/create-game" class="logo">TicTacToe</a>
+            <div class="nav-links">
+                <a href="https://ty700.tech">Portfolio</a>
+                <a href="https://github.com/Ty700/Tic-Tac-Toe" target="_blank">Source</a>
+            </div>
+        </nav>
+
+        <main class="policy">
+            <h1>Privacy Policy</h1>
+            <p class="effective">Effective: April 26, 2026</p>
+
+            <p>
+                TicTacToe is a hobby-scale online tic-tac-toe game. This policy describes
+                what data the iOS app, web client, and game server collect and why.
+                Read it in full — it's short on purpose.
+            </p>
+
+            <h2>What we collect</h2>
+
+            <h3>Player name</h3>
+            <p>
+                When you create or join a game, you type a name (e.g. "Tyler"). The
+                name is sent to the game server and stored in memory for the
+                duration of your game session only. Names are not persisted to disk
+                and are not linked to any other identifier.
+            </p>
+
+            <h3>Server access logs</h3>
+            <p>
+                The server writes basic request information to its standard output
+                (request method, path, game ID, the player name supplied with the
+                request). These logs are written to Docker container stdout and
+                retained only as long as the running container's log buffer.
+                They are not exported to any external system.
+            </p>
+
+            <h3>Game state</h3>
+            <p>
+                The board state, moves, and turn information for an in-progress
+                game live in server memory. A background "reaper" thread evicts
+                game sessions after a short idle window (10 minutes for unjoined
+                games, 30 minutes for idle active games, 5 minutes for finished
+                games). After eviction, no record of the game remains.
+            </p>
+
+            <h2>What we do not collect</h2>
+            <ul>
+                <li>No analytics, advertising, or tracking pixels.</li>
+                <li>No persistent device identifiers, advertising IDs, or fingerprints.</li>
+                <li>No location, contacts, photos, camera, microphone, or health data.</li>
+                <li>No payment information.</li>
+                <li>The iOS app does not use cookies. The web client uses browser
+                    <code>sessionStorage</code> to remember your name for the current
+                    tab; this is cleared when you close the tab.</li>
+            </ul>
+
+            <h2>Third parties</h2>
+            <ul>
+                <li><strong>Cloudflare</strong> proxies HTTPS traffic to ty700.tech.
+                    Cloudflare may process request metadata (IP address, headers)
+                    as part of providing TLS termination and DDoS protection.
+                    See <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">Cloudflare's privacy policy</a>.</li>
+                <li><strong>Apple</strong> distributes the iOS app via the App Store
+                    and operates iOS itself. OS-level telemetry is governed by
+                    Apple's policies, not this app.</li>
+                <li>No other third parties receive any data from this app.</li>
+            </ul>
+
+            <h2>Your choices</h2>
+            <ul>
+                <li>To remove your in-progress game session immediately, tap
+                    <strong>Leave</strong> in the iOS app or web client. The server
+                    will erase the session.</li>
+                <li>To stop using the iOS app entirely, delete it from your device.</li>
+                <li>For any questions or requests, email
+                    <a href="mailto:T.ScottiBusiness@yahoo.com">T.ScottiBusiness@yahoo.com</a>.</li>
+            </ul>
+
+            <h2>Children</h2>
+            <p>
+                TicTacToe is not directed at children under 13 and does not knowingly
+                collect personal information from children.
+            </p>
+
+            <h2>Changes</h2>
+            <p>
+                This policy may be updated as the app changes. The effective date at
+                the top reflects the most recent revision. The current version is
+                always available at this URL.
+            </p>
+        </main>
+    </div>
+</body>
+</html>

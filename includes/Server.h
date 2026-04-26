@@ -1,7 +1,11 @@
-#pragma once 
+#pragma once
 #include <string>
 #include <memory>
 #include <unordered_map>
+#include <thread>
+#include <atomic>
+#include <condition_variable>
+#include <chrono>
 
 #ifndef CPPHTTPLIB_OPENSSL_SUPPORT
 	#define CPPHTTPLIB_OPENSSL_SUPPORT
@@ -10,7 +14,7 @@
 #include "../includes/httplib.h"
 #include "../includes/NetworkGame.h"
 
-namespace ServerCodes 
+namespace ServerCodes
 {
 	const int CREATE_GAME_FAILED = httplib::StatusCode::InternalServerError_500;
 	const int DESKTOP_CREATE_GAME_SUCCESS = httplib::StatusCode::Found_302;
@@ -28,29 +32,45 @@ class Server {
 
 		/* Retry limit for gameID creation */
 		const size_t retryLimit = 5000;
-		
-		Server(){};
-		~Server(){};
+
+		Server() = default;
+		~Server();
 
 		int run();
+
 	private:
 		/* Server Instance */
 		httplib::Server svr;
 
 		/**
-		 * Key: Game ID 
-		 * Value: Ptr to Network Game Class 
+		 * Key: Game ID
+		 * Value: Ptr to Network Game Class
 		 */
 		std::unordered_map<std::string, std::unique_ptr<NetworkGame>> masterGameList;
 
 		/* Mutex to protect the masterGameList */
-		std::mutex masterGameListMutex;	
+		std::mutex masterGameListMutex;
+
+		/* ====== REAPER ====== */
+		/* The reaper periodically scans masterGameList and evicts games that
+		 * have outlived their TTL — so we don't leak memory or exhaust the
+		 * 1000-9999 gameID space. Wake every reaperInterval; each tick takes
+		 * masterGameListMutex briefly to find + erase expired games. */
+		ReaperPolicy::TTLs reaperTTLs{};
+		std::chrono::seconds reaperInterval{60};
+		std::atomic<bool> reaperRunning{false};
+		std::thread reaperThread;
+		std::mutex reaperWakeMutex;
+		std::condition_variable reaperWakeCV;
+
+		void reaperLoop();
+		void stopReaper();
 
 		/* Server Utilites */
 
 		std::string createGameId();
-		std::unique_ptr<NetworkGame> createGame(const httplib::Request& req, 
-				httplib::Response& res, 
+		std::unique_ptr<NetworkGame> createGame(const httplib::Request& req,
+				httplib::Response& res,
 				const std::string& gameID);
 
 		/* Helper: Read file to string */
@@ -62,6 +82,7 @@ class Server {
 		void getServerHealth(const httplib::Request& req, httplib::Response& res);
 		void getCreateGame(const httplib::Request& req, httplib::Response& res);
 		void getStaticFile(const httplib::Request& req, httplib::Response& res);
+		void getPrivacyPage(const httplib::Request& req, httplib::Response& res);
 
 		/* Web game pages */
 		void getPlayPage(const httplib::Request& req, httplib::Response& res);
@@ -71,7 +92,8 @@ class Server {
 		void getGameStatusAPI(const httplib::Request& req, httplib::Response& res);
 
 		/* ====== POSTs ====== */
-		void postJoinGame(const httplib::Request& req, httplib::Response& res);  
-		void postCreateGame(const httplib::Request& req, httplib::Response& res);  
+		void postJoinGame(const httplib::Request& req, httplib::Response& res);
+		void postCreateGame(const httplib::Request& req, httplib::Response& res);
         	void postMakeMove(const httplib::Request& req, httplib::Response& res);
+		void postLeaveGame(const httplib::Request& req, httplib::Response& res);
 };

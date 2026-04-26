@@ -5,3 +5,13 @@ GameStats/*
 compile_commands.json
 .clangd
 .cache/
+.claude/
+
+# Xcode user data
+iOS/Tic-Tac-Toe/Tic-Tac-Toe.xcodeproj/xcuserdata/
+iOS/Tic-Tac-Toe/Tic-Tac-Toe.xcodeproj/project.xcworkspace/xcuserdata/
+iOS/Tic-Tac-Toe/.DS_Store
+
+# Build artifacts
+iOS/Tic-Tac-Toe/build/
+iOS/DerivedData/
