@@ -5,6 +5,7 @@ GameStats/*
 compile_commands.json
 .clangd
 .cache/
+.claude/
 
 # Xcode user data
 iOS/Tic-Tac-Toe/Tic-Tac-Toe.xcodeproj/xcuserdata/
