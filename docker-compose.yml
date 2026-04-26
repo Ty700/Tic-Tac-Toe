@@ -2,6 +2,11 @@ services:
   tictactoe:
     build: .
     container_name: tictactoe
+    networks:
+      - default
     restart: unless-stopped
-    ports:
-      - "8085:8085"
+
+networks:
+  default:
+    external:
+      name: network-services_network_services
