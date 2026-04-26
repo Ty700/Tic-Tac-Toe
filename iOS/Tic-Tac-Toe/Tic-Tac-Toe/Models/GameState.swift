@@ -1,6 +1,6 @@
 import Foundation
 
-enum GameStatus: String, Decodable {
+nonisolated enum GameStatus: String, Decodable {
     case waiting
     case active
     case inProgress = "in_progress"
@@ -9,12 +9,12 @@ enum GameStatus: String, Decodable {
     case finished
 }
 
-struct PlayerInfo: Decodable, Equatable {
+nonisolated struct PlayerInfo: Decodable, Equatable {
     let name: String
     let symbol: String
 }
 
-struct GameState: Decodable, Equatable {
+nonisolated struct GameState: Decodable, Equatable {
     let gameID: String
     let gameStatus: GameStatus
     let board: [String]

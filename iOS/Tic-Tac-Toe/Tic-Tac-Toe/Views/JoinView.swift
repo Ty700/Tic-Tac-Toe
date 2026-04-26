@@ -58,5 +58,17 @@ struct JoinView: View {
             Spacer()
         }
         .background(Theme.cream.ignoresSafeArea())
+        .alert("Error", isPresented: errorBinding) {
+            Button("OK") { app.errorMessage = nil }
+        } message: {
+            Text(app.errorMessage ?? "")
+        }
+    }
+
+    private var errorBinding: Binding<Bool> {
+        Binding(
+            get: { app.errorMessage != nil },
+            set: { if !$0 { app.errorMessage = nil } }
+        )
     }
 }

@@ -18,7 +18,7 @@ enum APIError: Error, LocalizedError {
     }
 }
 
-final class APIClient {
+nonisolated final class APIClient: Sendable {
     let baseURL: URL
 
     init(baseURL: URL = URL(string: "https://ty700.tech/tictactoe")!) {
@@ -39,7 +39,7 @@ final class APIClient {
 
         let delegate = NoRedirectDelegate()
         let (data, response) = try await session.data(for: req, delegate: delegate)
-        let http = response as! HTTPURLResponse
+        let http = try httpResponse(response)
 
         guard http.statusCode == 302 || http.statusCode == 200 else {
             throw APIError.badStatus(http.statusCode, String(data: data, encoding: .utf8) ?? "")
@@ -61,7 +61,7 @@ final class APIClient {
         req.httpBody = formBody(["playerName": playerName])
 
         let (data, response) = try await session.data(for: req)
-        let http = response as! HTTPURLResponse
+        let http = try httpResponse(response)
         guard (200..<300).contains(http.statusCode) else {
             throw APIError.badStatus(http.statusCode, String(data: data, encoding: .utf8) ?? "")
         }
@@ -70,7 +70,7 @@ final class APIClient {
     func fetchState(gameID: String) async throws -> GameState {
         let url = baseURL.appendingPathComponent("api/game/\(gameID)")
         let (data, response) = try await session.data(from: url)
-        let http = response as! HTTPURLResponse
+        let http = try httpResponse(response)
         guard (200..<300).contains(http.statusCode) else {
             throw APIError.badStatus(http.statusCode, String(data: data, encoding: .utf8) ?? "")
         }
@@ -84,7 +84,7 @@ final class APIClient {
         req.httpBody = formBody(["playerName": playerName])
 
         let (data, response) = try await session.data(for: req)
-        let http = response as! HTTPURLResponse
+        let http = try httpResponse(response)
         guard (200..<300).contains(http.statusCode) else {
             throw APIError.badStatus(http.statusCode, String(data: data, encoding: .utf8) ?? "")
         }
@@ -100,11 +100,18 @@ final class APIClient {
         ])
 
         let (data, response) = try await session.data(for: req)
-        let http = response as! HTTPURLResponse
+        let http = try httpResponse(response)
         guard (200..<300).contains(http.statusCode) else {
             throw APIError.badStatus(http.statusCode, String(data: data, encoding: .utf8) ?? "")
         }
         return try decode(data)
+    }
+
+    private func httpResponse(_ response: URLResponse) throws -> HTTPURLResponse {
+        guard let http = response as? HTTPURLResponse else {
+            throw APIError.badStatus(0, "Non-HTTP response")
+        }
+        return http
     }
 
     private func formBody(_ fields: [String: String]) -> Data {

@@ -49,6 +49,9 @@ final class AppModel {
         if case .game(let gameID) = screen, !playerName.isEmpty {
             let name = playerName
             let api = self.api
+            // Fire-and-forget: server has a reaper that will evict the game
+            // even if this request never lands, so the error is intentionally
+            // discarded — we don't want to block returning to the home screen.
             Task.detached {
                 try? await api.leaveGame(gameID: gameID, playerName: name)
             }

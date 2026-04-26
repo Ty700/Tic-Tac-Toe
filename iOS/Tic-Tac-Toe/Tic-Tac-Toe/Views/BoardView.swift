@@ -5,24 +5,32 @@ struct BoardView: View {
     let interactive: Bool
     let onTap: (Int) -> Void
 
+    private let columns = Array(
+        repeating: GridItem(.flexible(), spacing: 6),
+        count: 3
+    )
+
     var body: some View {
-        Grid(horizontalSpacing: 6, verticalSpacing: 6) {
-            ForEach(0..<3, id: \.self) { row in
-                GridRow {
-                    ForEach(0..<3, id: \.self) { col in
-                        let i = row * 3 + col
+        // Defensive: server should always return 9 cells, but a malformed
+        // payload shouldn't crash the app. Render nothing if shape is wrong.
+        Group {
+            if cells.count == 9 {
+                LazyVGrid(columns: columns, spacing: 6) {
+                    ForEach(0..<9, id: \.self) { i in
                         CellView(value: cells[i])
+                            .aspectRatio(1, contentMode: .fit)
+                            .contentShape(Rectangle())
                             .onTapGesture {
                                 guard interactive, cells[i].isEmpty else { return }
                                 onTap(i)
                             }
                     }
                 }
+                .padding(6)
+                .background(Theme.brown.opacity(0.15))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
             }
         }
-        .padding(6)
-        .background(Theme.brown.opacity(0.15))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }
 
@@ -33,7 +41,6 @@ private struct CellView: View {
         ZStack {
             RoundedRectangle(cornerRadius: 8)
                 .fill(Theme.offWhite)
-                .aspectRatio(1, contentMode: .fit)
 
             Text(value)
                 .font(.custom("Georgia", size: 64))

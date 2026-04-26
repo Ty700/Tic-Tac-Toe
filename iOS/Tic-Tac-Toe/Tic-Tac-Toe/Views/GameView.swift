@@ -6,6 +6,8 @@ struct GameView: View {
 
     @State private var state: GameState?
     @State private var loadError: String?
+    // Bumped on Retry to cancel and restart the .task-bound polling loop.
+    @State private var pollAttempt: Int = 0
 
     var body: some View {
         VStack(spacing: 20) {
@@ -32,8 +34,23 @@ struct GameView: View {
                         .padding(.top, 12)
                 }
             } else if let err = loadError {
-                Text(err).foregroundStyle(.red)
-                Button("Back") { app.leaveGame() }
+                VStack(spacing: 12) {
+                    Text(err)
+                        .foregroundStyle(.red)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                    HStack(spacing: 12) {
+                        Button("Retry") {
+                            loadError = nil
+                            pollAttempt &+= 1
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(Theme.brown)
+                        Button("Back") { app.leaveGame() }
+                            .buttonStyle(.bordered)
+                            .tint(Theme.brown)
+                    }
+                }
             } else {
                 ProgressView("Connecting…")
             }
@@ -42,7 +59,7 @@ struct GameView: View {
         }
         .padding(.top)
         .background(Theme.cream.ignoresSafeArea())
-        .task(id: gameID) {
+        .task(id: "\(gameID)-\(pollAttempt)") {
             await pollLoop()
         }
     }
