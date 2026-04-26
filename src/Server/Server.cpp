@@ -112,6 +112,21 @@ void Server::getCreateGame(const httplib::Request& req, httplib::Response& res)
 }
 
 /**
+ * @FUNCTION:	Serves the privacy policy page (HTML) at /privacy
+ */
+void Server::getPrivacyPage(const httplib::Request& req, httplib::Response& res)
+{
+	std::string html = readFile("./web/privacy.html");
+	if (html.empty())
+	{
+		res.status = 500;
+		res.set_content("Error: privacy.html not found", "text/plain");
+		return;
+	}
+	res.set_content(html, "text/html");
+}
+
+/**
  * @FUNCTION:	Serves the game board page (HTML) at /play/:id
  *		Player must have session data (set by create/join flow)
  */
@@ -499,6 +514,10 @@ int Server::run()
 
 	svr.Get("/create-game", [this](const httplib::Request& req, httplib::Response& res) {
 		this->getCreateGame(req, res);
+	});
+
+	svr.Get("/privacy", [this](const httplib::Request& req, httplib::Response& res) {
+		this->getPrivacyPage(req, res);
 	});
 
 	/* Static files: /styles/game.css, /styles/game.js, etc. */

@@ -82,6 +82,7 @@ class Server {
 		void getServerHealth(const httplib::Request& req, httplib::Response& res);
 		void getCreateGame(const httplib::Request& req, httplib::Response& res);
 		void getStaticFile(const httplib::Request& req, httplib::Response& res);
+		void getPrivacyPage(const httplib::Request& req, httplib::Response& res);
 
 		/* Web game pages */
 		void getPlayPage(const httplib::Request& req, httplib::Response& res);
