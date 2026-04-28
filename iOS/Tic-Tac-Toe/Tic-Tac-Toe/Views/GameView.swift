@@ -10,77 +10,82 @@ struct GameView: View {
     @State private var pollAttempt: Int = 0
 
     var body: some View {
-        VStack(spacing: 20) {
-            header
-
-            if let s = state {
-                playerStrip(s)
-                BoardView(
-                    cells: s.board,
-                    interactive: s.isMyTurn(playerNumber: app.playerNumber),
-                    onTap: { idx in
-                        Task { await sendMove(position: idx) }
-                    }
-                )
-                .padding(.horizontal)
-                .frame(maxWidth: 400)
-
-                statusBanner(s)
-
-                if s.isOver {
-                    Button("Play Again") { app.leaveGame() }
-                        .buttonStyle(.borderedProminent)
-                        .tint(Theme.brown)
-                        .padding(.top, 12)
-                }
-            } else if let err = loadError {
-                VStack(spacing: 12) {
-                    Text(err)
-                        .foregroundStyle(.red)
-                        .multilineTextAlignment(.center)
+        NavigationStack {
+            Group {
+                if let s = state {
+                    VStack(spacing: 20) {
+                        playerStrip(s)
+                        BoardView(
+                            cells: s.board,
+                            interactive: s.isMyTurn(playerNumber: app.playerNumber),
+                            onTap: { idx in
+                                Task { await sendMove(position: idx) }
+                            }
+                        )
                         .padding(.horizontal)
-                    HStack(spacing: 12) {
-                        Button("Retry") {
-                            loadError = nil
-                            pollAttempt &+= 1
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .tint(Theme.brown)
-                        Button("Back") { app.leaveGame() }
-                            .buttonStyle(.bordered)
-                            .tint(Theme.brown)
-                    }
-                }
-            } else {
-                ProgressView("Connecting…")
-            }
+                        .frame(maxWidth: 400)
 
-            Spacer()
+                        statusBanner(s)
+
+                        if s.isOver {
+                            Button("Play Again") { app.leaveGame() }
+                                .buttonStyle(.borderedProminent)
+                                .tint(Theme.brown)
+                                .padding(.top, 12)
+                        }
+                        Spacer(minLength: 0)
+                    }
+                    .padding(.top, 16)
+                } else if let err = loadError {
+                    VStack(spacing: 12) {
+                        Text(err)
+                            .foregroundStyle(.red)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                        HStack(spacing: 12) {
+                            Button("Retry") {
+                                loadError = nil
+                                pollAttempt &+= 1
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .tint(Theme.brown)
+                            Button("Back") { app.leaveGame() }
+                                .buttonStyle(.bordered)
+                                .tint(Theme.brown)
+                        }
+                    }
+                } else {
+                    ProgressView("Connecting…")
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Theme.cream.ignoresSafeArea())
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(Theme.cream, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        app.leaveGame()
+                    } label: {
+                        HStack(spacing: 2) {
+                            Image(systemName: "chevron.left")
+                            Text("Leave")
+                        }
+                    }
+                    .tint(Theme.brown)
+                }
+                ToolbarItem(placement: .principal) {
+                    Text("Game #\(gameID)")
+                        .font(.custom("Georgia", size: 20))
+                        .foregroundStyle(Theme.brown)
+                }
+            }
         }
-        .padding(.top)
-        .background(Theme.cream.ignoresSafeArea())
         .task(id: "\(gameID)-\(pollAttempt)") {
             await pollLoop()
         }
-    }
-
-    private var header: some View {
-        HStack {
-            Button {
-                app.leaveGame()
-            } label: {
-                Image(systemName: "chevron.left")
-                Text("Leave")
-            }
-            .tint(Theme.brown)
-            Spacer()
-            Text("Game #\(gameID)")
-                .font(.custom("Georgia", size: 20))
-                .foregroundStyle(Theme.brown)
-            Spacer()
-            Color.clear.frame(width: 60)
-        }
-        .padding(.horizontal)
     }
 
     @ViewBuilder
