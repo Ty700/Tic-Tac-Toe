@@ -14,6 +14,7 @@ struct GameView: View {
             Group {
                 if let s = state {
                     VStack(spacing: 20) {
+                        Spacer(minLength: 0)
                         playerStrip(s)
                         BoardView(
                             cells: s.board,
@@ -35,7 +36,6 @@ struct GameView: View {
                         }
                         Spacer(minLength: 0)
                     }
-                    .padding(.top, 16)
                 } else if let err = loadError {
                     VStack(spacing: 12) {
                         Text(err)
