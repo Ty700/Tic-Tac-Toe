@@ -43,6 +43,7 @@ struct JoinView: View {
             }
             .buttonStyle(.borderedProminent)
             .tint(Theme.brown)
+            .frame(maxWidth: 480)
             .padding(.horizontal)
             .disabled(code.count != 4 || isWorking)
 
@@ -57,6 +58,7 @@ struct JoinView: View {
 
             Spacer()
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Theme.cream.ignoresSafeArea())
         .alert("Error", isPresented: errorBinding) {
             Button("OK") { app.errorMessage = nil }

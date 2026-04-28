@@ -24,7 +24,7 @@ struct GameView: View {
                             }
                         )
                         .padding(.horizontal)
-                        .frame(maxWidth: 400)
+                        .frame(maxWidth: 640)
 
                         statusBanner(s)
 
@@ -100,6 +100,7 @@ struct GameView: View {
                        active: s.currentTurn == 1 && s.isPlayable,
                        isMe: app.playerNumber == 2)
         }
+        .frame(maxWidth: 640)
         .padding(.horizontal)
     }
 
