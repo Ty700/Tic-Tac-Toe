@@ -18,40 +18,42 @@ struct HomeView: View {
                 .font(.title3)
                 .foregroundStyle(.secondary)
 
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Your name")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                TextField("Tyler", text: $app.playerName)
-                    .textFieldStyle(.roundedBorder)
-                    .textInputAutocapitalization(.words)
-                    .autocorrectionDisabled()
-            }
-            .padding(.horizontal)
+            VStack(spacing: 24) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Your name")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    TextField("Tyler", text: $app.playerName)
+                        .textFieldStyle(.roundedBorder)
+                        .textInputAutocapitalization(.words)
+                        .autocorrectionDisabled()
+                }
 
-            VStack(spacing: 12) {
-                Button {
-                    Task {
-                        isWorking = true
-                        await app.createGame()
-                        isWorking = false
+                VStack(spacing: 12) {
+                    Button {
+                        Task {
+                            isWorking = true
+                            await app.createGame()
+                            isWorking = false
+                        }
+                    } label: {
+                        Text("Create Game")
+                            .frame(maxWidth: .infinity)
                     }
-                } label: {
-                    Text("Create Game")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(Theme.brown)
-                .disabled(app.playerName.trimmingCharacters(in: .whitespaces).isEmpty || isWorking)
+                    .buttonStyle(.borderedProminent)
+                    .tint(Theme.brown)
+                    .disabled(app.playerName.trimmingCharacters(in: .whitespaces).isEmpty || isWorking)
 
-                Button("Join Game") {
-                    app.screen = .join
+                    Button("Join Game") {
+                        app.screen = .join
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(Theme.brown)
+                    .frame(maxWidth: .infinity)
+                    .disabled(app.playerName.trimmingCharacters(in: .whitespaces).isEmpty || isWorking)
                 }
-                .buttonStyle(.bordered)
-                .tint(Theme.brown)
-                .frame(maxWidth: .infinity)
-                .disabled(app.playerName.trimmingCharacters(in: .whitespaces).isEmpty || isWorking)
             }
+            .frame(maxWidth: 480)
             .padding(.horizontal)
 
             if isWorking {
@@ -60,6 +62,7 @@ struct HomeView: View {
 
             Spacer()
         }
+        .frame(maxWidth: .infinity)
         .background(Theme.cream.ignoresSafeArea())
         .alert("Error", isPresented: errorBinding) {
             Button("OK") { app.errorMessage = nil }
