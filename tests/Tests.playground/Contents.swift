@@ -36,6 +36,7 @@ struct LocalGame {
         }
     }
     
+    
     /* Players */
     let playerOne: Player
     let playerTwo: Player
@@ -96,3 +97,47 @@ struct LocalGame {
         return .inProgress
     }
 }
+
+let tyler = Player(name: "Tyler", symbol: .x, isAI: false)
+let Matt = Player(name: "Matt", symbol: .o, isAI: false)
+
+var game = LocalGame(playerOne: tyler, playerTwo: Matt, currentPlayer: tyler)
+
+/* Invalid Move Test */
+game.makeMove(at: 0, by: tyler)
+print(game.currentPlayer)
+game.makeMove(at: 1, by: tyler)
+print(game.currentPlayer)
+print(game.board)
+game.makeMove(at: 3, by: tyler)
+game.makeMove(at: 4, by: tyler)
+print(game.board)
+game.makeMove(at: 4, by: Matt)
+print(game.board)
+
+var game1 = LocalGame(playerOne: tyler, playerTwo: Matt, currentPlayer: tyler)
+
+/* Winner Test */
+game1.makeMove(at: 0, by: tyler)
+game1.makeMove(at: 4, by: Matt)
+game1.makeMove(at: 1, by: tyler)
+game1.makeMove(at: 5, by: Matt)
+game1.makeMove(at: 2, by: tyler)
+assert(game1.gameStatus.isOver)
+
+assert(game1.gameStatus.getWinner() == tyler)
+
+var game2 = LocalGame(playerOne: tyler, playerTwo: Matt, currentPlayer: tyler)
+
+/* Tie */
+game2.makeMove(at: 0, by: tyler)
+game2.makeMove(at: 8, by: Matt)
+game2.makeMove(at: 4, by: tyler)
+game2.makeMove(at: 2, by: Matt)
+game2.makeMove(at: 5, by: tyler)
+game2.makeMove(at: 3, by: Matt)
+game2.makeMove(at: 6, by: tyler)
+game2.makeMove(at: 1, by: Matt)
+game2.makeMove(at: 7, by: tyler)
+
+assert(game2.gameStatus == .tie)
