@@ -8,8 +8,14 @@ struct ContentView: View {
             switch app.screen {
             case .home:
                 HomeView()
+            case .hostSetup:
+                HostSetupView()
             case .join:
                 JoinView()
+            case .singlePlayer:
+                SinglePlayerView()
+            case .localGame:
+                LocalGameView()
             case .game(let id):
                 GameView(gameID: id)
             }

@@ -9,11 +9,11 @@ enum APIError: Error, LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .invalidURL:             return "Invalid URL."
-        case .badStatus(let s, let b): return "Server returned \(s): \(b)"
-        case .missingLocationHeader:  return "Server did not return a Location header."
-        case .missingGameID:          return "Could not parse game ID from response."
-        case .decoding(let e):        return "Could not decode response: \(e.localizedDescription)"
+        case .invalidURL:               return "Invalid URL."
+        case .badStatus(let s, let b):  return "Server returned \(s): \(b)"
+        case .missingLocationHeader:    return "Server did not return a Location header."
+        case .missingGameID:            return "Could not parse game ID from response."
+        case .decoding(let e):          return "Could not decode response: \(e.localizedDescription)"
         }
     }
 }

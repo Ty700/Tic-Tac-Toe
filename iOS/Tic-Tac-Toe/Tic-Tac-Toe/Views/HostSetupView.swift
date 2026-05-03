@@ -1,8 +1,7 @@
 import SwiftUI
 
-struct JoinView: View {
+struct HostSetupView: View {
     @Environment(AppModel.self) private var app
-    @State private var code: String = ""
     @State private var isWorking = false
 
     var body: some View {
@@ -11,7 +10,7 @@ struct JoinView: View {
         VStack(spacing: 24) {
             Spacer()
 
-            Text("Join Game")
+            Text("Host a Game")
                 .font(.custom("Georgia", size: 36))
                 .foregroundStyle(Theme.brown)
 
@@ -25,42 +24,20 @@ struct JoinView: View {
             .frame(maxWidth: 480)
             .padding(.horizontal)
 
-            Text("Enter the 4-digit game code")
-                .foregroundStyle(.secondary)
-
-            TextField("1234", text: $code)
-                .keyboardType(.numberPad)
-                .multilineTextAlignment(.center)
-                .font(.system(size: 40, weight: .semibold, design: .monospaced))
-                .frame(width: 200)
-                .padding(.vertical, 12)
-                .background(.white)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(Theme.brown.opacity(0.3))
-                )
-                .onChange(of: code) { _, new in
-                    code = String(new.filter(\.isNumber).prefix(4))
-                }
-
             Button {
                 Task {
                     isWorking = true
-                    await app.joinGame(gameID: code)
+                    await app.createGame()
                     isWorking = false
                 }
             } label: {
-                Text("Join").frame(maxWidth: .infinity)
+                Text("Host Game").frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
             .tint(Theme.brown)
             .frame(maxWidth: 480)
             .padding(.horizontal)
-            .disabled(
-                app.playerName.trimmingCharacters(in: .whitespaces).isEmpty
-                || code.count != 4
-                || isWorking
-            )
+            .disabled(app.playerName.trimmingCharacters(in: .whitespaces).isEmpty || isWorking)
 
             Button("Back") { app.screen = .home }
                 .tint(Theme.brown)
