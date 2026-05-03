@@ -15,7 +15,7 @@ struct HomeView: View {
                 Button {
                     app.screen = .singlePlayer
                 } label: {
-                    Text("Local Play").frame(maxWidth: .infinity)
+                    Text("Local Game").frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(Theme.brown)

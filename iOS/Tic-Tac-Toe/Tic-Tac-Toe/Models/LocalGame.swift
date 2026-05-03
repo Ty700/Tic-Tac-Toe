@@ -2,7 +2,9 @@
 struct Player: Equatable {
     let name:       String
     let symbol:     LocalGame.Cell
-    let isAI:       Bool
+    let aiDifficulty: AIDifficulty?  /* nil = human */
+
+    var isAI: Bool { aiDifficulty != nil }
 }
 
 struct LocalGame {

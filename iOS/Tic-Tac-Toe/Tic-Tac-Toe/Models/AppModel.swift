@@ -18,6 +18,8 @@ final class AppModel {
     var errorMessage: String?
 
     var localGame: LocalGame?
+    private var localConfig: LocalGameConfig?
+    private var aiTask: Task<Void, Never>?
 
     let api: APIClient
 
@@ -65,33 +67,120 @@ final class AppModel {
 
     func startLocalGame(config: LocalGameConfig) {
         let p1Name = config.p1Name.trimmingCharacters(in: .whitespaces)
-        let p2Name = config.p2Name.trimmingCharacters(in: .whitespaces)
-        guard !p1Name.isEmpty, !p2Name.isEmpty else { return }
+        guard !p1Name.isEmpty else { return }
 
-        let p1 = Player(name: p1Name, symbol: .x, isAI: false)
-        let p2 = Player(name: p2Name, symbol: .o, isAI: false)
-        localGame = LocalGame(playerOne: p1, playerTwo: p2, currentPlayer: p1)
+        let p2Symbol: LocalGame.Cell = (config.p1Symbol == .x) ? .o : .x
+
+        let p1 = Player(name: p1Name, symbol: config.p1Symbol, aiDifficulty: nil)
+
+        let p2: Player
+        if config.p2IsAI {
+            let resolved = config.aiDifficulty.resolve()
+            p2 = Player(name: Self.randomNPCName(),
+                        symbol: p2Symbol,
+                        aiDifficulty: resolved)
+        } else {
+            let p2NameTrimmed = config.p2Name.trimmingCharacters(in: .whitespaces)
+            guard !p2NameTrimmed.isEmpty else { return }
+            p2 = Player(name: p2NameTrimmed, symbol: p2Symbol, aiDifficulty: nil)
+        }
+
+        let firstPlayer = (p1.symbol == .x) ? p1 : p2
+        localGame = LocalGame(playerOne: p1, playerTwo: p2, currentPlayer: firstPlayer)
+        localConfig = config
         screen = .localGame
+
+        if firstPlayer.isAI {
+            scheduleAIMove()
+        }
     }
 
     func applyLocalMove(at pos: Int) {
         guard var game = localGame else { return }
+        // Block taps while AI is "thinking" — only humans can drive applyLocalMove.
+        guard !game.currentPlayer.isAI else { return }
         let player = game.currentPlayer
         game.makeMove(at: pos, by: player)
         localGame = game
+
+        if !game.gameStatus.isOver, game.currentPlayer.isAI {
+            scheduleAIMove()
+        }
     }
 
     func resetLocalGame() {
-        guard let game = localGame else { return }
-        localGame = LocalGame(
-            playerOne: game.playerOne,
-            playerTwo: game.playerTwo,
-            currentPlayer: game.playerOne
-        )
+        aiTask?.cancel()
+        aiTask = nil
+
+        guard let config = localConfig, let game = localGame else { return }
+
+        let p1 = game.playerOne
+        let p2: Player
+        if game.playerTwo.isAI {
+            // Re-resolve: .random rolls a new difficulty; explicit choices return themselves.
+            let resolved = config.aiDifficulty.resolve()
+            p2 = Player(name: game.playerTwo.name,
+                        symbol: game.playerTwo.symbol,
+                        aiDifficulty: resolved)
+        } else {
+            p2 = game.playerTwo
+        }
+
+        let firstPlayer = (p1.symbol == .x) ? p1 : p2
+        localGame = LocalGame(playerOne: p1, playerTwo: p2, currentPlayer: firstPlayer)
+
+        if firstPlayer.isAI {
+            scheduleAIMove()
+        }
     }
 
     func endLocalGame() {
+        aiTask?.cancel()
+        aiTask = nil
         localGame = nil
+        localConfig = nil
         screen = .home
+    }
+
+    /* ============================================================
+     *   AI Move Scheduling
+     * ============================================================ */
+
+    private func scheduleAIMove() {
+        aiTask?.cancel()
+        aiTask = Task { @MainActor in
+            let delayMs = Int.random(in: 300...1200)
+            try? await Task.sleep(for: .milliseconds(delayMs))
+            guard !Task.isCancelled else { return }
+            guard var game = localGame, !game.gameStatus.isOver else { return }
+            guard let difficulty = game.currentPlayer.aiDifficulty else { return }
+
+            let player = game.currentPlayer
+            let humanSymbol: LocalGame.Cell = (player.symbol == .x) ? .o : .x
+            let move = AIEngine.bestMove(on: game.board,
+                                         aiSymbol: player.symbol,
+                                         humanSymbol: humanSymbol,
+                                         difficulty: difficulty)
+            guard (0..<9).contains(move) else { return }
+
+            game.makeMove(at: move, by: player)
+            localGame = game
+        }
+    }
+
+    /* ============================================================
+     *   AI Names (matches C++ Player::generateAIName)
+     * ============================================================ */
+
+    private static let npcNames = [
+        "Akira", "Alex", "Andy",
+        "Ashley", "Chris", "Elisa",
+        "Emily", "Ai", "Jessie",
+        "Maria", "Mike", "Abby",
+        "Anna", "Matt", "Daisuke"
+    ]
+
+    private static func randomNPCName() -> String {
+        npcNames.randomElement() ?? "AI"
     }
 }
