@@ -270,6 +270,15 @@ entry placeholder {
     border-color: #6B8E5A;
 }
 
+/* Mania: marks the cell that will be evicted on the current player's next
+ * placement (server's nextEviction.pos). Low opacity + warning tint so the
+ * doomed piece reads as "fading out". */
+.cell.fading {
+    opacity: 0.35;
+    background-color: rgba(192, 57, 43, 0.08);
+    border-color: rgba(192, 57, 43, 0.4);
+}
+
 /* Grid borders — classic TicTacToe look */
 .cell.top-row    { border-top-width: 0; }
 .cell.bottom-row { border-bottom-width: 0; }
@@ -336,3 +345,182 @@ entry placeholder {
 .bottom-row { border-bottom-width: 0; }
 .left-col   { border-left-width: 0; }
 .right-col  { border-right-width: 0; }
+
+/* ============================================================
+ *   DARK MODE (#477)
+ *   Preserves the warm-brown identity but swaps the palette so it
+ *   reads correctly on a dark surface. Driven by the `.dark` class
+ *   added to the top-level window by TicTacToeWindow when the GTK
+ *   theme preference is dark. (GTK4's CSS parser does not honor
+ *   `@media (prefers-color-scheme: dark)`, hence the class-based
+ *   approach.)
+ *
+ *   Palette anchors:
+ *     bg            #1E1B16  (very dark warm-brown)
+ *     surface       #2A2620  (lifted card)
+ *     surface-hi    #322D26  (hover / placed cell)
+ *     border        #3A342C
+ *     border-strong #524A3F
+ *     text          #E6DDD0  (warm cream)
+ *     text-muted    #9E9587
+ *     accent        #C4A57A  (lightened warm-brown)
+ *     accent-hover  #D7BB8E
+ *     win           #8AB079
+ *     warn          #E07A6B  (Mania .fading)
+ * ============================================================ */
+
+.dark {
+    background-color: #1E1B16;
+    color: #E6DDD0;
+}
+
+/* Two selectors: `.dark headerbar` for hosts where the headerbar IS a
+ * descendant of the window, and `headerbar.dark` for hosts where set_titlebar
+ * lifts it out of the descendant chain (TicTacToeWindow tags it directly). */
+.dark headerbar,
+headerbar.dark {
+    background-color: #2A2620;
+    border-bottom: 1px solid #3A342C;
+    color: #E6DDD0;
+}
+.dark headerbar label,
+headerbar.dark label { color: #E6DDD0; }
+
+/* Typography */
+.dark .title-label    { color: #E6DDD0; }
+.dark .subtitle-label { color: #9E9587; }
+.dark .footer-label   { color: #9E9587; }
+
+/* Nav */
+.dark .nav-logo       { color: #E6DDD0; }
+.dark .game-id-label  { color: #9E9587; }
+
+/* Buttons */
+.dark .btn-primary {
+    background-color: #C4A57A;
+    color: #1E1B16;
+    border-color: #C4A57A;
+}
+.dark .btn-primary:hover {
+    background-color: #D7BB8E;
+    border-color: #D7BB8E;
+}
+.dark .btn-primary:active { background-color: #B0915F; }
+
+.dark .btn-secondary {
+    background-color: transparent;
+    color: #C4A57A;
+    border-color: #C4A57A;
+}
+.dark .btn-secondary:hover {
+    background-color: #C4A57A;
+    color: #1E1B16;
+}
+
+/* Menu labels + entries */
+.dark .menu { color: #E6DDD0; }
+
+.dark entry {
+    background-color: #2A2620;
+    border-color: #3A342C;
+    color: #E6DDD0;
+}
+.dark entry:focus {
+    border-color: #C4A57A;
+    box-shadow: 0 0 0 3px rgba(196, 165, 122, 0.18);
+}
+.dark entry placeholder { color: #6E6457; }
+
+/* Form */
+.dark .form-card {
+    background-color: #2A2620;
+    border: 1px solid #3A342C;
+}
+.dark .form-label { color: #9E9587; }
+.dark .error-label { color: #E07A6B; }
+
+/* Radio / toggle */
+.dark .radio-button {
+    background-color: rgba(196, 165, 122, 0.06);
+    border-color: #3A342C;
+    color: #E6DDD0;
+}
+.dark .radio-button:hover {
+    background-color: rgba(196, 165, 122, 0.12);
+    border-color: #524A3F;
+}
+.dark .radio-button:checked {
+    background-color: #C4A57A;
+    border-color: #C4A57A;
+    color: #1E1B16;
+}
+
+/* Status banner */
+.dark .status-banner-label {
+    color: #E6DDD0;
+    background-color: #2A2620;
+    border-color: #3A342C;
+}
+
+/* Player cards */
+.dark .player-card {
+    background-color: #2A2620;
+    border-color: #3A342C;
+}
+.dark .player-card.active-turn   { border-color: #C4A57A; }
+.dark .player-card.winner-highlight {
+    border-color: #8AB079;
+    background-color: rgba(138, 176, 121, 0.10);
+}
+
+.dark .player-symbol-label {
+    color: #C4A57A;
+    background-color: #1E1B16;
+}
+.dark .player-name-label { color: #E6DDD0; }
+.dark .player-sub-label  { color: #9E9587; }
+.dark .vs-label          { color: #9E9587; }
+
+/* Board cells (network) */
+.dark .cell {
+    background-color: #2A2620;
+    border-color: #E6DDD0;
+    color: #E6DDD0;
+}
+.dark .cell:hover:not(:disabled) {
+    background-color: rgba(196, 165, 122, 0.10);
+}
+.dark .cell.x-cell { color: #C4A57A; }
+.dark .cell.o-cell { color: #E6DDD0; }
+.dark .cell.win-cell {
+    background-color: rgba(138, 176, 121, 0.18);
+    border-color: #8AB079;
+}
+
+/* Mania .fading — keep "warning" semantic on dark */
+.dark .cell.fading {
+    opacity: 0.4;
+    background-color: rgba(224, 122, 107, 0.14);
+    border-color: rgba(224, 122, 107, 0.55);
+}
+
+/* Waiting / share code */
+.dark .share-code-label { color: #C4A57A; }
+.dark .share-link-label { color: #9E9587; }
+.dark .waiting-status   { color: #9E9587; }
+
+/* Legacy start-button + local-game grid */
+.dark .start-button {
+    background-color: #C4A57A;
+    color: #1E1B16;
+}
+.dark .start-button:hover { background-color: #D7BB8E; }
+
+.dark .button-grid {
+    background-color: #2A2620;
+    border-color: #E6DDD0;
+    color: #E6DDD0;
+}
+.dark .button-grid:hover {
+    background-color: rgba(196, 165, 122, 0.10);
+}
