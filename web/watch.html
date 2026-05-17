@@ -69,9 +69,8 @@
     <script>
         (function () {
             var s = document.createElement('script');
-            /* See TTT_ASSET_VERSION in the head script — same cache-bust scheme
-             * applied to watch.js so the textContent-clearing fix doesn't get
-             * shadowed by a stale cached watch.js. */
+            /* Same cache-bust scheme as the stylesheet (see
+             * TTT_ASSET_VERSION in the head script). */
             s.src = window.TTT_BASE + '/styles/watch.js?v=' + window.TTT_ASSET_VERSION;
             document.body.appendChild(s);
         })();

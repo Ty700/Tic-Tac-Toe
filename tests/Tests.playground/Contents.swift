@@ -772,12 +772,13 @@ enum Mania {
         return best
     }
 
-    /* Note (harbor BUG-2): this playground mirror intentionally OMITS
-     * the per-symbol RecentRing that Models/AIEngine.swift carries. The ring
-     * exists only to break deterministic self-play cycles between two
-     * deep-search engines; the tests below never run two ring-using engines
-     * against each other (Casual is stochastic, and only one search instance
-     * is involved per test). Strength + correctness are unaffected. */
+    /* This playground mirror intentionally OMITS the per-symbol
+     * RecentRing that Models/AIEngine.swift carries. The ring exists
+     * only to break deterministic self-play cycles between two
+     * deep-search engines; the tests below never run two ring-using
+     * engines against each other (Casual is stochastic, and only one
+     * search instance is involved per test). Strength and correctness
+     * are unaffected. */
     static func rootDispatch(pos: ManiaPosition,
                              aiSymbol: LocalGame.Cell,
                              oppSymbol: LocalGame.Cell,
@@ -803,10 +804,9 @@ enum Mania {
 }
 
 /* ============================================================
- *   Mania AI tests (T8b)
+ *   Mania AI tests
  *
- *   Review surfaced two failure modes for casual Mania play. Mirror
- *   forge's regression cases here:
+ *   Two failure modes covered:
  *     (A) Easy must NOT claim a "win" at a cell where the queue eviction
  *         removes one of the AI's own pieces from the line.
  *     (B) Easy MUST take a real Mania win even when the winning placement
@@ -986,16 +986,16 @@ do {
 }
 
 /* ============================================================
- *   ISSUE-Tests-C (harbor): AIEngine.bestMove(in:difficulty:) top-level
- *   routing on classic vs mania. Lightweight smoke — just verify the
- *   classic path returns a legal cell and the mania path also returns
- *   a legal cell. The deeper algorithmic tests are above.
+ *   AIEngine.bestMove(in:difficulty:) top-level routing on classic vs
+ *   mania. Lightweight smoke: verify the classic path returns a legal
+ *   cell and the mania path also returns a legal cell. The deeper
+ *   algorithmic tests are above.
  *
  *   Note: the playground's AIEngine struct does NOT carry the
- *   `bestMove(in:difficulty:)` overload because the playground keeps the
- *   mirror minimal. Test the underlying Mania.bestMove directly instead
- *   (the routing in Models/AIEngine.swift is a thin switch on game.mode
- *   that delegates to Mania.bestMove — covered by code review).
+ *   `bestMove(in:difficulty:)` overload because the playground keeps
+ *   the mirror minimal. Test the underlying Mania.bestMove directly
+ *   instead; the routing in Models/AIEngine.swift is a thin switch on
+ *   game.mode that delegates to Mania.bestMove.
  * ============================================================ */
 do {
     /* Classic path — empty board, casual difficulty should return some

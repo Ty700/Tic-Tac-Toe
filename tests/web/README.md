@@ -24,12 +24,11 @@ node tests/web/test_498_negative.js
 ```
 
 ## Tests
-- `test_498_mania_self_eviction.js` — regression for the post-update Mania
-  spec change ("self-replace is illegal"). Asserts the player's own
+- `test_498_mania_self_eviction.js`: regression for the Mania
+  "self-replace is illegal" rule. Asserts the player's own
   about-to-evict cell stays `disabled` and `onCellClick` does not POST
-  even if the disabled gate is bypassed. Will FAIL against previous web
-  client (which still allows the click); will PASS once anvil lands.
-- `test_498_negative.js` — companion. Asserts that with both queues full,
-  only empty cells are clickable for the active player.
-- `test_499_no_fading_after_win.js` — regression for. Asserts no
-  `.fading` cells remain on either client after Mania terminal status.
+  even if the disabled gate is bypassed.
+- `test_498_negative.js`: companion. Asserts that with both queues
+  full, only empty cells are clickable for the active player.
+- `test_499_no_fading_after_win.js`: asserts no `.fading` cells remain
+  on either client after a Mania terminal status.

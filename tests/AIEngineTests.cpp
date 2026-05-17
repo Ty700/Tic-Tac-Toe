@@ -124,17 +124,12 @@ TEST_F(AIEngineManiaTest, MediumBeatsEasyComfortably) {
 }
 
 TEST_F(AIEngineManiaTest, SelfPlayTerminates) {
-    /* Mania self-play termination history:
-     *   - two depth-4 engines settled into fixed-point cycles
-     *     (0/50 games terminated within 200 plies). The pathology was the
-     *     legal "self-replace" no-op placement.
-     *   - post-update (this PR —): self-replace is banned, every turn
-     *     must move a piece. Empirically 20/20 hard-vs-hard self-play
-     *     games now terminate well under the 200-ply cap.
-     *
-     * We assert termination AND that no game ever returns TIE or
-     * ERROR_MOVE — playOneMania's inner asserts guard the latter; the
-     * outer check here pins the new termination property. */
+    /* Mania hard-vs-hard self-play must terminate within the 200-ply
+     * cap. Self-replace is banned by the core, so every turn moves a
+     * piece; two deterministic depth-4 engines cannot settle into a
+     * fixed-point cycle. We also assert no game ever returns TIE or
+     * ERROR_MOVE; playOneMania's inner asserts guard the latter, the
+     * outer check here pins the termination property. */
     int finishedCount = 0;
     for (int i = 0; i < 20; i++) {
         auto winner = playOneMania(
@@ -143,22 +138,22 @@ TEST_F(AIEngineManiaTest, SelfPlayTerminates) {
             finishedCount++;
         }
     }
-    /* Allow a small margin for any near-pathological tail behavior, but
-     * the post-update expectation is that essentially every game finishes. */
+    /* Allow a small margin for near-pathological tail behavior; the
+     * expectation is that essentially every game finishes. */
     EXPECT_GE(finishedCount, 18) << "Mania hard-vs-hard self-play should "
-                                    "terminate reliably (banning self-replace "
-                                    "removed the no-op rotation that cycled)";
+                                    "terminate reliably; banning self-replace "
+                                    "removed the no-op rotation that cycled.";
 }
 
-/* Regression for sentinel easyMoveMania's classic wouldWin check
- * reported false wins in Mania when the candidate cell completes a line
+/* Regression: easyMoveMania's classic wouldWin check used to report
+ * false wins in Mania when the candidate cell completes a line
  * containing the AI's about-to-evict piece. Concrete repro:
  *   X queue = [0, 1, 3] (count=3, oldest=0)
  *   O placements at {4, 5, 6}
- *   X's next move evicts pos 0 BEFORE placing. Static wouldWin says
- *   "pos 2 completes row 0,1,2" — BUG: after eviction the row is
- *   {EMPTY, X, X}, NOT a win. Fix uses TicTacToeCore copy + makeMove to
- *   detect real wins. */
+ *   X's next move evicts pos 0 BEFORE placing. Static wouldWin claims
+ *   "pos 2 completes row 0,1,2" but after eviction the row is
+ *   {EMPTY, X, X}, NOT a win. The correct check uses a TicTacToeCore
+ *   copy + makeMove to detect real wins. */
 TEST(AIEngineManiaEasyTest, EasyDoesNotClaimFalseWinAfterEviction) {
     C g{C::Mode::MANIA};
     g.makeMove(0, C::CELL_STATES::X);

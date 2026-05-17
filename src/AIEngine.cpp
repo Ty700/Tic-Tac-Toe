@@ -362,9 +362,9 @@ int AIEngine::handleMove(const TicTacToeCore& game_logic, const Player::PlayerDi
 }
 
 /* =============================================================
- *   Mania-aware AI (T8)
+ *   Mania-aware AI
  *
- *   Algorithm chosen per sourcer research:
+ *   Difficulty tiers:
  *     - Easy:   weighted-random (center > corner > edge) + immediate-win-take
  *     - Medium: depth-2 minimax + alpha-beta with Mania-aware eval
  *     - Hard:   depth-4 minimax + alpha-beta with Mania-aware eval
@@ -415,9 +415,9 @@ int AIEngine::maniaEval(const TicTacToeCore& node,
         }
     }
 
-    /* Self-eviction-trap (sourcer flagged). If the AI's nextEviction cell
-     * lies on a line where the AI currently has 2 pieces and 0 opp pieces,
-     * the next AI placement will destroy a winning threat — heavy penalty. */
+    /* Self-eviction-trap. If the AI's nextEviction cell lies on a line
+     * where the AI currently has 2 pieces and 0 opp pieces, the next AI
+     * placement will destroy a winning threat; heavy penalty. */
     int aiEvict = node.getNextEviction(aiSymbol);
     if (aiEvict >= 0) {
         for (const auto& line : LINES) {
@@ -582,12 +582,9 @@ int AIEngine::easyMoveMania(const TicTacToeCore& logic)
 
 /* ----- Per-engine recent-board memory.
  *
- * Originally added (T8) to mitigate sourcer's no-fixed-point-cycle concern:
- * two deterministic depth-4 engines in self-play settled into cycles via
- * the legal self-replace no-op. post-update self-replace is banned and
- * self-play terminates without this mechanism — but the recent-board
- * ring still adds noise to break ties when search scores are equal, which
- * improves variety against repeat human opponents. Kept as-is; cheap. */
+ * Adds noise to break ties when search scores are equal so the AI does
+ * not pick the same move every time the position recurs. Improves
+ * variety against repeat human opponents at negligible cost. */
 namespace {
     constexpr int RECENT_SIZE = 32;
 

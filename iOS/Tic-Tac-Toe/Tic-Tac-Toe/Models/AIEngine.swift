@@ -309,11 +309,11 @@ enum Mania {
 
     /* ---------- Casual: simulate-via-copy immediate-win-take + weighted random ----------
      *
-     * In Mania, the classic `wouldWin` heuristic is unsafe — a candidate cell
-     * that completes a line on paper may NOT after the queue eviction takes
-     * one of the AI's pieces off that very line. The correct check is to
-     * simulate via `ManiaPosition.placing(...)` and look for a winning line
-     * on the resulting board. Mirrors forge's post-update C++ fix. */
+     * In Mania, the classic `wouldWin` heuristic is unsafe: a candidate
+     * cell that completes a line on paper may NOT after the queue
+     * eviction takes one of the AI's pieces off that very line. The
+     * correct check is to simulate via `ManiaPosition.placing(...)` and
+     * look for a winning line on the resulting board. */
     static func casualMove(in pos: ManiaPosition, aiSymbol: LocalGame.Cell) -> Int {
         let candidates = candidateMoves(pos: pos, symbol: aiSymbol)
 
