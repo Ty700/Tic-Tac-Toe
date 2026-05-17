@@ -4,12 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TicTacToe — Create Game</title>
-    <link rel="stylesheet" href="/tictactoe/styles/game.css">
+    <script>
+        (function () {
+            var prefix = location.pathname.indexOf('/tictactoe/') === 0 ? '/tictactoe' : '';
+            window.TTT_BASE = prefix;
+            var link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = prefix + '/styles/game.css';
+            document.head.appendChild(link);
+            document.addEventListener('DOMContentLoaded', function () {
+                var nodes = document.querySelectorAll('[data-ttt-path]');
+                for (var i = 0; i < nodes.length; i++) {
+                    nodes[i].setAttribute('href', prefix + nodes[i].getAttribute('data-ttt-path'));
+                }
+            });
+        })();
+    </script>
 </head>
 <body>
     <div class="content" style="opacity: 1;">
         <nav class="nav">
-            <a href="/tictactoe/create-game" class="logo">TicTacToe</a>
+            <a href="#" data-ttt-path="/create-game" class="logo">TicTacToe</a>
             <div class="nav-links">
                 <a href="https://ty700.tech">Portfolio</a>
                 <a href="https://github.com/Ty700/Tic-Tac-Toe" target="_blank">Source</a>
@@ -19,7 +34,7 @@
         <main class="game-container">
             <div class="hero-mini">
                 <h1 class="hero-title">TicTacToe</h1>
-                <p class="hero-sub">Play the classic game online with a friend.</p>
+                <p class="hero-sub">Host a game, join a friend, or watch every live match.</p>
             </div>
 
             <div class="create-grid">
@@ -34,16 +49,28 @@
                     <h2>Create Game</h2>
                     <p>Start a new game and invite a friend with your game code.</p>
                     <form id="createForm" class="inline-form">
-                        <input 
-                            type="text" 
-                            name="playerName" 
+                        <input
+                            type="text"
+                            name="playerName"
                             id="createName"
-                            class="form-input" 
-                            placeholder="Your name" 
+                            class="form-input"
+                            placeholder="Your name"
                             required
                             maxlength="20"
                             autocomplete="off"
                         >
+                        <fieldset class="mode-picker">
+                            <legend class="mode-picker-legend">Mode</legend>
+                            <label class="mode-option">
+                                <input type="radio" name="mode" value="classic" checked>
+                                <span>Classic</span>
+                            </label>
+                            <label class="mode-option">
+                                <input type="radio" name="mode" value="mania">
+                                <span>Mania</span>
+                            </label>
+                            <p class="mode-picker-note">Mode is fixed once the game is created.</p>
+                        </fieldset>
                         <button type="submit" class="btn btn-primary btn-full" id="createBtn">
                             Create Game
                         </button>
@@ -87,6 +114,19 @@
                         </button>
                     </form>
                 </div>
+
+                <!-- Watch Games Card -->
+                <div class="action-card">
+                    <div class="action-card-icon">
+                        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="50" cy="50" r="32" fill="none" stroke="currentColor" stroke-width="4"/>
+                            <circle cx="50" cy="50" r="10" fill="currentColor"/>
+                        </svg>
+                    </div>
+                    <h2>Watch Games</h2>
+                    <p>Spectate every live game on the server, updating in real time.</p>
+                    <a href="#" data-ttt-path="/watch" class="btn btn-secondary btn-full" style="margin-top: var(--spacing-sm);">Open Dashboard</a>
+                </div>
             </div>
         </main>
 
@@ -96,7 +136,7 @@
     </div>
 
     <script>
-        const BASE = '/tictactoe';
+        const BASE = window.TTT_BASE;
 
         // Create game
         document.getElementById('createForm').addEventListener('submit', async (e) => {
@@ -105,12 +145,16 @@
             const name = document.getElementById('createName').value.trim();
             if (!name) return;
 
+            const modeInput = document.querySelector('input[name="mode"]:checked');
+            const mode = modeInput ? modeInput.value : 'classic';
+
             btn.textContent = 'Creating...';
             btn.disabled = true;
 
             try {
                 const formData = new URLSearchParams();
                 formData.append('playerName', name);
+                formData.append('mode', mode);
 
                 // Use redirect:'follow' so the browser follows the server's 302
                 // The final URL will contain the game ID

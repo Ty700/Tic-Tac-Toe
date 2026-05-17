@@ -27,11 +27,11 @@ final class AppModel {
         self.api = api
     }
 
-    func createGame() async {
+    func createGame(mode: GameMode = .classic) async {
         let trimmed = playerName.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { return }
         do {
-            let id = try await api.createGame(playerName: trimmed)
+            let id = try await api.createGame(playerName: trimmed, mode: mode)
             playerNumber = 1
             screen = .game(gameID: id)
         } catch {
@@ -86,7 +86,7 @@ final class AppModel {
         }
 
         let firstPlayer = (p1.symbol == .x) ? p1 : p2
-        localGame = LocalGame(playerOne: p1, playerTwo: p2, currentPlayer: firstPlayer)
+        localGame = LocalGame(playerOne: p1, playerTwo: p2, currentPlayer: firstPlayer, mode: config.mode)
         localConfig = config
         screen = .localGame
 
@@ -127,7 +127,7 @@ final class AppModel {
         }
 
         let firstPlayer = (p1.symbol == .x) ? p1 : p2
-        localGame = LocalGame(playerOne: p1, playerTwo: p2, currentPlayer: firstPlayer)
+        localGame = LocalGame(playerOne: p1, playerTwo: p2, currentPlayer: firstPlayer, mode: config.mode)
 
         if firstPlayer.isAI {
             scheduleAIMove()
@@ -140,6 +140,17 @@ final class AppModel {
         localGame = nil
         localConfig = nil
         screen = .home
+    }
+
+    /* Position whose symbol will be cleared on the current player's next move in
+     * mania. `nil` in classic, and `nil` in mania until the current player has
+     * 3 of their own symbols already on the board. */
+    var localNextEvictionPos: Int? {
+        guard let g = localGame, g.mode == .mania, !g.gameStatus.isOver else {
+            return nil
+        }
+        let history = (g.currentPlayer == g.playerOne) ? g.p1History : g.p2History
+        return history.count == 3 ? history.first : nil
     }
 
     /* ============================================================
@@ -156,11 +167,7 @@ final class AppModel {
             guard let difficulty = game.currentPlayer.aiDifficulty else { return }
 
             let player = game.currentPlayer
-            let humanSymbol: LocalGame.Cell = (player.symbol == .x) ? .o : .x
-            let move = AIEngine.bestMove(on: game.board,
-                                         aiSymbol: player.symbol,
-                                         humanSymbol: humanSymbol,
-                                         difficulty: difficulty)
+            let move = AIEngine.bestMove(in: game, difficulty: difficulty)
             guard (0..<9).contains(move) else { return }
 
             game.makeMove(at: move, by: player)

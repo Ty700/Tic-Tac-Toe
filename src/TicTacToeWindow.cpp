@@ -1,8 +1,11 @@
 #include <glibmm.h>
+#include <giomm.h>
 #include <gtkmm.h>
 #include <gtkmm/accelkey.h>
+#include <cstdlib>
 #include <iostream>
 #include <memory.h>
+#include <sstream>
 #include <string.h>
 
 #include "Game.h"
@@ -97,21 +100,34 @@ void TicTacToeWindow::onStartButtonClick()
 	auto p1SymX 	    = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "symbolX");
 	auto p1TypeBut = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "p1TypeHuman");
 	auto p2TypeBut = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "p2TypeHuman");
+	auto modeManiaBut = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "modeMania");
+	const bool maniaSelected = modeManiaBut && modeManiaBut->get_active();
+
+	/* AI difficulty. Read the selected radio; default to MEDIUM if for
+	 * any reason the widgets can't be found (defensive — shouldn't happen). */
+	auto diffEasy   = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "aiDiffEasy");
+	auto diffHard   = findWidget<Gtk::ToggleButton>(p_mainWindowBox, "aiDiffHard");
+	std::optional<Player::PlayerDiff> selectedDiff;
+	if (diffEasy && diffEasy->get_active())      selectedDiff = Player::PlayerDiff::EASY;
+	else if (diffHard && diffHard->get_active()) selectedDiff = Player::PlayerDiff::HARD;
+	else                                         selectedDiff = Player::PlayerDiff::MEDIUM;
 
 	Player::PlayerParams p1Params{
 		.name  = (p1SymX->get_active()) ? p1NameEntry->get_text() : p2NameEntry->get_text(),
 		.sym   = Player::PlayerSymbol::X,
-		.state = (p1SymX->get_active()) ? 
+		.state = (p1SymX->get_active()) ?
 		((p1TypeBut->get_active()) ? Player::PlayerState::Human : Player::PlayerState::AI) :
-		((p2TypeBut->get_active()) ? Player::PlayerState::Human : Player::PlayerState::AI)	
+		((p2TypeBut->get_active()) ? Player::PlayerState::Human : Player::PlayerState::AI),
+		.diff  = selectedDiff,
 	};
 
 	Player::PlayerParams p2Params{
 		.name  = (p1SymX->get_active()) ? p2NameEntry->get_text() : p1NameEntry->get_text(),
-		.sym   = Player::PlayerSymbol::O, 
-		.state = (p1SymX->get_active()) ? 
+		.sym   = Player::PlayerSymbol::O,
+		.state = (p1SymX->get_active()) ?
 		((p2TypeBut->get_active()) ? Player::PlayerState::Human : Player::PlayerState::AI) :
-		((p1TypeBut->get_active()) ? Player::PlayerState::Human : Player::PlayerState::AI)	
+		((p1TypeBut->get_active()) ? Player::PlayerState::Human : Player::PlayerState::AI),
+		.diff  = selectedDiff,
 	};
 
 	std::shared_ptr<Player> p1 = std::make_shared<Player>(p1Params);
@@ -120,7 +136,8 @@ void TicTacToeWindow::onStartButtonClick()
 	Game::GameParams gameParams{
 		.p1 = p1,
 		.p2 = p2,
-		.updateUICallback = [this](const TicTacToeCore::GAME_STATUS& game_state) { updateTurnDisplay(game_state); }
+		.updateUICallback = [this](const TicTacToeCore::GAME_STATUS& game_state) { updateTurnDisplay(game_state); },
+		.mode = maniaSelected ? TicTacToeCore::Mode::MANIA : TicTacToeCore::Mode::CLASSIC,
 	};
 	
 	p_mainGame = std::make_unique<Game>(gameParams);
@@ -225,6 +242,39 @@ void TicTacToeWindow::setupSinglePlayerMainMenuGUI()
 	menuBox->set_margin(10);
 	menuBox->set_halign(Gtk::Align::CENTER);
 
+	/* Mode toggle (Classic / Mania). Mode is locked once startGame runs.
+	 * AIEngine::handleMove routes on TicTacToeCore::getMode() to T8's
+	 * Mania-aware strategy, so AI Just Works in Mania once Mode is plumbed
+	 * through GameParams — no special-casing needed here. */
+	auto modeBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::HORIZONTAL);
+	auto modeLabel = Gtk::make_managed<Gtk::Label>("Mode: ");
+	modeLabel->set_halign(Gtk::Align::START);
+	modeLabel->set_size_request(180, -1);
+
+	auto modeClassicBut = Gtk::make_managed<Gtk::ToggleButton>("Classic");
+	modeClassicBut->set_name("modeClassic");
+	modeClassicBut->set_active(true);
+	auto modeManiaBut = Gtk::make_managed<Gtk::ToggleButton>("Mania");
+	modeManiaBut->set_name("modeMania");
+	modeManiaBut->set_group(*modeClassicBut);
+
+	modeBox->set_margin(5);
+	modeBox->set_halign(Gtk::Align::START);
+	modeBox->append(*modeLabel);
+	modeBox->append(*modeClassicBut);
+	modeBox->append(*modeManiaBut);
+
+	modeLabel->add_css_class("menu");
+	modeClassicBut->add_css_class("radio-button");
+	modeManiaBut->add_css_class("radio-button");
+
+	auto maniaNote = Gtk::make_managed<Gtk::Label>(
+		"Mania: AI uses Mania-aware strategy.");
+	maniaNote->set_name("maniaNote");
+	maniaNote->add_css_class("subtitle-label");
+	maniaNote->set_halign(Gtk::Align::START);
+	maniaNote->set_visible(false);
+
 	/* Player 1 Type */
 	auto p1TypeBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::HORIZONTAL);
 	auto p1TypeLabel = Gtk::make_managed<Gtk::Label>("Player 1 is a: ");
@@ -310,12 +360,60 @@ void TicTacToeWindow::setupSinglePlayerMainMenuGUI()
 	});
 	p2Box->set_visible(false);
 
+	/* AI Difficulty. Applies to whichever player(s) are AI in the
+	 * setup below. Defaults to MEDIUM so the first run is interesting but not
+	 * crushing. T8 provides Mania-aware easy/medium/hard implementations, so
+	 * this works uniformly in classic and mania. */
+	auto aiDiffBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::HORIZONTAL);
+	auto aiDiffLabel = Gtk::make_managed<Gtk::Label>("AI Difficulty: ");
+	aiDiffLabel->set_halign(Gtk::Align::START);
+	aiDiffLabel->set_size_request(180, -1);
+	auto diffEasyBut   = Gtk::make_managed<Gtk::ToggleButton>("Easy");
+	auto diffMediumBut = Gtk::make_managed<Gtk::ToggleButton>("Medium");
+	auto diffHardBut   = Gtk::make_managed<Gtk::ToggleButton>("Hard");
+	diffEasyBut->set_name("aiDiffEasy");
+	diffMediumBut->set_name("aiDiffMedium");
+	diffHardBut->set_name("aiDiffHard");
+	diffMediumBut->set_group(*diffEasyBut);
+	diffHardBut->set_group(*diffEasyBut);
+	diffMediumBut->set_active(true);
+	aiDiffLabel->add_css_class("menu");
+	diffEasyBut->add_css_class("radio-button");
+	diffMediumBut->add_css_class("radio-button");
+	diffHardBut->add_css_class("radio-button");
+	aiDiffBox->set_margin(5);
+	aiDiffBox->set_halign(Gtk::Align::START);
+	aiDiffBox->append(*aiDiffLabel);
+	aiDiffBox->append(*diffEasyBut);
+	aiDiffBox->append(*diffMediumBut);
+	aiDiffBox->append(*diffHardBut);
+
+	/* Hide the row when both players are Human (no AI = nothing to configure).
+	 * Reactive to either type-toggle signal. */
+	auto refreshDiffVisibility = [aiDiffBox, p1TypeBut, p2TypeBut]() {
+		bool anyAI = !p1TypeBut->get_active() || !p2TypeBut->get_active();
+		aiDiffBox->set_visible(anyAI);
+	};
+	p1TypeBut->signal_toggled().connect(refreshDiffVisibility);
+	p2TypeBut->signal_toggled().connect(refreshDiffVisibility);
+	refreshDiffVisibility();
+
 	/* Add to menu */
+	menuBox->append(*modeBox);
+	menuBox->append(*maniaNote);
 	menuBox->append(*p1TypeBox);
 	menuBox->append(*p1Box);
 	menuBox->append(*p1SymBox);
 	menuBox->append(*p2TypeBox);
 	menuBox->append(*p2Box);
+	menuBox->append(*aiDiffBox);
+
+	/* Surface the Mania-AI note when Mania is selected. AI is fully usable
+	 * because AIEngine::handleMove routes on TicTacToeCore::getMode() to T8's
+	 * Mania-aware strategy. */
+	modeManiaBut->signal_toggled().connect([modeManiaBut, maniaNote]() {
+		maniaNote->set_visible(modeManiaBut->get_active());
+	});
 
 	auto spacerBox2 = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
 	spacerBox2->set_vexpand(true);
@@ -411,6 +509,25 @@ void TicTacToeWindow::setupHostOnlineGUI()
 	nameEntry->add_css_class("entry");
 	nameEntry->set_size_request(280, -1);
 
+	/* Mode picker (Classic / Mania). Mode is locked at create-time — joiners
+	 * inherit via the server's JSON response per docs/mania-mode-wire-format.md. */
+	auto modeLabel = Gtk::make_managed<Gtk::Label>("Mode");
+	modeLabel->add_css_class("form-label");
+	modeLabel->set_halign(Gtk::Align::START);
+
+	auto modeRow = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::HORIZONTAL);
+	modeRow->set_halign(Gtk::Align::START);
+	auto modeClassicBut = Gtk::make_managed<Gtk::ToggleButton>("Classic");
+	modeClassicBut->set_name("hostModeClassic");
+	modeClassicBut->set_active(true);
+	auto modeManiaBut = Gtk::make_managed<Gtk::ToggleButton>("Mania");
+	modeManiaBut->set_name("hostModeMania");
+	modeManiaBut->set_group(*modeClassicBut);
+	modeClassicBut->add_css_class("radio-button");
+	modeManiaBut->add_css_class("radio-button");
+	modeRow->append(*modeClassicBut);
+	modeRow->append(*modeManiaBut);
+
 	auto errorLabel = Gtk::make_managed<Gtk::Label>("");
 	errorLabel->add_css_class("error-label");
 	errorLabel->set_visible(false);
@@ -423,6 +540,8 @@ void TicTacToeWindow::setupHostOnlineGUI()
 
 	cardBox->append(*nameLabel);
 	cardBox->append(*nameEntry);
+	cardBox->append(*modeLabel);
+	cardBox->append(*modeRow);
 	cardBox->append(*errorLabel);
 	cardBox->append(*createButton);
 	cardBox->append(*backButton);
@@ -440,7 +559,7 @@ void TicTacToeWindow::setupHostOnlineGUI()
 
 	/* Create Game Signal */
 	createButton->signal_clicked().connect(
-		[this, nameEntry, createButton, errorLabel]()
+		[this, nameEntry, modeManiaBut, createButton, errorLabel]()
 	{
 		std::string playerName = nameEntry->get_text();
 		if (playerName.empty())
@@ -450,18 +569,23 @@ void TicTacToeWindow::setupHostOnlineGUI()
 			return;
 		}
 
+		const bool maniaSelected = modeManiaBut->get_active();
+
 		createButton->set_label("Creating...");
 		createButton->set_sensitive(false);
 		errorLabel->set_visible(false);
 
 		/* Run network call in a timeout to avoid blocking UI */
 		Glib::signal_timeout().connect_once(
-			[this, playerName, createButton, errorLabel]()
+			[this, playerName, maniaSelected, createButton, errorLabel]()
 		{
 			m_networkClient = std::make_unique<NetworkGameClient>(
 				"https://ty700.tech/tictactoe");
 
-			std::string gameID = m_networkClient->createGame(playerName);
+			std::string gameID = m_networkClient->createGame(
+				playerName,
+				maniaSelected ? NetworkGameClient::Mode::MANIA
+				              : NetworkGameClient::Mode::CLASSIC);
 
 			if (!gameID.empty())
 			{
@@ -728,6 +852,11 @@ void TicTacToeWindow::setupNetworkGameGUI()
 	for (int i = 0; i < 9; i++)
 		m_lastBoard[i] = "";
 
+	/* Reset rematch-render cache so a fresh session paints the action area
+	 * from a clean slate. */
+	m_lastRematchState = NetworkGameClient::RematchState::NONE;
+	m_lastTerminalStatus.clear();
+
 	auto state = m_networkClient->getLastState();
 
 	/* --- Nav area --- */
@@ -802,6 +931,14 @@ void TicTacToeWindow::setupNetworkGameGUI()
 	playersBar->append(*vsLabel);
 	playersBar->append(*m_netPlayer2Card);
 
+	/* --- Score strip ---
+	 * Cumulative W-L-T per player across this session. Sits between the
+	 * players bar and the board; refreshed each updateNetworkUI tick. */
+	m_netScoreLabel = Gtk::make_managed<Gtk::Label>("0–0–0");
+	m_netScoreLabel->add_css_class("subtitle-label");
+	m_netScoreLabel->set_halign(Gtk::Align::CENTER);
+	m_netScoreLabel->set_margin_bottom(8);
+
 	/* --- Board --- */
 	auto boardGrid = Gtk::make_managed<Gtk::Grid>();
 	boardGrid->set_halign(Gtk::Align::CENTER);
@@ -842,6 +979,7 @@ void TicTacToeWindow::setupNetworkGameGUI()
 	p_mainWindowBox->append(*navBox);
 	p_mainWindowBox->append(*m_netStatusLabel);
 	p_mainWindowBox->append(*playersBar);
+	p_mainWindowBox->append(*m_netScoreLabel);
 	p_mainWindowBox->append(*boardGrid);
 	p_mainWindowBox->append(*m_netActionArea);
 	set_child(*p_mainWindowBox);
@@ -963,18 +1101,43 @@ void TicTacToeWindow::updateNetworkUI(const NetworkGameClient::GameState& state)
 			m_netPlayer2Label->set_text("Waiting...");
 	}
 
-	/* Update board */
+	/* Update board. We always reconcile each cell against state.board so
+	 * Mania evictions (cell goes from "X"/"O" back to "") repaint cleanly.
+	 * `.fading` is cleared here and reapplied below from state.nextEviction. */
 	for (int i = 0; i < 9; i++)
 	{
-		if (state.board[i] != m_lastBoard[i] && !state.board[i].empty())
+		m_networkCells[i]->remove_css_class("fading");
+
+		if (state.board[i] != m_lastBoard[i])
 		{
-			m_networkCells[i]->set_label(state.board[i]);
-			m_networkCells[i]->add_css_class("placed");
-			m_networkCells[i]->add_css_class(
-				state.board[i] == "X" ? "x-cell" : "o-cell");
-			m_networkCells[i]->set_sensitive(false);
+			if (state.board[i].empty())
+			{
+				/* Cell was evicted by Mania's FIFO. Reset label + classes
+				 * so it renders blank and (later) becomes clickable again. */
+				m_networkCells[i]->set_label("");
+				m_networkCells[i]->remove_css_class("placed");
+				m_networkCells[i]->remove_css_class("x-cell");
+				m_networkCells[i]->remove_css_class("o-cell");
+			}
+			else
+			{
+				m_networkCells[i]->set_label(state.board[i]);
+				m_networkCells[i]->add_css_class("placed");
+				m_networkCells[i]->add_css_class(
+					state.board[i] == "X" ? "x-cell" : "o-cell");
+				m_networkCells[i]->set_sensitive(false);
+			}
 		}
 		m_lastBoard[i] = state.board[i];
+	}
+
+	/* Mania fading indicator: mark the cell that will be evicted on the
+	 * current player's next placement. Only set in MANIA, only once a
+	 * player has 3 of their own symbols on the board. */
+	if (state.mode == NetworkGameClient::Mode::MANIA &&
+	    state.nextEvictionPos >= 0 && state.nextEvictionPos < 9)
+	{
+		m_networkCells[state.nextEvictionPos]->add_css_class("fading");
 	}
 
 	/* Update active turn highlight */
@@ -1024,61 +1187,197 @@ void TicTacToeWindow::updateNetworkUI(const NetworkGameClient::GameState& state)
 	}
 	else if (state.gameStatus == "winner")
 	{
+		/* Don't stop polling: we need to keep observing the server so the
+		 * rematch lifecycle (pending → ready → active) can drive a new
+		 * round. Cells stay disabled until that happens. */
 		m_networkGameOver = true;
-		stopNetworkPolling();
-
 		for (int i = 0; i < 9; i++)
 			m_networkCells[i]->set_sensitive(false);
 
 		int winnerNum = state.currentTurn + 1;
 		if (winnerNum == myNum)
-		{
-			m_netStatusLabel->set_text("You won! 🎉");
-		}
+			m_netStatusLabel->set_text("You won!");
 		else
 		{
 			std::string winnerName = (winnerNum == 1) ? state.player1Name : state.player2Name;
 			m_netStatusLabel->set_text(winnerName + " wins!");
 		}
 
-		/* Highlight winner card */
 		if (winnerNum == 1 && m_netPlayer1Card)
 			m_netPlayer1Card->add_css_class("winner-highlight");
 		else if (m_netPlayer2Card)
 			m_netPlayer2Card->add_css_class("winner-highlight");
 
-		/* Show play again */
-		auto playAgainBtn = Gtk::make_managed<Gtk::Button>("Play Again");
-		playAgainBtn->add_css_class("btn-primary");
-		playAgainBtn->signal_clicked().connect([this]() {
-			stopNetworkPolling();
-			m_networkClient.reset();
-			deleteBoxContents(p_mainWindowBox);
-			setupModeSelectionGUI();
-		});
-		if (m_netActionArea)
-			m_netActionArea->append(*playAgainBtn);
+		renderRematchActionArea(state);
 	}
-	else if (state.gameStatus == "tie")
+	else if (state.gameStatus == "tie" &&
+	         state.mode == NetworkGameClient::Mode::MANIA)
+	{
+		/* Mania cannot tie by construction (wire-format contract). If a server
+		 * ever emits one we ignore it (better than locking the UI on a phantom),
+		 * but log once per session so a contract regression isn't silent. */
+		static bool warned = false;
+		if (!warned)
+		{
+			std::cerr << "[NetworkUI] server emitted gameStatus=tie for a Mania "
+			             "game — contract violation; ignoring." << std::endl;
+			warned = true;
+		}
+	}
+	else if (state.gameStatus == "tie" || state.gameStatus == "finished")
 	{
 		m_networkGameOver = true;
-		stopNetworkPolling();
-
 		for (int i = 0; i < 9; i++)
 			m_networkCells[i]->set_sensitive(false);
+		if (state.gameStatus == "tie")
+			m_netStatusLabel->set_text("It's a tie!");
+		renderRematchActionArea(state);
+	}
 
-		m_netStatusLabel->set_text("It's a tie!");
+	/* Score strip refresh. Always W–L–T regardless of mode — matches
+	 * web and iOS for cross-platform parity. Mania's T column
+	 * stays 0 by contract, which is fine. */
+	if (m_netScoreLabel)
+	{
+		std::ostringstream ss;
+		const auto& s1 = state.player1Score;
+		const auto& s2 = state.player2Score;
+		const std::string n1 = state.player1Name.empty() ? std::string("P1") : state.player1Name;
+		const std::string n2 = state.player2Name.empty() ? std::string("P2") : state.player2Name;
+		ss << n1 << "  " << s1.wins << "–" << s1.losses << "–" << s1.ties
+		   << "    vs    "
+		   << n2 << "  " << s2.wins << "–" << s2.losses << "–" << s2.ties;
+		m_netScoreLabel->set_text(ss.str());
+	}
 
-		auto playAgainBtn = Gtk::make_managed<Gtk::Button>("Play Again");
-		playAgainBtn->add_css_class("btn-primary");
-		playAgainBtn->signal_clicked().connect([this]() {
+	/* Rematch-state transition: when the server reports the new round has
+	 * started (READY → ACTIVE), reset round-local UI cruft so the next round
+	 * paints clean. */
+	if (m_lastRematchState != NetworkGameClient::RematchState::NONE &&
+	    state.rematchState == NetworkGameClient::RematchState::NONE &&
+	    (state.gameStatus == "active" || state.gameStatus == "in_progress"))
+	{
+		m_networkGameOver = false;
+		if (m_netPlayer1Card) m_netPlayer1Card->remove_css_class("winner-highlight");
+		if (m_netPlayer2Card) m_netPlayer2Card->remove_css_class("winner-highlight");
+		/* Clear action area so the rematch buttons aren't stuck around. */
+		if (m_netActionArea)
+		{
+			auto c = m_netActionArea->get_first_child();
+			while (c) { m_netActionArea->remove(*c); c = m_netActionArea->get_first_child(); }
+		}
+	}
+	m_lastRematchState   = state.rematchState;
+	m_lastTerminalStatus = (state.gameStatus == "winner" || state.gameStatus == "tie" ||
+	                        state.gameStatus == "finished") ? state.gameStatus : "";
+}
+
+/* Renders rematch + leave controls into m_netActionArea. Idempotent over
+ * the (terminalStatus, rematchState, requestedBy) triple — skips the rebuild
+ * if nothing relevant changed. */
+void TicTacToeWindow::renderRematchActionArea(const NetworkGameClient::GameState& state)
+{
+	if (!m_netActionArea) return;
+
+	/* Skip rebuild when the relevant slice hasn't changed (polling tick
+	 * runs ~1Hz; without this we'd reflow the area every second). */
+	const std::string thisTerminal =
+	    (state.gameStatus == "winner" || state.gameStatus == "tie" || state.gameStatus == "finished")
+	        ? state.gameStatus : "";
+	if (thisTerminal == m_lastTerminalStatus &&
+	    state.rematchState == m_lastRematchState)
+		return;
+
+	/* Clear existing children. */
+	auto c = m_netActionArea->get_first_child();
+	while (c) { m_netActionArea->remove(*c); c = m_netActionArea->get_first_child(); }
+
+	const int myNum = m_networkClient ? m_networkClient->getPlayerNum() : 0;
+
+	if (state.rematchState == NetworkGameClient::RematchState::NONE)
+	{
+		auto rematchBtn = Gtk::make_managed<Gtk::Button>("Rematch");
+		rematchBtn->add_css_class("btn-primary");
+		rematchBtn->signal_clicked().connect([this, rematchBtn]() {
+			if (!m_networkClient) return;
+			rematchBtn->set_sensitive(false);
+			rematchBtn->set_label("Requesting…");
+			Glib::signal_timeout().connect_once([this]() {
+				if (m_networkClient) m_networkClient->requestRematch();
+			}, 50);
+		});
+		auto leaveBtn = Gtk::make_managed<Gtk::Button>("Leave");
+		leaveBtn->add_css_class("btn-secondary");
+		leaveBtn->signal_clicked().connect([this]() {
 			stopNetworkPolling();
 			m_networkClient.reset();
 			deleteBoxContents(p_mainWindowBox);
 			setupModeSelectionGUI();
 		});
-		if (m_netActionArea)
-			m_netActionArea->append(*playAgainBtn);
+		m_netActionArea->append(*rematchBtn);
+		m_netActionArea->append(*leaveBtn);
+	}
+	else if (state.rematchState == NetworkGameClient::RematchState::PENDING)
+	{
+		const bool iRequested = (state.rematchRequestedBy == myNum);
+		if (iRequested)
+		{
+			auto waiting = Gtk::make_managed<Gtk::Label>("Waiting for opponent to accept…");
+			waiting->add_css_class("subtitle-label");
+			m_netActionArea->append(*waiting);
+			auto leaveBtn = Gtk::make_managed<Gtk::Button>("Leave");
+			leaveBtn->add_css_class("btn-secondary");
+			leaveBtn->signal_clicked().connect([this]() {
+				stopNetworkPolling();
+				m_networkClient.reset();
+				deleteBoxContents(p_mainWindowBox);
+				setupModeSelectionGUI();
+			});
+			m_netActionArea->append(*leaveBtn);
+		}
+		else
+		{
+			std::string oppName = (myNum == 1) ? state.player2Name : state.player1Name;
+			if (oppName.empty()) oppName = "Opponent";
+			auto prompt = Gtk::make_managed<Gtk::Label>(oppName + " wants a rematch.");
+			prompt->add_css_class("subtitle-label");
+			m_netActionArea->append(*prompt);
+
+			auto acceptBtn = Gtk::make_managed<Gtk::Button>("Accept");
+			acceptBtn->add_css_class("btn-primary");
+			acceptBtn->signal_clicked().connect([this, acceptBtn]() {
+				if (!m_networkClient) return;
+				acceptBtn->set_sensitive(false);
+				Glib::signal_timeout().connect_once([this]() {
+					if (m_networkClient) m_networkClient->acceptRematch();
+				}, 50);
+			});
+			auto declineBtn = Gtk::make_managed<Gtk::Button>("Decline");
+			declineBtn->add_css_class("btn-secondary");
+			declineBtn->signal_clicked().connect([this, declineBtn]() {
+				if (!m_networkClient) return;
+				declineBtn->set_sensitive(false);
+				Glib::signal_timeout().connect_once([this]() {
+					if (m_networkClient) m_networkClient->declineRematch();
+				}, 50);
+			});
+			auto btnRow = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::HORIZONTAL);
+			btnRow->set_halign(Gtk::Align::CENTER);
+			btnRow->set_spacing(8);
+			btnRow->append(*acceptBtn);
+			btnRow->append(*declineBtn);
+			m_netActionArea->append(*btnRow);
+		}
+	}
+	/* READY is a transient — server flips to ACTIVE on the next state read,
+	 * which the m_lastRematchState transition block above handles. We render
+	 * a brief "Starting next round…" hint so the UI isn't blank if a poll
+	 * happens to catch READY mid-flight. */
+	else if (state.rematchState == NetworkGameClient::RematchState::READY)
+	{
+		auto starting = Gtk::make_managed<Gtk::Label>("Starting next round…");
+		starting->add_css_class("subtitle-label");
+		m_netActionArea->append(*starting);
 	}
 }
 
@@ -1120,6 +1419,84 @@ TicTacToeWindow::TicTacToeWindow()
 {
 	setTicTacToeWindowProperties();
 	applyCSSMainMenu();
+
+	/* Dark-mode. GTK4's CSS parser does NOT honor
+	 * `@media (prefers-color-scheme: dark)`, so we drive a `.dark` class
+	 * on this window from the system theme preference and let CSS rules
+	 * key on `window.dark <selector>`.
+	 *
+	 * Detection sources (any one ⇒ dark):
+	 *   1. `Gtk::Settings::gtk-application-prefer-dark-theme` (legacy hint)
+	 *   2. `org.gnome.desktop.interface color-scheme` = "prefer-dark"
+	 *      (GNOME 42+ canonical signal; Gtk::Settings doesn't always mirror it)
+	 *   3. `GTK_THEME` env contains ":dark" / "Adwaita-dark"-style suffix
+	 *
+	 * When we detect dark we also force `gtk-application-prefer-dark-theme=true`
+	 * so GTK's own stock-widget styling (entry, button focus rings, etc.) goes
+	 * dark in lockstep with our overrides. */
+	auto isDarkPreferred = []() -> bool {
+		/* (2) GNOME canonical signal. */
+		try {
+			auto gio = Gio::Settings::create("org.gnome.desktop.interface");
+			if (gio)
+			{
+				auto cs = gio->get_string("color-scheme");
+				if (cs == "prefer-dark") return true;
+				if (cs == "prefer-light" || cs == "default") return false;
+			}
+		} catch (const Glib::Error&) { /* schema not installed → fall through */ }
+
+		/* (1) Gtk::Settings hint. */
+		auto s = Gtk::Settings::get_default();
+		if (s && s->property_gtk_application_prefer_dark_theme().get_value()) return true;
+
+		/* (3) GTK_THEME env override. */
+		if (const char* env = std::getenv("GTK_THEME"))
+		{
+			std::string t = env;
+			if (t.find(":dark") != std::string::npos) return true;
+			if (t.find("-dark") != std::string::npos) return true;
+		}
+
+		return false;
+	};
+
+	auto applyColorScheme = [this, isDarkPreferred]() {
+		bool dark = isDarkPreferred();
+		if (dark) add_css_class("dark"); else remove_css_class("dark");
+		/* set_titlebar's headerbar is NOT a descendant of the window node in
+		 * the CSS tree (it's a sibling under the application surface). Tag it
+		 * directly so `.dark headerbar` selectors still match. */
+		if (auto tb = get_titlebar())
+		{
+			if (dark) tb->add_css_class("dark");
+			else      tb->remove_css_class("dark");
+		}
+		/* Push the result back to Gtk::Settings so GTK's stock widget theme
+		 * stays consistent with our `.dark` override block. */
+		if (auto s = Gtk::Settings::get_default())
+			s->property_gtk_application_prefer_dark_theme().set_value(dark);
+		std::cout << "[TicTacToeWindow] color-scheme: "
+		          << (dark ? "dark" : "light") << std::endl;
+	};
+	applyColorScheme();
+
+	/* Listen on both signals so a live `gsettings set` or theme toggle takes
+	 * effect without restart. */
+	if (auto s = Gtk::Settings::get_default())
+	{
+		s->property_gtk_application_prefer_dark_theme().signal_changed().connect(
+			[applyColorScheme]() { applyColorScheme(); });
+	}
+	try {
+		auto gio = Gio::Settings::create("org.gnome.desktop.interface");
+		if (gio)
+		{
+			gio->signal_changed("color-scheme").connect(
+				[applyColorScheme](const Glib::ustring&) { applyColorScheme(); });
+		}
+	} catch (const Glib::Error&) { /* schema absent — non-fatal */ }
+
 	setupModeSelectionGUI();
 }
 

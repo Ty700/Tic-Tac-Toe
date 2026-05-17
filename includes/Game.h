@@ -45,21 +45,24 @@ private:
 	std::function<void(const TicTacToeCore::GAME_STATUS&)> p_updateUICallback;
 
 public:
-	/* Core Functionality */
+	/* Core Functionality. Constructed with the GameParams-provided mode so
+	 * Mania games get the per-player FIFO from the start. */
 	TicTacToeCore p_gameLogic;
 
-	struct GameParams 
+	struct GameParams
 	{
 		std::shared_ptr<Player> p1;
 		std::shared_ptr<Player> p2;
 		std::function<void(const TicTacToeCore::GAME_STATUS&)> updateUICallback;
+		TicTacToeCore::Mode mode { TicTacToeCore::Mode::CLASSIC };
 	};
 
 	Game(const GameParams& params)
-		: p_playerOne(params.p1), p_playerTwo(params.p2), 
-		  p_PlayerArr{p_playerOne, p_playerTwo}, 
-		  p_updateUICallback(params.updateUICallback)
-		  
+		: p_playerOne(params.p1), p_playerTwo(params.p2),
+		  p_PlayerArr{p_playerOne, p_playerTwo},
+		  p_updateUICallback(params.updateUICallback),
+		  p_gameLogic(params.mode)
+
 	{
 		assert(p_playerOne != nullptr);
 		assert(p_playerTwo != nullptr);

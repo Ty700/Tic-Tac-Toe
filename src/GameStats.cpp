@@ -36,7 +36,45 @@ static void createFile(const char *FILE_PATH)
  * FUNCTION:    Helper of updateOngoingGameStats | Determines if Game Stats CSV exists, if not creates it
  * PARAMS:      Game stats file path
  * RETURNS:     fstream file
+ *
+ * Header upgrade: if an existing CSV was written by a pre-Mania build
+ * its header lacks the trailing "Mode" column even though new rows include
+ * the field. Detect and rewrite the header in place so column-by-header
+ * parsers see a consistent schema. Body rows are preserved untouched —
+ * legacy rows that have 6 fields keep them; new rows have 7.
  */
+static const char* CSV_CANONICAL_HEADER =
+    "0,PlayerOneName,PlayerTwoName,WinnerName,WinnerAI,WinnerSymbol,Mode";
+
+static void upgradeCSVHeaderIfNeeded(const char *CSV_PATH)
+{
+    std::ifstream in(CSV_PATH);
+    if (!in.is_open()) return;
+
+    std::string headerLine;
+    if (!std::getline(in, headerLine)) { in.close(); return; }
+
+    if (headerLine == CSV_CANONICAL_HEADER)
+    {
+        in.close();
+        return; /* Already current. */
+    }
+
+    /* Read remaining body. */
+    std::vector<std::string> body;
+    std::string line;
+    while (std::getline(in, line)) body.push_back(line);
+    in.close();
+
+    /* Rewrite header + body. */
+    std::ofstream out(CSV_PATH, std::ios::out | std::ios::trunc);
+    if (!out.is_open()) return;
+    out << CSV_CANONICAL_HEADER << '\n';
+    for (const auto& l : body) out << l << '\n';
+    out.flush();
+    out.close();
+}
+
 static std::fstream ensureGameStatsCSVFile(const char *CSV_PATH)
 {
     std::fstream csvFile;
@@ -47,10 +85,11 @@ static std::fstream ensureGameStatsCSVFile(const char *CSV_PATH)
     {
         createFile(CSV_PATH);
         csvFile.open(CSV_PATH, CSV_MODE);
-        csvFile << "0,PlayerOneName,PlayerTwoName,WinnerName,WinnerAI,WinnerSymbol\n";
+        csvFile << CSV_CANONICAL_HEADER << '\n';
     }
     else
     {
+        upgradeCSVHeaderIfNeeded(CSV_PATH);
         csvFile.open(CSV_PATH, CSV_MODE);
     }
 
@@ -153,13 +192,18 @@ static void updateGameStatsCSVFile(std::unique_ptr<Game>& game, std::fstream &cs
         gameFields.push_back(game->p_winningPlayer->getPlayerName());
         gameFields.push_back((game->p_winningPlayer->getPlayerState() == Player::PlayerState::AI) ? "true" : "false");
         gameFields.push_back((game->p_winningPlayer->getPlayerSymbol() == Player::PlayerSymbol::X) ? "X" : "O");
-    } 
-    else 
+    }
+    else
     {
         gameFields.push_back("TIE");
         gameFields.push_back("N/A");
         gameFields.push_back("N/A");
     }
+
+    /* Mode column (deferred from T2). Appended last so older rows that
+     * predate this column still parse with one fewer field. */
+    gameFields.push_back(
+        (game->p_gameLogic.getMode() == TicTacToeCore::Mode::MANIA) ? "mania" : "classic");
 
     for (size_t i = 0; i < gameFields.size(); i++)
     {
@@ -200,6 +244,7 @@ void writeToGameStats(std::fstream &gameStatsFile, std::fstream &csvFile)
         3 = Winner Name
         4 = Winner is AI?
         5 = Winner Symbol
+        6 = Mode  (added in T5; missing on legacy rows — guard read)
     */
     std::istringstream csvLine(lastLine);
     std::vector<std::string> gameFields;
@@ -212,21 +257,26 @@ void writeToGameStats(std::fstream &gameStatsFile, std::fstream &csvFile)
 
     gameStatsFile.seekp(0, std::ios::end);
     gameStatsFile   << "Game " << gameFields.at(0) << " Details: "
-                    << "\n\tPlayer One Name: " << gameFields.at(1) 
+                    << "\n\tPlayer One Name: " << gameFields.at(1)
                     << "\n\tPlayer Two Name: " << gameFields.at(2);
 
                     if(gameFields.at(3) == "TIE")
                     {
-                        gameStatsFile << "\n\tWinner: TIE\n";
+                        gameStatsFile << "\n\tWinner: TIE";
                     }
-                    else 
+                    else
                     {
                         gameStatsFile << "\n\tWinner Name: " << gameFields.at(3)
                         << "\n\tWinner was " << (gameFields.at(4) == "true" ? "AI" : "not AI")
-                        << "\n\tWinner Symbol: " << gameFields.at(5)
-                        << "\n\n"; 
-
+                        << "\n\tWinner Symbol: " << gameFields.at(5);
                     }
+
+                    /* Mode row (T5+). Guard against pre-upgrade legacy rows
+                     * that may have only 6 fields. */
+                    if (gameFields.size() >= 7)
+                        gameStatsFile << "\n\tMode: " << gameFields.at(6);
+
+                    gameStatsFile << "\n\n";
 
     gameStatsFile.flush();
 }
@@ -240,6 +290,20 @@ int updateOngoingGameStats(std::unique_ptr<Game>& game)
 {
     try
     {
+        /* Invariant guard: Mania mode cannot tie by construction
+         * (docs/mania-mode-wire-format.md). If we're asked to persist a
+         * Mania game with no winning player it's a logic bug upstream —
+         * refuse and log instead of corrupting the CSV with an impossible
+         * row like "Mode=mania,Winner=TIE". */
+        if (game &&
+            game->p_gameLogic.getMode() == TicTacToeCore::Mode::MANIA &&
+            game->p_winningPlayer == nullptr)
+        {
+            std::cout << "ERROR: refusing to persist Mania game with no winner "
+                         "(ties are impossible in Mania)\n";
+            return 1;
+        }
+
         const char *DIR_PATH = "./GameStats/";
         const char *CSV_PATH = "./GameStats/GameStatsDB.csv";
         const char *GAME_STATS_PATH = "./GameStats/GameStats.txt";

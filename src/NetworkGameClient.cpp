@@ -45,13 +45,17 @@ NetworkGameClient::~NetworkGameClient()
 {
 }
 
-std::string NetworkGameClient::createGame(const std::string& playerName)
+std::string NetworkGameClient::createGame(const std::string& playerName,
+                                           Mode mode)
 {
 	m_playerName = playerName;
 	m_playerNum = 1;
 
 	httplib::Params params;
 	params.emplace("playerName", playerName);
+	/* Mania wire-format: server treats absent/unknown as classic, but be
+	 * explicit so logs and any future server-side validation are crisp. */
+	params.emplace("mode", (mode == Mode::MANIA) ? "mania" : "classic");
 
 	std::string path = m_pathPrefix + "/create";
 	std::cout << "[NetworkGameClient] POST " << path << std::endl;
@@ -161,6 +165,69 @@ bool NetworkGameClient::makeMove(int position)
 	return false;
 }
 
+/**
+ * Helper for the three rematch POSTs — they share path-prefix + playerName
+ * form param + response-parse pattern.
+ */
+static httplib::Result postRematchAction(httplib::Client* client,
+                                         const std::string& pathPrefix,
+                                         const std::string& gameID,
+                                         const std::string& playerName,
+                                         const std::string& action /* "" | "/accept" | "/decline" */)
+{
+	httplib::Params params;
+	params.emplace("playerName", playerName);
+	return client->Post(pathPrefix + "/game/" + gameID + "/rematch" + action, params);
+}
+
+bool NetworkGameClient::requestRematch()
+{
+	if (m_gameID.empty() || m_playerName.empty()) return false;
+	auto res = postRematchAction(m_client.get(), m_pathPrefix, m_gameID, m_playerName, "");
+	if (!res) { m_connected.store(false); return false; }
+	m_connected.store(true);
+	if (res->status == 200)
+	{
+		std::lock_guard<std::mutex> lock(m_stateMutex);
+		m_lastState = parseGameState(res->body);
+		return true;
+	}
+	std::cerr << "[NetworkGameClient] Rematch request failed: " << res->status << std::endl;
+	return false;
+}
+
+bool NetworkGameClient::acceptRematch()
+{
+	if (m_gameID.empty() || m_playerName.empty()) return false;
+	auto res = postRematchAction(m_client.get(), m_pathPrefix, m_gameID, m_playerName, "/accept");
+	if (!res) { m_connected.store(false); return false; }
+	m_connected.store(true);
+	if (res->status == 200)
+	{
+		std::lock_guard<std::mutex> lock(m_stateMutex);
+		m_lastState = parseGameState(res->body);
+		return true;
+	}
+	std::cerr << "[NetworkGameClient] Rematch accept failed: " << res->status << std::endl;
+	return false;
+}
+
+bool NetworkGameClient::declineRematch()
+{
+	if (m_gameID.empty() || m_playerName.empty()) return false;
+	auto res = postRematchAction(m_client.get(), m_pathPrefix, m_gameID, m_playerName, "/decline");
+	if (!res) { m_connected.store(false); return false; }
+	m_connected.store(true);
+	if (res->status == 200)
+	{
+		std::lock_guard<std::mutex> lock(m_stateMutex);
+		m_lastState = parseGameState(res->body);
+		return true;
+	}
+	std::cerr << "[NetworkGameClient] Rematch decline failed: " << res->status << std::endl;
+	return false;
+}
+
 bool NetworkGameClient::fetchGameState()
 {
 	if (m_gameID.empty())
@@ -204,7 +271,13 @@ NetworkGameClient::GameState NetworkGameClient::parseGameState(const std::string
 
 		state.gameID = j.value("gameID", "");
 		state.gameStatus = j.value("gameStatus", "");
-		state.currentTurn = j.value("currentTurn", 0);
+		/* currentTurn is integer (0/1) during active play; the wire format
+		 * permits "" while waiting. Tolerate both rather than letting
+		 * nlohmann::json throw on the non-int branch. */
+		if (j.contains("currentTurn") && j["currentTurn"].is_number_integer())
+			state.currentTurn = j["currentTurn"].get<int>();
+		else
+			state.currentTurn = 0;
 
 		if (j.contains("board") && j["board"].is_array())
 		{
@@ -224,6 +297,60 @@ NetworkGameClient::GameState NetworkGameClient::parseGameState(const std::string
 		{
 			state.player2Name = j["player2"].value("name", "");
 			state.player2Symbol = j["player2"].value("symbol", "O");
+		}
+
+		/* Mania wire-format. Per contract, mode/moveHistory/nextEviction are
+		 * always present in modern responses; treat missing as CLASSIC for
+		 * back-compat with older servers. */
+		state.mode = (j.value("mode", std::string("classic")) == "mania")
+			? Mode::MANIA : Mode::CLASSIC;
+
+		state.moveHistory.clear();
+		if (j.contains("moveHistory") && j["moveHistory"].is_array())
+		{
+			for (const auto& e : j["moveHistory"])
+			{
+				GameState::HistoryEntry entry;
+				entry.player = e.value("player", 0);
+				entry.pos    = e.value("pos", -1);
+				entry.ord    = e.value("ord", 0);
+				state.moveHistory.push_back(entry);
+			}
+		}
+
+		state.nextEvictionPlayer = 0;
+		state.nextEvictionPos    = -1;
+		if (j.contains("nextEviction") && !j["nextEviction"].is_null())
+		{
+			state.nextEvictionPlayer = j["nextEviction"].value("player", 0);
+			state.nextEvictionPos    = j["nextEviction"].value("pos", -1);
+		}
+
+		/* Rematch + score. Defaults survive a pre-rematch server. */
+		const std::string rs = j.value("rematchState", std::string("none"));
+		if (rs == "pending")      state.rematchState = RematchState::PENDING;
+		else if (rs == "ready")   state.rematchState = RematchState::READY;
+		else                      state.rematchState = RematchState::NONE;
+
+		state.rematchRequestedBy = 0;
+		if (j.contains("rematchRequestedBy") && j["rematchRequestedBy"].is_number_integer())
+			state.rematchRequestedBy = j["rematchRequestedBy"].get<int>();
+
+		state.player1Score = {};
+		state.player2Score = {};
+		if (j.contains("score") && j["score"].is_object())
+		{
+			auto readScore = [](const json& s) {
+				GameState::Score out;
+				out.wins   = s.value("wins",   0);
+				out.losses = s.value("losses", 0);
+				out.ties   = s.value("ties",   0);
+				return out;
+			};
+			if (j["score"].contains("player1") && j["score"]["player1"].is_object())
+				state.player1Score = readScore(j["score"]["player1"]);
+			if (j["score"].contains("player2") && j["score"]["player2"].is_object())
+				state.player2Score = readScore(j["score"]["player2"]);
 		}
 	}
 	catch (const json::exception& e)

@@ -3,7 +3,21 @@ import SwiftUI
 struct BoardView: View {
     let cells: [String]
     let interactive: Bool
+    /* Mania-only: the cell whose symbol will be cleared on the next move.
+     * BoardView fades its symbol to telegraph the upcoming eviction.
+     * `nil` in classic mode and in mania before any player's queue fills. */
+    let nextEvictionPos: Int?
     let onTap: (Int) -> Void
+
+    init(cells: [String],
+         interactive: Bool,
+         nextEvictionPos: Int? = nil,
+         onTap: @escaping (Int) -> Void) {
+        self.cells = cells
+        self.interactive = interactive
+        self.nextEvictionPos = nextEvictionPos
+        self.onTap = onTap
+    }
 
     private let columns = Array(
         repeating: GridItem(.flexible(), spacing: 6),
@@ -17,7 +31,8 @@ struct BoardView: View {
             if cells.count == 9 {
                 LazyVGrid(columns: columns, spacing: 6) {
                     ForEach(0..<9, id: \.self) { i in
-                        CellView(value: cells[i])
+                        CellView(value: cells[i],
+                                 isFading: nextEvictionPos == i && !cells[i].isEmpty)
                             .aspectRatio(1, contentMode: .fit)
                             .contentShape(Rectangle())
                             .onTapGesture {
@@ -36,6 +51,7 @@ struct BoardView: View {
 
 private struct CellView: View {
     let value: String
+    let isFading: Bool
 
     var body: some View {
         ZStack {
@@ -45,6 +61,8 @@ private struct CellView: View {
             Text(value)
                 .font(.custom("Georgia", size: 64))
                 .foregroundStyle(value == "X" ? Theme.brown : Theme.brown.opacity(0.7))
+                .opacity(isFading ? 0.35 : 1.0)
+                .animation(.easeInOut(duration: 0.25), value: isFading)
         }
     }
 }

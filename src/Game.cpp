@@ -69,10 +69,39 @@ void Game::validMove(const int& slot_id)
 	auto current_symbol = p_gameLogic.getCurrentSymbol(); 
 
 	TicTacToeCore::GAME_STATUS game_status = p_gameLogic.makeMove(slot_id, current_symbol);
-	
-	/* Update Slot's button to be player's symbol */
-	p_boardSlots[slot_id]->updateSymbol(current_symbol); 
-	
+
+	/* Resync every slot's label from core state. In CLASSIC this just paints
+	 * the newly-placed symbol; in MANIA it also clears whichever cell was
+	 * evicted by the FIFO before this placement (cheapest-correct approach
+	 * per T5 scope note). Also clear any stale .fading class — only the cell
+	 * queued for the next placement should carry it. */
+	for (int i = 0; i < 9; i++)
+	{
+		auto cell = p_gameLogic.getCell(i);
+		if (cell == TicTacToeCore::CELL_STATES::EMPTY)
+			p_boardSlots[i]->clearSymbol();
+		else
+			p_boardSlots[i]->updateSymbol(cell);
+		p_boardSlots[i]->getButton()->remove_css_class("fading");
+	}
+
+	/* Mania fading indicator: after the move, the core has already advanced
+	 * the turn — getCurrentSymbol() now returns the side that plays NEXT.
+	 * If that side already has 3 placements, getNextEviction returns the
+	 * doomed cell; otherwise -1. CLASSIC returns -1 unconditionally.
+	 *
+	 * Gate on IN_PROGRESS: on a winning move, makeMove returns before
+	 * flipping current_symbol, so getCurrentSymbol() is still the winner's
+	 * side and would falsely paint .fading on a finished board. Mirrors the
+	 * web client's data-state gate from. */
+	if (p_gameLogic.getMode() == TicTacToeCore::Mode::MANIA &&
+	    game_status == TicTacToeCore::GAME_STATUS::IN_PROGRESS)
+	{
+		int evictPos = p_gameLogic.getNextEviction(p_gameLogic.getCurrentSymbol());
+		if (evictPos >= 0 && evictPos < 9)
+			p_boardSlots[evictPos]->getButton()->add_css_class("fading");
+	}
+
 	/* Update UI */
 	p_updateUICallback(game_status);
 	

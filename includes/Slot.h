@@ -39,6 +39,7 @@ public:
 	int getID() const { return p_id; } 
 	Gtk::Button* getButton() const { return this->p_button; }
 	void updateSymbol(const TicTacToeCore::CELL_STATES& sym);
+	void clearSymbol();
 	void onSlotClick();
 	Glib::ustring getSymbol() const { return this->p_symbolStr; }
 };

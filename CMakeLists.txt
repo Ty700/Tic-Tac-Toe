@@ -47,7 +47,9 @@ if(BUILD_TESTS)
     add_executable(${TEST_NAME}
         tests/NetworkGameTests.cpp
         tests/TicTacToeCoreTests.cpp
+        tests/AIEngineTests.cpp
         src/TicTacToeCore.cpp
+        src/AIEngine.cpp
         src/Player.cpp
         src/Server/NetworkGame.cpp
     )
