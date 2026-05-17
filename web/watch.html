@@ -8,9 +8,14 @@
         (function () {
             var prefix = location.pathname.indexOf('/tictactoe/') === 0 ? '/tictactoe' : '';
             window.TTT_BASE = prefix;
+            /* Cache-bust the stylesheet so a shipped CSS fix isn't shadowed by
+             * the user's prior cached copy. Bump TTT_ASSET_VERSION whenever a
+             * web-asset fix needs to land for everyone without a hard-refresh.
+             * Paired with no-store Cache-Control on /styles/* (Server.cpp). */
+            window.TTT_ASSET_VERSION = 'v2-overlay';
             var link = document.createElement('link');
             link.rel = 'stylesheet';
-            link.href = prefix + '/styles/game.css';
+            link.href = prefix + '/styles/game.css?v=' + window.TTT_ASSET_VERSION;
             document.head.appendChild(link);
             document.addEventListener('DOMContentLoaded', function () {
                 var nodes = document.querySelectorAll('[data-ttt-path]');
@@ -64,7 +69,10 @@
     <script>
         (function () {
             var s = document.createElement('script');
-            s.src = window.TTT_BASE + '/styles/watch.js';
+            /* See TTT_ASSET_VERSION in the head script — same cache-bust scheme
+             * applied to watch.js so the textContent-clearing fix doesn't get
+             * shadowed by a stale cached watch.js. */
+            s.src = window.TTT_BASE + '/styles/watch.js?v=' + window.TTT_ASSET_VERSION;
             document.body.appendChild(s);
         })();
     </script>

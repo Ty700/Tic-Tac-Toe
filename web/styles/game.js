@@ -181,15 +181,23 @@
             gameOver = false;
             rematchClickPending = false;
 
+            /* currentTurn is move_counter % 2, which maps to the SYMBOL
+             * about to move (0 = X, 1 = O), not directly to a player
+             * slot. After a rematch the symbols swap, so a slot-keyed
+             * comparison would point at the wrong player. Resolve via
+             * symbol instead. */
             const currentTurnIdx = data.currentTurn;
-            isMyTurn = (currentTurnIdx === playerNum - 1);
+            const turnSymbol = currentTurnIdx === 0 ? 'X' : 'O';
+            const mySymbol = mySymbolFromData(data) || (playerNum === 1 ? 'X' : 'O');
+            const p1Symbol = (data.player1 && data.player1.symbol) || 'X';
+            const p2Symbol = (data.player2 && data.player2.symbol) || 'O';
+            isMyTurn = mySymbol === turnSymbol;
 
-            player1Card.classList.toggle('active-turn', currentTurnIdx === 0);
-            player2Card.classList.toggle('active-turn', currentTurnIdx === 1);
+            player1Card.classList.toggle('active-turn', p1Symbol === turnSymbol);
+            player2Card.classList.toggle('active-turn', p2Symbol === turnSymbol);
 
             if (isMyTurn) {
                 enableBoard(data.board);
-                const mySymbol = mySymbolFromData(data) || (playerNum === 1 ? 'X' : 'O');
                 setStatus('Your turn (' + mySymbol + ')', 'active');
             } else {
                 disableBoard();
@@ -205,8 +213,14 @@
         else if (status === 'winner') {
             gameOver = true;
 
-            const winnerTurnIdx = data.currentTurn;
-            const winnerNum = winnerTurnIdx + 1;
+            /* After a winning move the server returns WINNER without
+             * advancing move_counter, so currentTurn still points at
+             * the winner's SYMBOL index. Resolve to a slot via the
+             * player.symbol field, since after a rematch swap the
+             * symbol no longer matches the slot number. */
+            const winnerSymbol = data.currentTurn === 0 ? 'X' : 'O';
+            const p1Sym = (data.player1 && data.player1.symbol) || 'X';
+            const winnerNum = p1Sym === winnerSymbol ? 1 : 2;
             const winnerData = winnerNum === 1 ? data.player1 : data.player2;
             const winnerName = winnerData ? winnerData.name : 'Player ' + winnerNum;
 

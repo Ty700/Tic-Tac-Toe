@@ -347,6 +347,13 @@ void Server::getStaticFile(const httplib::Request& req, httplib::Response& res)
 	else if (ext == "png") contentType = "image/png";
 	else if (ext == "svg") contentType = "image/svg+xml";
 
+	/* Force re-validation on every reload. Without this, browser
+	 * heuristic freshness keeps stale CSS/JS in cache after a server
+	 * rebuild. no-store is safer than no-cache because some proxies and
+	 * service workers ignore no-cache. Bandwidth cost is negligible for
+	 * these small static assets. */
+	res.set_header("Cache-Control", "no-store, max-age=0");
+
 	res.set_content(content, contentType);
 }
 
@@ -356,18 +363,12 @@ void Server::postCreateGame(const httplib::Request& req, httplib::Response& res)
 {
 	std::string hostName = req.get_param_value("playerName");
 
-	/* Reject the request before doing any work if playerName is missing.
-	 * cpp-httplib's get_param_value() only consumes query string and
-	 * application/x-www-form-urlencoded bodies — a request with
+	/* cpp-httplib's get_param_value() consumes only query string and
+	 * application/x-www-form-urlencoded bodies. A request with
 	 * Content-Type: application/json + a JSON body returns "" here even
-	 * if the JSON contains a playerName key. Pre-fix, postCreateGame
-	 * then quietly skipped the masterGameList insert at the bottom but
-	 * still emitted a 302 Location header from createGame(), producing
-	 * a lying success: clients followed the redirect to a gameID that
-	 * never existed. All three production clients (web/iOS/GTK) send
-	 * form-encoded so this only ever bit ad-hoc REST consumers (curl
-	 * default, future thin clients), but the silent contract violation
-	 * was a footgun. Fail fast with a clear JSON error instead. */
+	 * when the JSON contains a playerName key. Reject early so a
+	 * misbehaving client cannot produce a 302 Location header that
+	 * points at a gameID never inserted into masterGameList. */
 	if (hostName.empty())
 	{
 		std::cout << "[POST /create] 400: missing playerName "
@@ -375,7 +376,7 @@ void Server::postCreateGame(const httplib::Request& req, httplib::Response& res)
 		          << "')" << std::endl;
 		res.status = 400;
 		res.set_content(
-			R"({"error":"Missing playerName — send as form field or query param, not JSON body"})",
+			R"({"error":"Missing playerName: send as form field or query param, not JSON body"})",
 			"application/json");
 		return;
 	}
@@ -419,10 +420,9 @@ void Server::postCreateGame(const httplib::Request& req, httplib::Response& res)
 
 	game->setMode(mode);
 
-	/* hostName was validated non-empty at the top of the handler, so we
-	 * always have a real player to seat. The insert is unconditional —
-	 * pre-fix, this was gated on !hostName.empty() which silently dropped
-	 * games when the form parse failed. */
+	/* hostName is non-empty (validated at top), so the insert is
+	 * unconditional. A gated insert here would let a parse failure
+	 * silently drop the freshly-minted ID. */
 	Player::PlayerParams p1Params = {
 		.name = hostName,
 		.sym = Player::PlayerSymbol::X,
@@ -617,8 +617,8 @@ void Server::postLeaveGame(const httplib::Request& req, httplib::Response& res)
 		 * has a valid lastRoundWinner to drive the symbol swap. If we
 		 * can't resolve who left (unknown / missing playerName), fall
 		 * back to markFinished-only so the opponent's poll still sees
-		 * the game end — better a missing score increment than a stuck
-		 * active game. */
+		 * the game end; a missing score increment beats a stuck active
+		 * game. */
 		int leaverNum = 0;
 		if (game->getPlayer(1) && game->getPlayer(1)->getPlayerName() == playerName)
 			leaverNum = 1;
@@ -880,9 +880,9 @@ int Server::run()
 		return -1;
 	}
 
-	/* Also override cpp-httplib's default SO_REUSEPORT with SO_REUSEADDR
-	 * only. SO_REUSEADDR is what we want — quick rebind after a clean
-	 * shutdown (TIME_WAIT skip) — without permitting two live listeners. */
+	/* Override cpp-httplib's default SO_REUSEPORT with SO_REUSEADDR only.
+	 * SO_REUSEADDR allows quick rebind after a clean shutdown (TIME_WAIT
+	 * skip) without permitting two live listeners on the same port. */
 	svr.set_socket_options([](socket_t sock) {
 		int yes = 1;
 		::setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));

@@ -642,10 +642,16 @@ body.loaded .content {
 
 .create-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    /* minmax(360px, 1fr) gives each card at least 360px, enough room
+     * for "Your name" and "4-digit game code" placeholders and for
+     * the "Create Game" / "Join Game" button labels to stay on one
+     * line. max-width 1440 ceilings the card width at roughly 460px
+     * on wide screens. Three 360px columns plus gaps need ~1100px to
+     * fit; narrower viewports hit the single-column rule below. */
+    grid-template-columns: repeat(3, minmax(360px, 1fr));
     gap: var(--spacing-md);
     width: 100%;
-    max-width: 1200px;
+    max-width: 1440px;
 }
 
 @media (max-width: 900px) {
@@ -968,6 +974,14 @@ body.loaded .content {
     font-size: 0.85rem;
     font-style: italic;
     border-radius: 4px;
+}
+
+/* `display: flex` on .watch-overlay overrides the UA's
+ * `[hidden] { display: none }` default. Without this rule, setting
+ * `overlay.hidden = true` from JS has no visual effect and the overlay
+ * div stays rendered on every card. */
+.watch-overlay[hidden] {
+    display: none !important;
 }
 
 /* ===== RESPONSIVE ===== */

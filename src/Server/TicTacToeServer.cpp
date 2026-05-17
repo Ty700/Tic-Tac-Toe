@@ -13,8 +13,9 @@ static void printUsage(const char* progName)
 		<< "Options:\n"
 		<< "  -h, --help    Print this message and exit\n"
 		<< "\n"
-		<< "All other arguments are ignored. The server reads no config from\n"
-		<< "argv — port, ID space, and TTLs are compiled in via includes/Server.h.\n";
+		<< "All other arguments are ignored. The server reads no config\n"
+		<< "from argv; port, ID space, and TTLs are compiled in via\n"
+		<< "includes/Server.h.\n";
 }
 
 int main(int argc, char* argv[])

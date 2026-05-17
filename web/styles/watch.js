@@ -181,6 +181,7 @@
             card.stateBadge.hidden = true;
         } else if (isTerminal) {
             card.overlay.hidden = true;
+            card.overlay.textContent = '';
             card.stateBadge.hidden = false;
             if (status === 'winner') {
                 const winnerNum = currentTurn + 1;
@@ -192,7 +193,14 @@
                 card.stateBadge.textContent = 'Final';
             }
         } else {
+            /* Clear overlay text in addition to hiding. The hidden
+             * attribute is the primary mechanism (game.css carries
+             * `.watch-overlay[hidden] { display: none !important }` to
+             * defeat the `display: flex` on the base rule); clearing
+             * textContent guarantees the overlay renders empty even if
+             * a stale cached CSS lets it remain visible. */
             card.overlay.hidden = true;
+            card.overlay.textContent = '';
             card.stateBadge.hidden = true;
         }
 

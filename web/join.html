@@ -8,9 +8,13 @@
         (function () {
             var prefix = location.pathname.indexOf('/tictactoe/') === 0 ? '/tictactoe' : '';
             window.TTT_BASE = prefix;
+            /* Cache-bust asset URLs. Bump TTT_ASSET_VERSION when a CSS/JS
+             * fix needs to land for everyone without a hard-refresh. Paired
+             * with no-store Cache-Control on /styles/* (Server.cpp). */
+            window.TTT_ASSET_VERSION = 'v2-overlay';
             var link = document.createElement('link');
             link.rel = 'stylesheet';
-            link.href = prefix + '/styles/game.css';
+            link.href = prefix + '/styles/game.css?v=' + window.TTT_ASSET_VERSION;
             document.head.appendChild(link);
             document.addEventListener('DOMContentLoaded', function () {
                 var nodes = document.querySelectorAll('[data-ttt-path]');

@@ -83,18 +83,14 @@ TEST_F(AIEngineManiaTest, HardLatencyUnder100ms) {
 }
 
 TEST_F(AIEngineManiaTest, HardBeatsEasyOverwhelmingly) {
-    /* Hard playing as X should win the large majority of games against Easy.
-     *
-     * AIEngine seeds its std::mt19937 from std::random_device and isn't
-     * test-injectable without changing production code, so the threshold
-     * here is chosen with enough binomial headroom that flakes are
-     * statistically negligible.
-     *
-     * Empirically (200-repeat run, zero flakes) the observed win-rate
-     * hovers well above 85%. A bar of 30/50 (60%) gives P(flake) ~ 3.5e-7
-     * if true p=0.85; even at p=0.75 it's ~1e-3 — tight enough that a
-     * real regression in AI strength trips the test long before it
-     * becomes a flake source. */
+    /* Hard playing as X should win the large majority of games against
+     * Easy. AIEngine seeds its std::mt19937 from std::random_device
+     * internally, so the test cannot inject a deterministic seed without
+     * changing production code; the threshold here is chosen with
+     * enough binomial headroom that flakes are statistically negligible.
+     * A bar of 30/50 (60%) gives P(flake) ~ 3.5e-7 at true p=0.85 and
+     * ~1e-3 even under a pessimistic p=0.75, tight enough that a real
+     * regression in AI strength trips the test long before flakes start. */
     int hardWins = 0, easyWins = 0, unfinished = 0;
     for (int i = 0; i < 50; i++) {
         auto winner = playOneMania(
@@ -110,11 +106,10 @@ TEST_F(AIEngineManiaTest, HardBeatsEasyOverwhelmingly) {
 }
 
 TEST_F(AIEngineManiaTest, MediumBeatsEasyComfortably) {
-    /* Medium should beat Easy comfortably but with less margin than Hard.
-     * Same headroom logic as HardBeatsEasy with a lower bar (25/50 = 50%).
-     * Empirical 200-run sweep shows observed win-rate well above 65%, so
-     * flake probability at 25/50 is < 1e-3 even under a pessimistic
-     * p=0.65 assumption. */
+    /* Medium should beat Easy comfortably but with less margin than
+     * Hard. Same headroom logic as HardBeatsEasy with a lower bar
+     * (25/50 = 50%). At true p=0.65 the flake probability stays under
+     * 1e-3, well within the test-side determinism budget. */
     int medWins = 0, easyWins = 0, unfinished = 0;
     for (int i = 0; i < 50; i++) {
         auto winner = playOneMania(
