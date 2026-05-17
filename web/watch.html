@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TicTacToe — Watch</title>
+    <script>
+        (function () {
+            var prefix = location.pathname.indexOf('/tictactoe/') === 0 ? '/tictactoe' : '';
+            window.TTT_BASE = prefix;
+            var link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = prefix + '/styles/game.css';
+            document.head.appendChild(link);
+            document.addEventListener('DOMContentLoaded', function () {
+                var nodes = document.querySelectorAll('[data-ttt-path]');
+                for (var i = 0; i < nodes.length; i++) {
+                    nodes[i].setAttribute('href', prefix + nodes[i].getAttribute('data-ttt-path'));
+                }
+            });
+        })();
+    </script>
+</head>
+<body>
+    <div class="content" style="opacity: 1;">
+        <nav class="nav">
+            <a href="#" data-ttt-path="/create-game" class="logo">TicTacToe</a>
+            <div class="nav-meta">
+                <span class="connection-dot" id="connectionDot" title="Connection status"></span>
+            </div>
+        </nav>
+
+        <main class="watch-container">
+            <div class="hero-mini">
+                <h1 class="hero-title">Watch</h1>
+                <p class="hero-sub">All live games, updating every second.</p>
+            </div>
+
+            <div class="watch-toolbar">
+                <input
+                    type="text"
+                    class="form-input watch-search"
+                    id="watchSearch"
+                    placeholder="Search by game ID…"
+                    autocomplete="off"
+                    inputmode="numeric"
+                >
+                <span class="watch-count" id="watchCount">0 games</span>
+            </div>
+
+            <div class="watch-empty" id="watchEmpty" hidden>
+                <p>No games right now.</p>
+                <p class="watch-empty-sub">Create one or wait for a host.</p>
+            </div>
+
+            <div class="watch-grid" id="watchGrid"></div>
+        </main>
+
+        <footer class="footer">
+            <p>&copy; 2025 Tyler Scotti &middot; <a href="https://ty700.tech">ty700.tech</a></p>
+        </footer>
+    </div>
+
+    <script>
+        (function () {
+            var s = document.createElement('script');
+            s.src = window.TTT_BASE + '/styles/watch.js';
+            document.body.appendChild(s);
+        })();
+    </script>
+</body>
+</html>
