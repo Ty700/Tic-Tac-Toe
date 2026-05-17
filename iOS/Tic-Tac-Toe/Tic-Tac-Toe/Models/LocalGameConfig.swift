@@ -6,6 +6,7 @@ struct LocalGameConfig {
     var p1Symbol: LocalGame.Cell = .x                  /* P2 gets the other; X always plays first */
     var p2IsAI: Bool = true
     var aiDifficulty: AIDifficultyChoice = .random
+    var mode: LocalGame.Mode = .classic
 
     var canStart: Bool {
         let p1 = p1Name.trimmingCharacters(in: .whitespaces)

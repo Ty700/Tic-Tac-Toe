@@ -1,10 +1,10 @@
 /**
  * TicTacToe Web Client
  * Polls server for game state and sends moves via REST API.
- * 
+ *
  * Session storage keys:
  *   ttt_playerName  - This player's name
- *   ttt_playerNum   - "1" (host/X) or "2" (guest/O)  
+ *   ttt_playerNum   - "1" (host/X) or "2" (guest/O)
  *   ttt_gameID      - 4-digit game code
  */
 
@@ -12,10 +12,13 @@
     'use strict';
 
     // ===== CONFIG =====
-    const BASE = '/tictactoe';
+    const BASE = typeof window.TTT_BASE === 'string'
+        ? window.TTT_BASE
+        : (location.pathname.indexOf('/tictactoe/') === 0 ? '/tictactoe' : '');
     const POLL_INTERVAL_WAITING = 1500;
     const POLL_INTERVAL_ACTIVE  = 1000;
     const POLL_INTERVAL_IDLE    = 5000;
+    const POLL_INTERVAL_FINISHED = 1000;
 
     // ===== STATE =====
     let gameID     = sessionStorage.getItem('ttt_gameID');
@@ -25,6 +28,11 @@
     let lastBoard  = ['', '', '', '', '', '', '', '', ''];
     let gameOver   = false;
     let isMyTurn   = false;
+    let lastNextEviction = null;
+    let lastStatus = '';
+    let lastRematchState = 'none';
+    let lastRematchRequestedBy = null;
+    let rematchClickPending = false;
 
     // ===== DOM REFS =====
     const board          = document.getElementById('board');
@@ -32,11 +40,16 @@
     const statusBanner   = document.getElementById('statusBanner');
     const statusText     = document.getElementById('statusText');
     const gameIdDisplay  = document.getElementById('gameIdDisplay');
+    const modeBadge      = document.getElementById('modeBadge');
     const connectionDot  = document.getElementById('connectionDot');
     const player1Name    = document.getElementById('player1Name');
     const player2Name    = document.getElementById('player2Name');
     const player1Card    = document.getElementById('player1Card');
     const player2Card    = document.getElementById('player2Card');
+    const player1Symbol  = document.getElementById('player1Symbol');
+    const player2Symbol  = document.getElementById('player2Symbol');
+    const player1Score   = document.getElementById('player1Score');
+    const player2Score   = document.getElementById('player2Score');
     const actionArea     = document.getElementById('actionArea');
     const loader         = document.getElementById('loader');
 
@@ -82,10 +95,10 @@
     // ===== POLLING =====
     function startPolling() {
         stopPolling();
-        const interval = gameOver ? 0 : 
-                         isMyTurn ? POLL_INTERVAL_IDLE : 
-                         POLL_INTERVAL_ACTIVE;
-        
+        const interval = gameOver
+            ? POLL_INTERVAL_FINISHED
+            : (isMyTurn ? POLL_INTERVAL_IDLE : POLL_INTERVAL_ACTIVE);
+
         if (interval > 0) {
             pollTimer = setInterval(fetchGameState, interval);
         }
@@ -102,7 +115,7 @@
     async function fetchGameState() {
         try {
             const res = await fetch(BASE + '/api/game/' + gameID);
-            
+
             if (!res.ok) {
                 setConnectionStatus('error');
                 if (res.status === 404) {
@@ -131,11 +144,31 @@
             player2Name.textContent = 'Waiting...';
         }
 
+        updatePlayerSymbols(data);
+        updateScore(data);
+
+        const status = data.gameStatus;
+        const isTerminal = status === 'winner' || status === 'tie' || status === 'finished';
+        const wasTerminal = lastStatus === 'winner' || lastStatus === 'tie' || lastStatus === 'finished';
+        const transitionedToRound = (status === 'active' || status === 'in_progress') && wasTerminal;
+        lastNextEviction = isTerminal ? null : (data.nextEviction || null);
+
+        if (transitionedToRound) {
+            resetRoundVisuals();
+        }
+
+        lastRematchState = (data.rematchState === 'pending' || data.rematchState === 'ready')
+            ? data.rematchState : 'none';
+        lastRematchRequestedBy = (lastRematchState !== 'none' && typeof data.rematchRequestedBy === 'number')
+            ? data.rematchRequestedBy : null;
+
+        updateModeBadge(data.mode);
+
         if (data.board && Array.isArray(data.board)) {
             updateBoard(data.board);
         }
 
-        const status = data.gameStatus;
+        updateEvictionIndicator(lastNextEviction);
 
         if (status === 'waiting') {
             gameOver = false;
@@ -143,10 +176,11 @@
             disableBoard();
             setStatus('Waiting for opponent to join...', '');
             showShareInfo();
-        } 
+        }
         else if (status === 'active' || status === 'in_progress') {
             gameOver = false;
-            
+            rematchClickPending = false;
+
             const currentTurnIdx = data.currentTurn;
             isMyTurn = (currentTurnIdx === playerNum - 1);
 
@@ -155,23 +189,21 @@
 
             if (isMyTurn) {
                 enableBoard(data.board);
-                const mySymbol = playerNum === 1 ? 'X' : 'O';
+                const mySymbol = mySymbolFromData(data) || (playerNum === 1 ? 'X' : 'O');
                 setStatus('Your turn (' + mySymbol + ')', 'active');
             } else {
                 disableBoard();
-                const oppName = playerNum === 1 ? 
+                const oppName = playerNum === 1 ?
                     (data.player2 ? data.player2.name : 'Opponent') :
                     (data.player1 ? data.player1.name : 'Opponent');
                 setStatus(oppName + "'s turn...", '');
             }
-            
+
             clearActionArea();
             startPolling();
-        } 
+        }
         else if (status === 'winner') {
             gameOver = true;
-            disableBoard();
-            stopPolling();
 
             const winnerTurnIdx = data.currentTurn;
             const winnerNum = winnerTurnIdx + 1;
@@ -184,28 +216,72 @@
                 setStatus(winnerName + ' wins!', 'winner');
             }
 
-            if (winnerNum === 1) {
-                player1Card.classList.add('winner-highlight');
-            } else {
-                player2Card.classList.add('winner-highlight');
-            }
+            player1Card.classList.toggle('winner-highlight', winnerNum === 1);
+            player2Card.classList.toggle('winner-highlight', winnerNum === 2);
 
-            showPlayAgain();
-        } 
+            renderEndOfRoundActions(data);
+            startPolling();
+        }
         else if (status === 'tie') {
             gameOver = true;
-            disableBoard();
-            stopPolling();
             setStatus("It's a tie!", 'tie');
-            showPlayAgain();
+            renderEndOfRoundActions(data);
+            startPolling();
         }
         else if (status === 'finished') {
             gameOver = true;
-            disableBoard();
-            stopPolling();
             setStatus('Game finished.', '');
-            showPlayAgain();
+            renderEndOfRoundActions(data);
+            startPolling();
         }
+
+        if (isTerminal) {
+            disableBoard();
+        }
+
+        lastStatus = status;
+    }
+
+    function mySymbolFromData(data) {
+        const slot = playerNum === 1 ? data.player1 : data.player2;
+        return slot && slot.symbol ? slot.symbol : null;
+    }
+
+    function updatePlayerSymbols(data) {
+        if (player1Symbol && data.player1 && data.player1.symbol) {
+            player1Symbol.textContent = data.player1.symbol;
+        }
+        if (player2Symbol && data.player2 && data.player2.symbol) {
+            player2Symbol.textContent = data.player2.symbol;
+        }
+    }
+
+    function updateScore(data) {
+        const s = data.score;
+        renderScoreLabel(player1Score, s && s.player1, 'Player 1');
+        renderScoreLabel(player2Score, s && s.player2, 'Player 2');
+    }
+
+    function renderScoreLabel(node, scoreObj, fallback) {
+        if (!node) return;
+        if (scoreObj && typeof scoreObj.wins === 'number') {
+            const w = scoreObj.wins | 0;
+            const l = scoreObj.losses | 0;
+            const t = scoreObj.ties | 0;
+            node.textContent = w + 'W-' + l + 'L-' + t + 'T';
+        } else {
+            node.textContent = fallback;
+        }
+    }
+
+    function resetRoundVisuals() {
+        player1Card.classList.remove('winner-highlight', 'active-turn');
+        player2Card.classList.remove('winner-highlight', 'active-turn');
+        cells.forEach(cell => {
+            cell.classList.remove('placed', 'x-cell', 'o-cell', 'win-cell', 'fading');
+            cell.textContent = '';
+        });
+        lastBoard = ['', '', '', '', '', '', '', '', ''];
     }
 
     // ===== BOARD RENDERING =====
@@ -221,7 +297,7 @@
                 cell.classList.toggle('o-cell', val === 'O');
             } else if (val === '' && lastBoard[i] !== '') {
                 cell.textContent = '';
-                cell.classList.remove('placed', 'x-cell', 'o-cell', 'win-cell');
+                cell.classList.remove('placed', 'x-cell', 'o-cell', 'win-cell', 'fading');
             }
         });
 
@@ -230,16 +306,28 @@
 
     function enableBoard(boardState) {
         cells.forEach((cell, i) => {
-            if (boardState && boardState[i] !== '') {
-                cell.disabled = true;
-            } else {
-                cell.disabled = false;
-            }
+            cell.disabled = !!(boardState && boardState[i] !== '');
         });
     }
 
     function disableBoard() {
         cells.forEach(cell => { cell.disabled = true; });
+    }
+
+    function updateModeBadge(mode) {
+        if (!modeBadge) return;
+        const isMania = mode === 'mania';
+        modeBadge.textContent = isMania ? 'Mania' : 'Classic';
+        modeBadge.classList.toggle('mode-mania', isMania);
+        modeBadge.hidden = false;
+    }
+
+    function updateEvictionIndicator(nextEviction) {
+        const fadingPos = (nextEviction && typeof nextEviction.pos === 'number')
+            ? nextEviction.pos : -1;
+        cells.forEach((cell, i) => {
+            cell.classList.toggle('fading', i === fadingPos);
+        });
     }
 
     // ===== CELL CLICK → MAKE MOVE =====
@@ -249,13 +337,26 @@
         const pos = parseInt(cell.dataset.pos, 10);
         if (lastBoard[pos] !== '') return;
 
-        const mySymbol = playerNum === 1 ? 'X' : 'O';
+        const prevText    = cell.textContent;
+        const prevClasses = cell.className;
+
+        const mySymbol = (playerNum === 1 && player1Symbol ? player1Symbol.textContent : null)
+                     || (playerNum === 2 && player2Symbol ? player2Symbol.textContent : null)
+                     || (playerNum === 1 ? 'X' : 'O');
         cell.textContent = mySymbol;
+        cell.classList.remove('x-cell', 'o-cell', 'fading');
         cell.classList.add('placed', mySymbol === 'X' ? 'x-cell' : 'o-cell');
         cell.disabled = true;
         isMyTurn = false;
         disableBoard();
         setStatus('Sending move...', '');
+
+        const rollback = () => {
+            cell.textContent = prevText;
+            cell.className = prevClasses;
+            isMyTurn = true;
+            enableBoard(lastBoard);
+        };
 
         try {
             const formData = new URLSearchParams();
@@ -272,23 +373,118 @@
                 const data = await res.json();
                 updateUI(data);
             } else {
-                cell.textContent = '';
-                cell.classList.remove('placed', 'x-cell', 'o-cell');
-                isMyTurn = true;
-                enableBoard(lastBoard);
-
+                rollback();
                 const errData = await res.json().catch(() => ({}));
                 setStatus('Invalid move: ' + (errData.error || 'Try again'), 'active');
             }
         } catch (err) {
-            cell.textContent = '';
-            cell.classList.remove('placed', 'x-cell', 'o-cell');
-            isMyTurn = true;
-            enableBoard(lastBoard);
+            rollback();
             setStatus('Connection error. Try again.', 'active');
         }
 
         startPolling();
+    }
+
+    // ===== REMATCH =====
+    async function postRematchAction(path) {
+        rematchClickPending = true;
+        renderEndOfRoundActions(null);
+        try {
+            const formData = new URLSearchParams();
+            formData.append('playerName', playerName);
+            const res = await fetch(BASE + '/game/' + gameID + path, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: formData.toString()
+            });
+            if (res.ok) {
+                const data = await res.json().catch(() => null);
+                if (data) updateUI(data);
+            } else {
+                const errData = await res.json().catch(() => ({}));
+                setStatus('Rematch error: ' + (errData.error || 'Try again'), '');
+                rematchClickPending = false;
+                renderEndOfRoundActions(null);
+            }
+        } catch (err) {
+            setStatus('Connection error. Try again.', '');
+            rematchClickPending = false;
+            renderEndOfRoundActions(null);
+        }
+    }
+
+    function renderEndOfRoundActions(data) {
+        if (!actionArea) return;
+        const state = lastRematchState;
+        const requester = lastRematchRequestedBy;
+        const iAmRequester = state !== 'none' && requester === playerNum;
+        const iAmRecipient = state !== 'none' && requester !== null && requester !== playerNum;
+
+        while (actionArea.firstChild) actionArea.removeChild(actionArea.firstChild);
+
+        if (rematchClickPending) {
+            actionArea.appendChild(buildRematchBox('Sending…', []));
+            return;
+        }
+
+        if (state === 'pending' && iAmRecipient) {
+            const opp = playerNum === 1
+                ? (data && data.player2 ? data.player2.name : 'Your opponent')
+                : (data && data.player1 ? data.player1.name : 'Your opponent');
+            actionArea.appendChild(buildRematchBox(
+                opp + ' wants a rematch.',
+                [
+                    { label: 'Accept', primary: true,  onClick: () => postRematchAction('/rematch/accept') },
+                    { label: 'Decline', primary: false, onClick: () => postRematchAction('/rematch/decline') },
+                ]
+            ));
+            return;
+        }
+
+        if (state === 'pending' && iAmRequester) {
+            actionArea.appendChild(buildRematchBox(
+                'Waiting for opponent to accept…',
+                [{ label: 'Leave', primary: false, onClick: leaveGame }]
+            ));
+            return;
+        }
+
+        actionArea.appendChild(buildRematchBox(
+            'Game over.',
+            [
+                { label: 'Rematch', primary: true,  onClick: () => postRematchAction('/rematch') },
+                { label: 'Leave',   primary: false, onClick: leaveGame },
+            ]
+        ));
+    }
+
+    function buildRematchBox(prompt, buttons) {
+        const box = document.createElement('div');
+        box.className = 'rematch-box';
+
+        const p = document.createElement('p');
+        p.className = 'rematch-prompt';
+        p.textContent = prompt;
+        box.appendChild(p);
+
+        if (buttons.length) {
+            const btnRow = document.createElement('div');
+            btnRow.className = 'rematch-actions';
+            for (const b of buttons) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'btn ' + (b.primary ? 'btn-primary' : 'btn-secondary');
+                btn.textContent = b.label;
+                btn.addEventListener('click', b.onClick);
+                btnRow.appendChild(btn);
+            }
+            box.appendChild(btnRow);
+        }
+        return box;
+    }
+
+    function leaveGame() {
+        window.location.href = BASE + '/create-game';
     }
 
     // ===== STATUS HELPERS =====
@@ -309,24 +505,39 @@
 
     // ===== ACTION AREA =====
     function clearActionArea() {
-        if (actionArea) actionArea.innerHTML = '';
+        if (actionArea) {
+            while (actionArea.firstChild) actionArea.removeChild(actionArea.firstChild);
+        }
     }
 
     function showShareInfo() {
         if (!actionArea) return;
-        const joinURL = window.location.origin + BASE + '/game/' + gameID;
-        actionArea.innerHTML = 
-            '<div class="share-box">' +
-                '<p>Share this code with your friend:</p>' +
-                '<div class="share-code">' + gameID + '</div>' +
-                '<div class="share-link">Or send this link: <a href="' + joinURL + '">' + joinURL + '</a></div>' +
-            '</div>';
-    }
+        while (actionArea.firstChild) actionArea.removeChild(actionArea.firstChild);
 
-    function showPlayAgain() {
-        if (!actionArea) return;
-        actionArea.innerHTML = 
-            '<a href="' + BASE + '/create-game" class="btn btn-primary" style="margin-top: 1rem;">Play Again</a>';
+        const joinURL = window.location.origin + BASE + '/game/' + gameID;
+
+        const box = document.createElement('div');
+        box.className = 'share-box';
+
+        const p = document.createElement('p');
+        p.textContent = 'Share this code with your friend:';
+        box.appendChild(p);
+
+        const code = document.createElement('div');
+        code.className = 'share-code';
+        code.textContent = gameID;
+        box.appendChild(code);
+
+        const linkLine = document.createElement('div');
+        linkLine.className = 'share-link';
+        linkLine.appendChild(document.createTextNode('Or send this link: '));
+        const a = document.createElement('a');
+        a.href = joinURL;
+        a.textContent = joinURL;
+        linkLine.appendChild(a);
+        box.appendChild(linkLine);
+
+        actionArea.appendChild(box);
     }
 
     // ===== BOOT =====

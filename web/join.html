@@ -4,12 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TicTacToe — Join Game</title>
-    <link rel="stylesheet" href="/tictactoe/styles/game.css">
+    <script>
+        (function () {
+            var prefix = location.pathname.indexOf('/tictactoe/') === 0 ? '/tictactoe' : '';
+            window.TTT_BASE = prefix;
+            var link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = prefix + '/styles/game.css';
+            document.head.appendChild(link);
+            document.addEventListener('DOMContentLoaded', function () {
+                var nodes = document.querySelectorAll('[data-ttt-path]');
+                for (var i = 0; i < nodes.length; i++) {
+                    nodes[i].setAttribute('href', prefix + nodes[i].getAttribute('data-ttt-path'));
+                }
+            });
+        })();
+    </script>
 </head>
 <body>
     <div class="content" style="opacity: 1;">
         <nav class="nav">
-            <a href="/tictactoe/create-game" class="logo">TicTacToe</a>
+            <a href="#" data-ttt-path="/create-game" class="logo">TicTacToe</a>
         </nav>
 
         <main class="game-container">
@@ -39,7 +54,7 @@
                     </button>
                 </form>
 
-                <a href="/tictactoe/create-game" class="back-link">&larr; Create your own game</a>
+                <a href="#" data-ttt-path="/create-game" class="back-link">&larr; Create your own game</a>
             </div>
         </main>
 
@@ -49,8 +64,8 @@
     </div>
 
     <script>
-        const BASE = '/tictactoe';
-        const gameID = window.location.pathname.replace(BASE, '').split('/').pop();
+        const BASE = window.TTT_BASE;
+        const gameID = window.location.pathname.split('/').pop();
         document.getElementById('joinGameId').textContent = gameID;
 
         // Fetch game info to show host name

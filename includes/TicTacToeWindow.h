@@ -34,6 +34,10 @@ class TicTacToeWindow : public Gtk::Window
 		void stopNetworkPolling();
 		void pollNetworkState();
 		void updateNetworkUI(const NetworkGameClient::GameState& state);
+		/* Rematch UX. Renders the appropriate set of buttons + banner
+		 * into m_netActionArea based on the terminal-state shape: requester
+		 * sees "waiting", opponent sees accept/decline, both see the score. */
+		void renderRematchActionArea(const NetworkGameClient::GameState& state);
 
 		/* ====== Styling ====== */
 		void applyCSSMainMenu();
@@ -64,9 +68,18 @@ class TicTacToeWindow : public Gtk::Window
 		Gtk::Label* m_netShareCode = nullptr;
 		Gtk::Box* m_netActionArea = nullptr;
 
+		/* Score-strip label. Refreshed each updateNetworkUI tick. */
+		Gtk::Label* m_netScoreLabel = nullptr;
+
 		/* Track last board state to detect changes */
 		std::string m_lastBoard[9] = {"","","","","","","","",""};
 		bool m_networkGameOver = false;
+
+		/* Cached rematch state from last render so we only repaint the action
+		 * area when something actually changed (polling hits every second). */
+		NetworkGameClient::RematchState m_lastRematchState
+		    { NetworkGameClient::RematchState::NONE };
+		std::string m_lastTerminalStatus; // "winner" | "tie" | "" while in_progress
 };
 
 /**

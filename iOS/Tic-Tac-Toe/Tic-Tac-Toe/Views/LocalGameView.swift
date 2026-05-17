@@ -13,6 +13,7 @@ struct LocalGameView: View {
                         BoardView(
                             cells: cells(from: game),
                             interactive: !game.gameStatus.isOver,
+                            nextEvictionPos: app.localNextEvictionPos,
                             onTap: { idx in
                                 app.applyLocalMove(at: idx)
                             }

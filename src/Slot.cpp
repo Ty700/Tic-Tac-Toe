@@ -2,11 +2,6 @@
 #include <iostream>
 #include "Slot.h"
 
-/**
- * @FUNCTION: 	Sets the front-end related properties of slot instance
- * @PARAMS: 	VOID
- * @RET: 	VOID 
-*/
 void Slot::setButtonProperties()
 {
 	p_button->set_size_request(120, 120);
@@ -23,15 +18,10 @@ void Slot::setButtonProperties()
 	if(p_id == 2 || p_id == 5 || p_id == 8) p_button->add_css_class("right-col");
 }
 
-/**
- * @FUNCTION: 	Callback for game.
- * 		If slot isn't taken, will callback its p_id. If not, -1,-1
- * @PARAMS: 	VOID 
- * @RET: 	VOID | Callback to game	
- */
+/* Returns p_id when the cell is empty, -1 when occupied. The -1 signals
+ * an invalid move to Game without needing a separate channel. */
 void Slot::onSlotClick()
 {
-	/* If p_symbolStr length == 0, thenlslot is avaliable */
 	if(p_symbolStr.length() == 0)
 	{
 		p_onSlotClickedCallback(p_id);
@@ -40,13 +30,16 @@ void Slot::onSlotClick()
 	}
 }
 
-/**
- * @FUNCTION: 	Responsible for the front-end work of updating slot's symbol
- * @PARAMS: 	What symbol to update it to 
- * @RET:	VOID 
- */
 void Slot::updateSymbol(const TicTacToeCore::CELL_STATES& sym)
 {
 	p_symbolStr = (sym == TicTacToeCore::CELL_STATES::O) ? "O" : "X";
 	p_button->set_label(p_symbolStr);
+}
+
+/* Mania FIFO eviction needs the cell to render blank and report empty
+ * to onSlotClick again. */
+void Slot::clearSymbol()
+{
+	p_symbolStr = "";
+	p_button->set_label("");
 }

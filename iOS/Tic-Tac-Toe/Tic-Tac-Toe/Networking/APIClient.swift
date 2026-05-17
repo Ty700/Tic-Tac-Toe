@@ -31,11 +31,11 @@ nonisolated final class APIClient: Sendable {
         return URLSession(configuration: cfg)
     }()
 
-    func createGame(playerName: String) async throws -> String {
+    func createGame(playerName: String, mode: GameMode = .classic) async throws -> String {
         var req = URLRequest(url: baseURL.appendingPathComponent("create"))
         req.httpMethod = "POST"
         req.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
-        req.httpBody = formBody(["playerName": playerName])
+        req.httpBody = formBody(["playerName": playerName, "mode": mode.rawValue])
 
         let delegate = NoRedirectDelegate()
         let (data, response) = try await session.data(for: req, delegate: delegate)
@@ -88,6 +88,35 @@ nonisolated final class APIClient: Sendable {
         guard (200..<300).contains(http.statusCode) else {
             throw APIError.badStatus(http.statusCode, String(data: data, encoding: .utf8) ?? "")
         }
+    }
+
+    /* Rematch lifecycle endpoints. All three POST `playerName` and
+     * return the updated GameState so callers can refresh immediately
+     * without waiting for the next poll tick. */
+    func requestRematch(gameID: String, playerName: String) async throws -> GameState {
+        try await rematchEndpoint(suffix: "rematch", gameID: gameID, playerName: playerName)
+    }
+
+    func acceptRematch(gameID: String, playerName: String) async throws -> GameState {
+        try await rematchEndpoint(suffix: "rematch/accept", gameID: gameID, playerName: playerName)
+    }
+
+    func declineRematch(gameID: String, playerName: String) async throws -> GameState {
+        try await rematchEndpoint(suffix: "rematch/decline", gameID: gameID, playerName: playerName)
+    }
+
+    private func rematchEndpoint(suffix: String, gameID: String, playerName: String) async throws -> GameState {
+        var req = URLRequest(url: baseURL.appendingPathComponent("game/\(gameID)/\(suffix)"))
+        req.httpMethod = "POST"
+        req.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        req.httpBody = formBody(["playerName": playerName])
+
+        let (data, response) = try await session.data(for: req)
+        let http = try httpResponse(response)
+        guard (200..<300).contains(http.statusCode) else {
+            throw APIError.badStatus(http.statusCode, String(data: data, encoding: .utf8) ?? "")
+        }
+        return try decode(data)
     }
 
     func makeMove(gameID: String, playerName: String, position: Int) async throws -> GameState {

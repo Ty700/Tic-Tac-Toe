@@ -85,9 +85,12 @@ bool findGameInGameMap(const std::string& gameID,
 
 void Server::getHomepage(const httplib::Request& req, httplib::Response& res)
 {
+	/* Relative redirect: browser resolves against the current
+	 * URL so this works both directly (→ /create-game) and behind the
+	 * /tictactoe/ reverse-proxy mount (→ /tictactoe/create-game). */
 	res.status = 302;
-	res.set_header("Location", "/tictactoe/create-game");
-	std::cout << "[GET /] Redirecting to /tictactoe/create-game" << std::endl;
+	res.set_header("Location", "create-game");
+	std::cout << "[GET /] Redirecting to create-game (relative)" << std::endl;
 }
 
 void Server::getServerHealth(const httplib::Request& req, httplib::Response& res)
@@ -127,6 +130,22 @@ void Server::getPrivacyPage(const httplib::Request& req, httplib::Response& res)
 }
 
 /**
+ * @FUNCTION:	Serves the spectator dashboard page (HTML) at /watch.
+ *		The page itself polls the aggregate /api/games endpoint.
+ */
+void Server::getWatchPage(const httplib::Request& req, httplib::Response& res)
+{
+	std::string html = readFile("./web/watch.html");
+	if (html.empty())
+	{
+		res.status = 500;
+		res.set_content("Error: watch.html not found", "text/plain");
+		return;
+	}
+	res.set_content(html, "text/html");
+}
+
+/**
  * @FUNCTION:	Serves the game board page (HTML) at /play/:id
  *		Player must have session data (set by create/join flow)
  */
@@ -134,11 +153,22 @@ void Server::getPlayPage(const httplib::Request& req, httplib::Response& res)
 {
 	std::string gameID = req.matches[1];
 
-	if (!findGameInGameMap(gameID, masterGameList))
 	{
-		res.status = 302;
-		res.set_header("Location", "/create-game");
-		return;
+		/* Lock around the map read — concurrent POST /create writers can
+		 * rehash the bucket array, and reading without the lock is UB
+		 *. The HTML body read is independent of map state, so we
+		 * release the lock before file I/O. */
+		std::lock_guard<std::mutex> lock(masterGameListMutex);
+		if (!findGameInGameMap(gameID, masterGameList))
+		{
+			/* Relative redirect. From /play/:id (or
+			 * /tictactoe/play/:id behind the proxy) a `../create-game`
+			 * resolution lands at /create-game / /tictactoe/create-game
+			 * respectively. Avoids hardcoding the mount prefix. */
+			res.status = 302;
+			res.set_header("Location", "../create-game");
+			return;
+		}
 	}
 
 	std::string html = readFile("./web/game.html");
@@ -160,21 +190,35 @@ void Server::getJoinPage(const httplib::Request& req, httplib::Response& res)
 	std::string gameID = req.matches[1];
 	std::cout << "[GET /game/" << gameID << "] Endpoint accessed" << std::endl;
 
-	if (!findGameInGameMap(gameID, masterGameList))
-	{
-		std::cout << "[GET /game/" << gameID << "] ERROR: Invalid game ID" << std::endl;
-		res.status = ServerCodes::NOT_FOUND;
-		res.set_content("Game ID: " + gameID + " is not valid.", "text/plain");
-		return;
-	}
-
-	/* Check Accept header to decide HTML vs JSON */
+	/* Lock around all map access. For the JSON branch we hold the
+	 * lock until the JSON snapshot is taken; the per-game gameMutex inside
+	 * NetworkGame protects the actual state read. For the HTML branch we
+	 * only need the lock long enough to verify the gameID exists. */
 	std::string accept = req.get_header_value("Accept");
 	bool wantsHtml = (accept.find("text/html") != std::string::npos);
 
+	std::string jsonPayload;
+	{
+		std::lock_guard<std::mutex> lock(masterGameListMutex);
+		if (!findGameInGameMap(gameID, masterGameList))
+		{
+			std::cout << "[GET /game/" << gameID << "] ERROR: Invalid game ID" << std::endl;
+			res.status = ServerCodes::NOT_FOUND;
+			res.set_content("Game ID: " + gameID + " is not valid.", "text/plain");
+			return;
+		}
+
+		if (!wantsHtml)
+		{
+			auto& game = masterGameList[gameID];
+			game->touch();
+			jsonPayload = game->getGameStatusJson();
+		}
+	}
+
 	if (wantsHtml)
 	{
-		/* Browser → serve join page */
+		/* Browser → serve join page. File I/O happens outside the lock. */
 		std::string html = readFile("./web/join.html");
 		if (html.empty())
 		{
@@ -186,11 +230,7 @@ void Server::getJoinPage(const httplib::Request& req, httplib::Response& res)
 	}
 	else
 	{
-		/* Desktop/API client → return JSON */
-		auto& game = masterGameList[gameID];
-		game->touch();
-		std::string json = game->getGameStatusJson();
-		res.set_content(json, "application/json");
+		res.set_content(jsonPayload, "application/json");
 	}
 }
 
@@ -203,17 +243,71 @@ void Server::getGameStatusAPI(const httplib::Request& req, httplib::Response& re
 {
 	std::string gameID = req.matches[1];
 
-	if (!findGameInGameMap(gameID, masterGameList))
+	/* Hot path — polled by web/iOS/desktop on every tick. Lock around the
+	 * map read so we don't race POST /create / reaper erase. The
+	 * JSON snapshot is taken under the lock; the per-game gameMutex inside
+	 * NetworkGame::getGameStatusJson() handles the inner read. */
+	std::string json;
 	{
-		res.status = ServerCodes::NOT_FOUND;
-		res.set_content(R"({"error":"Game not found"})", "application/json");
-		return;
+		std::lock_guard<std::mutex> lock(masterGameListMutex);
+		if (!findGameInGameMap(gameID, masterGameList))
+		{
+			res.status = ServerCodes::NOT_FOUND;
+			res.set_content(R"({"error":"Game not found"})", "application/json");
+			return;
+		}
+		auto& game = masterGameList[gameID];
+		game->touch();
+		json = game->getGameStatusJson();
 	}
-
-	auto& game = masterGameList[gameID];
-	game->touch();
-	std::string json = game->getGameStatusJson();
 	res.set_content(json, "application/json");
+}
+
+/**
+ * @FUNCTION:	Spectator dashboard endpoint.
+ *
+ * Returns a JSON array of every game currently in the masterGameList,
+ * each element matching the GET /api/game/:id JSON shape. Designed for
+ * the public /watch page; ~1Hz polling cadence per client.
+ *
+ * Locking: we hold masterGameListMutex while iterating the map and
+ * collecting per-game JSON snapshots. Each getGameStatusJson() also
+ * takes its own per-game gameMutex internally. We release the map lock
+ * before writing the response body. This keeps the global lock window
+ * proportional to game count, but at the 8500-game ceiling and ~few
+ * microseconds per JSON dump that's still well under polling cadence
+ * latency budgets. If this becomes a bottleneck under heavier load,
+ * switch to std::shared_mutex (concurrent readers) or add an etag-style
+ * cache invalidated on map mutation. Out of scope for v1.
+ *
+ * We intentionally do NOT touch() the games here — spectator polling
+ * shouldn't keep otherwise-idle games alive past their reaper TTL.
+ *
+ * Recently-finished games appear briefly with gameStatus="finished"
+ * until the reaper evicts them (5-minute finished-TTL by default), so
+ * spectators see the final state for a short grace window.
+ */
+void Server::getAllGamesAPI(const httplib::Request& req, httplib::Response& res)
+{
+	(void)req;
+	std::string body;
+	{
+		std::lock_guard<std::mutex> lock(masterGameListMutex);
+		body.reserve(64 + masterGameList.size() * 192);
+		body.push_back('[');
+		bool first = true;
+		for (const auto& [id, game] : masterGameList)
+		{
+			if (!game) continue;
+			if (!first) body.push_back(',');
+			first = false;
+			/* getGameStatusJson takes its own per-game mutex; safe to call
+			 * while we hold the map lock. */
+			body.append(game->getGameStatusJson());
+		}
+		body.push_back(']');
+	}
+	res.set_content(body, "application/json");
 }
 
 /**
@@ -256,13 +350,30 @@ void Server::postCreateGame(const httplib::Request& req, httplib::Response& res)
 {
 	std::string hostName = req.get_param_value("playerName");
 
+	/* Mania Mode: optional create-time param. Missing/unknown ⇒ classic.
+	 * Mode is locked at create-time; joiners inherit it via the JSON
+	 * response. See docs/mania-mode-wire-format.md. */
+	NetworkGame::Mode mode = NetworkGame::parseMode(req.get_param_value("mode"));
+
+	/* Lock the entire handler. createGameId() reads the map and the
+	 * final assignment writes it; both must happen under the same lock so
+	 * concurrent creates can't (a) both pick the same "unused" ID, or
+	 * (b) trigger a rehash mid-read in another handler. Logging is also
+	 * inside the lock so messages don't interleave on stdout. */
+	std::lock_guard<std::mutex> lock(masterGameListMutex);
+
 	std::string newID = this->createGameId();
 
 	if (newID.empty())
 	{
-		std::cout << "[POST /create] ERROR: GAME ID" << std::endl;
-		res.status = ServerCodes::CREATE_GAME_ID_FAILED;
-		res.set_content("ERROR CREATING GAME ID!", "text/plain");
+		/* createGameId exhausted retryLimit attempts → server is effectively
+		 * full. Surface as 503 with a friendly JSON body; clients
+		 * (web/iOS/desktop) all decode JSON errors. */
+		std::cout << "[POST /create] ERROR: Server full (retryLimit reached)" << std::endl;
+		res.status = ServerCodes::CREATE_GAME_ID_FAILED;  /* 503 */
+		res.set_content(
+			R"({"error":"Server full — please try again later"})",
+			"application/json");
 		return;
 	}
 
@@ -275,6 +386,8 @@ void Server::postCreateGame(const httplib::Request& req, httplib::Response& res)
 		res.set_content("ERROR CREATING GAME!", "text/plain");
 		return;
 	}
+
+	game->setMode(mode);
 
 	if (!hostName.empty())
 	{
@@ -297,6 +410,12 @@ void Server::postJoinGame(const httplib::Request& req, httplib::Response& res)
 {
 	std::string gameID = req.matches[1];
 	std::string playerName = req.get_param_value("playerName");
+
+	/* Lock the whole handler. We both read existence and mutate the
+	 * game pointer's owned state; concurrent /create writers or the reaper
+	 * could rehash / erase mid-handler without this lock. The NetworkGame
+	 * methods we call internally take their own per-game gameMutex. */
+	std::lock_guard<std::mutex> lock(masterGameListMutex);
 
 	if (!findGameInGameMap(gameID, masterGameList))
 	{
@@ -365,7 +484,31 @@ void Server::postMakeMove(const httplib::Request& req, httplib::Response& res)
 		return;
 	}
 
-	int position = std::stoi(posStr);
+	/* Parse `position` defensively. Pre-fix, std::stoi propagated
+	 * std::invalid_argument / std::out_of_range up to cpp-httplib's default
+	 * exception handler, which emitted a 500 with the raw exception::what()
+	 * in the body — leaking implementation detail. Range validation
+	 * (0..8) is still delegated to TicTacToeCore via ERROR_MOVE; here we
+	 * only reject inputs that don't parse as integers at all. */
+	int position;
+	try {
+		size_t consumed = 0;
+		position = std::stoi(posStr, &consumed);
+		if (consumed != posStr.size()) {
+			/* Trailing junk like "3abc" — reject. */
+			res.status = 400;
+			res.set_content(R"({"error":"position must be an integer"})", "application/json");
+			return;
+		}
+	} catch (const std::invalid_argument&) {
+		res.status = 400;
+		res.set_content(R"({"error":"position must be an integer"})", "application/json");
+		return;
+	} catch (const std::out_of_range&) {
+		res.status = 400;
+		res.set_content(R"({"error":"position must be an integer"})", "application/json");
+		return;
+	}
 
 	std::lock_guard<std::mutex> lock(masterGameListMutex);
 
@@ -447,6 +590,147 @@ void Server::postLeaveGame(const httplib::Request& req, httplib::Response& res)
 	res.set_content(R"({"ok":true})", "application/json");
 }
 
+/* ====== REMATCH ======
+ *
+ * Each endpoint follows the same shape: validate playerName form param,
+ * lock masterGameListMutex, look up the game, resolve playerName →
+ * playerNum (same auth pattern as postMakeMove / postLeaveGame), call
+ * the corresponding NetworkGame::*Rematch method, and return the current
+ * JSON snapshot on success (so the requesting client doesn't need a
+ * second poll to observe the state change). I considered factoring the
+ * auth + lookup into a helper template but the body is ~10 lines each
+ * and the inline form reads more clearly than threading a closure
+ * through a template. */
+
+void Server::postRematchRequest(const httplib::Request& req, httplib::Response& res)
+{
+	std::string gameID     = req.matches[1];
+	std::string playerName = req.get_param_value("playerName");
+	if (playerName.empty())
+	{
+		res.status = 400;
+		res.set_content(R"({"error":"Missing playerName"})", "application/json");
+		return;
+	}
+
+	std::lock_guard<std::mutex> lock(masterGameListMutex);
+	if (!findGameInGameMap(gameID, masterGameList))
+	{
+		res.status = ServerCodes::NOT_FOUND;
+		res.set_content(R"({"error":"Game not found"})", "application/json");
+		return;
+	}
+	auto& game = masterGameList[gameID];
+
+	int playerNum = 0;
+	if (game->getPlayer(1) && game->getPlayer(1)->getPlayerName() == playerName) playerNum = 1;
+	else if (game->getPlayer(2) && game->getPlayer(2)->getPlayerName() == playerName) playerNum = 2;
+	else
+	{
+		res.status = 400;
+		res.set_content(R"({"error":"Player not in this game"})", "application/json");
+		return;
+	}
+
+	if (!game->requestRematch(playerNum))
+	{
+		res.status = 400;
+		res.set_content(R"({"error":"Rematch not available"})", "application/json");
+		return;
+	}
+
+	std::cout << "[POST /game/" << gameID << "/rematch] " << playerName
+		  << " requested rematch" << std::endl;
+	res.status = ServerCodes::GAME_SUCCESS;
+	res.set_content(game->getGameStatusJson(), "application/json");
+}
+
+void Server::postRematchAccept(const httplib::Request& req, httplib::Response& res)
+{
+	std::string gameID     = req.matches[1];
+	std::string playerName = req.get_param_value("playerName");
+	if (playerName.empty())
+	{
+		res.status = 400;
+		res.set_content(R"({"error":"Missing playerName"})", "application/json");
+		return;
+	}
+
+	std::lock_guard<std::mutex> lock(masterGameListMutex);
+	if (!findGameInGameMap(gameID, masterGameList))
+	{
+		res.status = ServerCodes::NOT_FOUND;
+		res.set_content(R"({"error":"Game not found"})", "application/json");
+		return;
+	}
+	auto& game = masterGameList[gameID];
+
+	int playerNum = 0;
+	if (game->getPlayer(1) && game->getPlayer(1)->getPlayerName() == playerName) playerNum = 1;
+	else if (game->getPlayer(2) && game->getPlayer(2)->getPlayerName() == playerName) playerNum = 2;
+	else
+	{
+		res.status = 400;
+		res.set_content(R"({"error":"Player not in this game"})", "application/json");
+		return;
+	}
+
+	if (!game->acceptRematch(playerNum))
+	{
+		res.status = 400;
+		res.set_content(R"({"error":"Rematch accept not valid"})", "application/json");
+		return;
+	}
+
+	std::cout << "[POST /game/" << gameID << "/rematch/accept] "
+		  << playerName << " accepted; new round started" << std::endl;
+	res.status = ServerCodes::GAME_SUCCESS;
+	res.set_content(game->getGameStatusJson(), "application/json");
+}
+
+void Server::postRematchDecline(const httplib::Request& req, httplib::Response& res)
+{
+	std::string gameID     = req.matches[1];
+	std::string playerName = req.get_param_value("playerName");
+	if (playerName.empty())
+	{
+		res.status = 400;
+		res.set_content(R"({"error":"Missing playerName"})", "application/json");
+		return;
+	}
+
+	std::lock_guard<std::mutex> lock(masterGameListMutex);
+	if (!findGameInGameMap(gameID, masterGameList))
+	{
+		res.status = ServerCodes::NOT_FOUND;
+		res.set_content(R"({"error":"Game not found"})", "application/json");
+		return;
+	}
+	auto& game = masterGameList[gameID];
+
+	int playerNum = 0;
+	if (game->getPlayer(1) && game->getPlayer(1)->getPlayerName() == playerName) playerNum = 1;
+	else if (game->getPlayer(2) && game->getPlayer(2)->getPlayerName() == playerName) playerNum = 2;
+	else
+	{
+		res.status = 400;
+		res.set_content(R"({"error":"Player not in this game"})", "application/json");
+		return;
+	}
+
+	if (!game->declineRematch(playerNum))
+	{
+		res.status = 400;
+		res.set_content(R"({"error":"Rematch decline not valid"})", "application/json");
+		return;
+	}
+
+	std::cout << "[POST /game/" << gameID << "/rematch/decline] "
+		  << playerName << " declined" << std::endl;
+	res.status = ServerCodes::GAME_SUCCESS;
+	res.set_content(game->getGameStatusJson(), "application/json");
+}
+
 /* ====== REAPER ====== */
 
 void Server::reaperLoop()
@@ -520,6 +804,11 @@ int Server::run()
 		this->getPrivacyPage(req, res);
 	});
 
+	/* Public spectator dashboard. Polls /api/games. */
+	svr.Get("/watch", [this](const httplib::Request& req, httplib::Response& res) {
+		this->getWatchPage(req, res);
+	});
+
 	/* Static files: /styles/game.css, /styles/game.js, etc. */
 	svr.Get(R"(/styles/(.+))", [this](const httplib::Request& req, httplib::Response& res) {
 		this->getStaticFile(req, res);
@@ -533,6 +822,12 @@ int Server::run()
 	/* JSON API for polling game state */
 	svr.Get(R"(/api/game/(.+))", [this](const httplib::Request& req, httplib::Response& res) {
 		this->getGameStatusAPI(req, res);
+	});
+
+	/* Spectator dashboard aggregate. Returns a JSON array of every
+	 * live game's state in the same shape as /api/game/:id. */
+	svr.Get("/api/games", [this](const httplib::Request& req, httplib::Response& res) {
+		this->getAllGamesAPI(req, res);
 	});
 
 	/* Game page: HTML for browsers, JSON for desktop/API */
@@ -555,6 +850,18 @@ int Server::run()
 
 	svr.Post(R"(/game/(.+)/leave)", [this](const httplib::Request& req, httplib::Response& res) {
 		this->postLeaveGame(req, res);
+	});
+
+	/* Rematch. Three transient endpoints share the same auth + lock
+	 * pattern as /move. */
+	svr.Post(R"(/game/(.+)/rematch)", [this](const httplib::Request& req, httplib::Response& res) {
+		this->postRematchRequest(req, res);
+	});
+	svr.Post(R"(/game/(.+)/rematch/accept)", [this](const httplib::Request& req, httplib::Response& res) {
+		this->postRematchAccept(req, res);
+	});
+	svr.Post(R"(/game/(.+)/rematch/decline)", [this](const httplib::Request& req, httplib::Response& res) {
+		this->postRematchDecline(req, res);
 	});
 
 	/* Spin up the reaper before accepting traffic so we don't have a

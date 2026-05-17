@@ -13,6 +13,19 @@ struct SinglePlayerView: View {
                     .padding(.top, 24)
 
                 VStack(alignment: .leading, spacing: 18) {
+                    /* Mode picker — locked once a game starts. */
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Mode").foregroundStyle(.secondary)
+                        Picker("Mode", selection: $config.mode) {
+                            Text("Classic").tag(LocalGame.Mode.classic)
+                            Text("Mania").tag(LocalGame.Mode.mania)
+                        }
+                        .pickerStyle(.segmented)
+                        Text("Mode cannot be changed mid-game.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
                     /* Player 1 name */
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Player 1 (You)").foregroundStyle(.secondary)

@@ -4,7 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TicTacToe — Game</title>
-    <link rel="stylesheet" href="/tictactoe/styles/game.css">
+    <script>
+        (function () {
+            var prefix = location.pathname.indexOf('/tictactoe/') === 0 ? '/tictactoe' : '';
+            window.TTT_BASE = prefix;
+            var link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = prefix + '/styles/game.css';
+            document.head.appendChild(link);
+            document.addEventListener('DOMContentLoaded', function () {
+                var nodes = document.querySelectorAll('[data-ttt-path]');
+                for (var i = 0; i < nodes.length; i++) {
+                    nodes[i].setAttribute('href', prefix + nodes[i].getAttribute('data-ttt-path'));
+                }
+            });
+        })();
+    </script>
 </head>
 <body>
     <!-- Loading overlay -->
@@ -21,9 +36,10 @@
     <div class="content" id="content">
         <!-- Nav -->
         <nav class="nav">
-            <a href="/tictactoe/create-game" class="logo">TicTacToe</a>
+            <a href="#" data-ttt-path="/create-game" class="logo">TicTacToe</a>
             <div class="nav-meta">
                 <span class="game-id-display" id="gameIdDisplay">Game #----</span>
+                <span class="mode-badge" id="modeBadge" hidden></span>
                 <span class="connection-dot" id="connectionDot" title="Connection status"></span>
             </div>
         </nav>
@@ -37,19 +53,19 @@
             <!-- Player Info Bar -->
             <div class="players-bar">
                 <div class="player-card" id="player1Card">
-                    <div class="player-symbol">X</div>
+                    <div class="player-symbol" id="player1Symbol">X</div>
                     <div class="player-info">
                         <span class="player-name" id="player1Name">—</span>
-                        <span class="player-label">Player 1</span>
+                        <span class="player-label" id="player1Score">Player 1</span>
                     </div>
                 </div>
                 <div class="vs-divider">vs</div>
                 <div class="player-card" id="player2Card">
                     <div class="player-info" style="text-align: right;">
                         <span class="player-name" id="player2Name">Waiting...</span>
-                        <span class="player-label">Player 2</span>
+                        <span class="player-label" id="player2Score">Player 2</span>
                     </div>
-                    <div class="player-symbol">O</div>
+                    <div class="player-symbol" id="player2Symbol">O</div>
                 </div>
             </div>
 
@@ -78,6 +94,12 @@
         </footer>
     </div>
 
-    <script src="/tictactoe/styles/game.js"></script>
+    <script>
+        (function () {
+            var s = document.createElement('script');
+            s.src = window.TTT_BASE + '/styles/game.js';
+            document.body.appendChild(s);
+        })();
+    </script>
 </body>
 </html>

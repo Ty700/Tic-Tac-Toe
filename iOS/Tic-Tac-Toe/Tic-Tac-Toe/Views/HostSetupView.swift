@@ -3,6 +3,7 @@ import SwiftUI
 struct HostSetupView: View {
     @Environment(AppModel.self) private var app
     @State private var isWorking = false
+    @State private var mode: GameMode = .classic
 
     var body: some View {
         @Bindable var app = app
@@ -14,12 +15,27 @@ struct HostSetupView: View {
                 .font(.custom("Georgia", size: 36))
                 .foregroundStyle(Theme.brown)
 
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Your name").foregroundStyle(.secondary)
-                TextField("Tyler", text: $app.playerName)
-                    .textFieldStyle(.roundedBorder)
-                    .textInputAutocapitalization(.words)
-                    .autocorrectionDisabled()
+            VStack(alignment: .leading, spacing: 16) {
+                /* Mode picker — locked once a game starts; joiners inherit. */
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Mode").foregroundStyle(.secondary)
+                    Picker("Mode", selection: $mode) {
+                        Text("Classic").tag(GameMode.classic)
+                        Text("Mania").tag(GameMode.mania)
+                    }
+                    .pickerStyle(.segmented)
+                    Text("Mode cannot be changed mid-game.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Your name").foregroundStyle(.secondary)
+                    TextField("Tyler", text: $app.playerName)
+                        .textFieldStyle(.roundedBorder)
+                        .textInputAutocapitalization(.words)
+                        .autocorrectionDisabled()
+                }
             }
             .frame(maxWidth: 480)
             .padding(.horizontal)
@@ -27,7 +43,7 @@ struct HostSetupView: View {
             Button {
                 Task {
                     isWorking = true
-                    await app.createGame()
+                    await app.createGame(mode: mode)
                     isWorking = false
                 }
             } label: {
