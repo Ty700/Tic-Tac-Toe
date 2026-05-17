@@ -368,6 +368,33 @@ TEST_F(NetworkGameTest, MarkFinishedSurfacesAsFinishedInJson) {
         << "Session FINISHED must override core IN_PROGRESS in the wire format";
 }
 
+/* Mid-game /leave forfeit: when a player leaves an ACTIVE game, the
+ * server credits the remaining player a win via recordRoundEnd(WINNER, opp)
+ * before markFinished. After that a subsequent rematch accept must see
+ * lastRoundWinner set so the symbol-swap branch fires. */
+TEST_F(NetworkGameTest, ForfeitCreditOnMidGameLeave) {
+    game->setPlayer(player1, 1);
+    game->setPlayer(player2, 2);
+    game->initGame();
+
+    /* P1 leaves before any moves. Server-side: resolve playerName→1,
+     * opponent=2, recordRoundEnd(WINNER, 2), then markFinished. */
+    game->recordRoundEnd(TicTacToeCore::GAME_STATUS::WINNER, 2);
+    game->markFinished();
+
+    auto post = nlohmann::json::parse(game->getGameStatusJson());
+    EXPECT_EQ(post["gameStatus"], "finished");
+    EXPECT_EQ(post["score"]["player1"]["losses"], 1);
+    EXPECT_EQ(post["score"]["player2"]["wins"], 1);
+
+    /* Remaining player can request and accept rematch; symbols swap
+     * (P2 was winner → becomes O; P1 was loser → becomes X). */
+    EXPECT_TRUE(game->requestRematch(2));
+    EXPECT_TRUE(game->acceptRematch(1));
+    EXPECT_EQ(game->getPlayer(1)->getPlayerSymbol(), Player::PlayerSymbol::X);
+    EXPECT_EQ(game->getPlayer(2)->getPlayerSymbol(), Player::PlayerSymbol::O);
+}
+
 // ===== Rematch + score =====
 
 namespace {

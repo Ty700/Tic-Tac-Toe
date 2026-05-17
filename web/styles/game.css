@@ -580,17 +580,24 @@ body.loaded .content {
 .mode-picker {
     border: 1px solid var(--border);
     border-radius: 6px;
-    padding: 0.6rem 0.75rem 0.75rem;
+    padding: 1.1rem 0.85rem 0.85rem;
+    margin: 0.35rem 0 0;
     background: var(--cream);
+    position: relative;
 }
 
 .mode-picker-legend {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 600;
     color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    padding: 0 0.35rem;
+    background: var(--off-white);
+    padding: 0 0.4rem;
+    position: absolute;
+    top: -0.55rem;
+    left: 0.65rem;
+    line-height: 1;
 }
 
 .mode-option {
@@ -635,10 +642,16 @@ body.loaded .content {
 
 .create-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: var(--spacing-md);
     width: 100%;
-    max-width: 960px;
+    max-width: 1200px;
+}
+
+@media (max-width: 900px) {
+    .create-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 .action-card {
@@ -889,6 +902,23 @@ body.loaded .content {
     font-size: 0.75rem;
     color: var(--text-secondary);
     font-style: italic;
+}
+
+.watch-score {
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    letter-spacing: 0.02em;
+    margin-bottom: 0.4rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.watch-score-text {
+    background: var(--cream);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0.15rem 0.55rem;
+    display: inline-block;
 }
 
 .watch-board-wrap {

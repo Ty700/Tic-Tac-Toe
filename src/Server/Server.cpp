@@ -7,6 +7,12 @@
 #include <iterator>
 #include <memory>
 
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+
 #include "httplib.h"
 #include "NetworkGame.h"
 #include "Server.h"
@@ -350,6 +356,30 @@ void Server::postCreateGame(const httplib::Request& req, httplib::Response& res)
 {
 	std::string hostName = req.get_param_value("playerName");
 
+	/* Reject the request before doing any work if playerName is missing.
+	 * cpp-httplib's get_param_value() only consumes query string and
+	 * application/x-www-form-urlencoded bodies — a request with
+	 * Content-Type: application/json + a JSON body returns "" here even
+	 * if the JSON contains a playerName key. Pre-fix, postCreateGame
+	 * then quietly skipped the masterGameList insert at the bottom but
+	 * still emitted a 302 Location header from createGame(), producing
+	 * a lying success: clients followed the redirect to a gameID that
+	 * never existed. All three production clients (web/iOS/GTK) send
+	 * form-encoded so this only ever bit ad-hoc REST consumers (curl
+	 * default, future thin clients), but the silent contract violation
+	 * was a footgun. Fail fast with a clear JSON error instead. */
+	if (hostName.empty())
+	{
+		std::cout << "[POST /create] 400: missing playerName "
+		          << "(Content-Type was '" << req.get_header_value("Content-Type")
+		          << "')" << std::endl;
+		res.status = 400;
+		res.set_content(
+			R"({"error":"Missing playerName — send as form field or query param, not JSON body"})",
+			"application/json");
+		return;
+	}
+
 	/* Mania Mode: optional create-time param. Missing/unknown ⇒ classic.
 	 * Mode is locked at create-time; joiners inherit it via the JSON
 	 * response. See docs/mania-mode-wire-format.md. */
@@ -389,19 +419,20 @@ void Server::postCreateGame(const httplib::Request& req, httplib::Response& res)
 
 	game->setMode(mode);
 
-	if (!hostName.empty())
-	{
-		Player::PlayerParams p1Params = {
-			.name = hostName,
-			.sym = Player::PlayerSymbol::X,
-			.state = Player::PlayerState::Human
-		};
+	/* hostName was validated non-empty at the top of the handler, so we
+	 * always have a real player to seat. The insert is unconditional —
+	 * pre-fix, this was gated on !hostName.empty() which silently dropped
+	 * games when the form parse failed. */
+	Player::PlayerParams p1Params = {
+		.name = hostName,
+		.sym = Player::PlayerSymbol::X,
+		.state = Player::PlayerState::Human
+	};
 
-		auto player1 = std::make_shared<Player>(p1Params);
-		game->setPlayer(player1, 1);
+	auto player1 = std::make_shared<Player>(p1Params);
+	game->setPlayer(player1, 1);
 
-		this->masterGameList[newID] = std::move(game);
-	}
+	this->masterGameList[newID] = std::move(game);
 
 	std::cout << "[POST /create] SUCCESS: Game created! ID: " << newID << std::endl;
 }
@@ -581,8 +612,32 @@ void Server::postLeaveGame(const httplib::Request& req, httplib::Response& res)
 	}
 	else
 	{
-		std::cout << "[POST /game/" << gameID << "/leave] Marked FINISHED by "
-			  << playerName << std::endl;
+		/* Mid-game leave: credit the remaining player a forfeit win so
+		 * the score reflects "abandon = loss" and the next acceptRematch
+		 * has a valid lastRoundWinner to drive the symbol swap. If we
+		 * can't resolve who left (unknown / missing playerName), fall
+		 * back to markFinished-only so the opponent's poll still sees
+		 * the game end — better a missing score increment than a stuck
+		 * active game. */
+		int leaverNum = 0;
+		if (game->getPlayer(1) && game->getPlayer(1)->getPlayerName() == playerName)
+			leaverNum = 1;
+		else if (game->getPlayer(2) && game->getPlayer(2)->getPlayerName() == playerName)
+			leaverNum = 2;
+
+		if (leaverNum == 1 || leaverNum == 2)
+		{
+			int opponentNum = (leaverNum == 1) ? 2 : 1;
+			game->recordRoundEnd(TicTacToeCore::GAME_STATUS::WINNER, opponentNum);
+			std::cout << "[POST /game/" << gameID << "/leave] Forfeit by "
+				  << playerName << " (p" << leaverNum
+				  << "); opponent p" << opponentNum << " credited a win" << std::endl;
+		}
+		else
+		{
+			std::cout << "[POST /game/" << gameID << "/leave] Marked FINISHED by "
+				  << playerName << " (unknown player, no forfeit credit)" << std::endl;
+		}
 		game->markFinished();
 	}
 
@@ -785,8 +840,54 @@ Server::~Server()
 
 /* ====== SERVER RUN ====== */
 
+/* Probe whether another process is already serving on SERVER_PORT.
+ * cpp-httplib defaults to SO_REUSEPORT on Linux (see httplib.h
+ * default_socket_options), which silently permits multiple processes to
+ * listen on the same port; the kernel then load-balances incoming
+ * connections between them. Because each server keeps its own
+ * masterGameList in memory, two listeners produce a non-deterministic
+ * split-brain (games created on one are invisible to the other).
+ * Returns true iff a sibling server accepted a TCP connect on the loopback
+ * address. */
+static bool isPortAlreadyServed(uint16_t port)
+{
+	int fd = ::socket(AF_INET, SOCK_STREAM, 0);
+	if (fd < 0) return false;
+
+	sockaddr_in addr{};
+	addr.sin_family = AF_INET;
+	addr.sin_port   = htons(port);
+	inet_pton(AF_INET, "127.0.0.1", &addr.sin_addr);
+
+	bool alive = (::connect(fd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) == 0);
+	::close(fd);
+	return alive;
+}
+
 int Server::run()
 {
+	/* Fail-fast guard against the dual-listener split-brain (see
+	 * isPortAlreadyServed comment). If a sibling is already serving the
+	 * port, exit cleanly with a clear message rather than quietly
+	 * co-binding via SO_REUSEPORT. */
+	if (isPortAlreadyServed(static_cast<uint16_t>(SERVER_PORT)))
+	{
+		std::cerr << "[SERVER] FATAL: port " << SERVER_PORT
+		          << " is already served by another process. "
+		          << "Refusing to start a second instance "
+		          << "(would split game state across processes)."
+		          << std::endl;
+		return -1;
+	}
+
+	/* Also override cpp-httplib's default SO_REUSEPORT with SO_REUSEADDR
+	 * only. SO_REUSEADDR is what we want — quick rebind after a clean
+	 * shutdown (TIME_WAIT skip) — without permitting two live listeners. */
+	svr.set_socket_options([](socket_t sock) {
+		int yes = 1;
+		::setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
+	});
+
 	/* ====== GET Routes ====== */
 	svr.Get("/", [this](const httplib::Request& req, httplib::Response& res) {
 		this->getHomepage(req, res);

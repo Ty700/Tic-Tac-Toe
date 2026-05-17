@@ -205,11 +205,13 @@ bool NetworkGame::acceptRematch(int playerNum)
 		: TicTacToeCore::Mode::CLASSIC;
 	p_gameLogic = std::make_unique<TicTacToeCore>(coreMode);
 
-	/* Transition READY → ACTIVE in the same call. The transient READY
-	 * state is observable only if a client polls exactly during the brief
-	 * window between accept and the state flip below — we collapse it
-	 * for atomicity. Clients that miss it just see rematchState back at
-	 * "none" with the board reset. */
+	/* Transition READY → ACTIVE in the same call under gameMutex.
+	 * Because the state flip below happens before we release the lock,
+	 * no concurrent getGameStatusJson() call can ever serialize
+	 * rematchState as "ready" — on the wire, the only observable values
+	 * are "none" and "pending". Clients can safely treat "ready" as a
+	 * defensive-only enum entry. (Future canonical wire-format doc
+	 * should note this; see backlog.) */
 	p_rematchState = RematchState::NONE;
 	p_rematchRequestedBy = 0;
 	p_lastRoundWinner = 0;

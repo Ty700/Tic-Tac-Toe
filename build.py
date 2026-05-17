@@ -37,8 +37,17 @@
 ##########################################################
 
 import subprocess
-import sys 
-import os 
+import sys
+import os
+import shutil
+import socket
+
+SERVER_PORT = 8085
+
+def port_in_use(port):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.settimeout(0.5)
+        return s.connect_ex(("127.0.0.1", port)) == 0
 
 def ensure_build_dir():
     if not os.path.exists("./build/"):
@@ -62,9 +71,9 @@ def make_build_dir():
     subprocess.run(cmd.split())
 
 def make_clean():
-    cmd = "sudo rm -rf ./build ./bin"
-    print(f"Running: {cmd}")
-    subprocess.run(cmd.split())
+    print("Cleaning: ./build ./bin")
+    shutil.rmtree("./build", ignore_errors=True)
+    shutil.rmtree("./bin", ignore_errors=True)
 
 def make_prod():
         make_clean()
@@ -115,6 +124,14 @@ def make_and_run_server():
     _INCLUDE_PATH    = "./includes/"
     
     _LINK_LIBS       = "-lssl -lcrypto -pthread"
+
+    if port_in_use(SERVER_PORT):
+        print(f"FATAL: port {SERVER_PORT} is already in use. "
+              f"Stop the existing server before launching a new one "
+              f"(e.g. `ss -ltnp | grep :{SERVER_PORT}` then `kill <pid>`).",
+              file=sys.stderr)
+        sys.exit(1)
+
     make_clean()
 
     cmd = f"g++ {_MAIN_SER_PATH} {_CORE_SRC_PATH} {_NETWORK_GAME_PATH} {_SERVER_SRC_PATH} {_PLAYER_SRC_PATH} -I{_INCLUDE_PATH} -o {_SERVER_MV_PATH} {_LINK_LIBS}"

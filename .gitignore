@@ -15,3 +15,7 @@ iOS/Tic-Tac-Toe/.DS_Store
 # Build artifacts
 iOS/Tic-Tac-Toe/build/
 iOS/DerivedData/
+node_modules/
+package-lock.json
+docs/
+package.json

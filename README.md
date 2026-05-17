@@ -35,7 +35,7 @@ A queue-based variant where each player holds at most 3 symbols on the board at 
 - **Cross-platform multiplayer.** Desktop, web, and iOS clients all interoperate.
 - Create a game and share a 4-digit code with a friend.
 - Real-time game state via polling.
-- **Rematch and session score.** After a finished game, either player can request a rematch; the opponent accepts or declines. Symbols swap each round so the previous loser plays X next. A W-L-T score persists across rounds within the session and resets only when the server reaper evicts the session.
+- **Rematch and session score.** After a finished game, either player can request a rematch; the opponent accepts or declines. Symbols swap each round so the previous loser plays X next. A W-L-T score persists across rounds within the session and resets only when the server reaper evicts the session. On the wire, `rematchState` is one of `"none"` or `"pending"`; the internal `"ready"` value collapses to `"none"` under the accept lock and is never observable to clients.
 - **Mania online** works on every client.
 - Web client at [ty700.tech/tictactoe](https://ty700.tech/tictactoe).
 - Desktop and iOS clients connect to the same server.

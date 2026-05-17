@@ -103,6 +103,13 @@
         playersRow.appendChild(vs);
         playersRow.appendChild(p2Name);
 
+        const scoreRow = document.createElement('div');
+        scoreRow.className = 'watch-score';
+        scoreRow.hidden = true;
+        const scoreText = document.createElement('span');
+        scoreText.className = 'watch-score-text';
+        scoreRow.appendChild(scoreText);
+
         const boardEl = document.createElement('div');
         boardEl.className = 'watch-mini-board';
         const cellEls = [];
@@ -128,6 +135,7 @@
 
         root.appendChild(header);
         root.appendChild(playersRow);
+        root.appendChild(scoreRow);
         root.appendChild(boardWrap);
 
         return {
@@ -139,6 +147,8 @@
             p2Name,
             cellEls,
             overlay,
+            scoreRow,
+            scoreText,
         };
     }
 
@@ -184,6 +194,22 @@
         } else {
             card.overlay.hidden = true;
             card.stateBadge.hidden = true;
+        }
+
+        const s1 = (g.score && g.score.player1) ? g.score.player1 : null;
+        const s2 = (g.score && g.score.player2) ? g.score.player2 : null;
+        const totalRounds = s1 && s2
+            ? (s1.wins | 0) + (s1.losses | 0) + (s1.ties | 0)
+              + (s2.wins | 0) + (s2.losses | 0) + (s2.ties | 0)
+            : 0;
+        if (s1 && s2 && totalRounds > 0) {
+            card.scoreText.textContent =
+                (s1.wins | 0) + 'W-' + (s1.losses | 0) + 'L-' + (s1.ties | 0) + 'T'
+                + '  ·  '
+                + (s2.wins | 0) + 'W-' + (s2.losses | 0) + 'L-' + (s2.ties | 0) + 'T';
+            card.scoreRow.hidden = false;
+        } else {
+            card.scoreRow.hidden = true;
         }
 
         const board = Array.isArray(g.board) ? g.board : [];
