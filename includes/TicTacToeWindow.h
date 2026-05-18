@@ -64,6 +64,10 @@ class TicTacToeWindow : public Gtk::Window
 		Gtk::Label* m_netPlayer2Label = nullptr;
 		Gtk::Box* m_netPlayer1Card = nullptr;
 		Gtk::Box* m_netPlayer2Card = nullptr;
+		/* Per-slot symbol labels. Refreshed each updateNetworkUI tick from
+		 * state.player{1,2}Symbol, so post-rematch swaps render correctly. */
+		Gtk::Label* m_netPlayer1Symbol = nullptr;
+		Gtk::Label* m_netPlayer2Symbol = nullptr;
 		Gtk::Label* m_netGameIdLabel = nullptr;
 		Gtk::Label* m_netShareCode = nullptr;
 		Gtk::Box* m_netActionArea = nullptr;
@@ -86,6 +90,10 @@ class TicTacToeWindow : public Gtk::Window
 		 * new round starts. Drives the "Opponent declined the rematch."
 		 * prompt above the Rematch/Leave buttons. */
 		bool m_rematchDeclineNotice { false };
+		/* Cached notice state from the last action-area render. Tracked as a
+		 * fourth dedup dimension so toggling the flag invalidates the cache
+		 * exactly once instead of forcing repaints every poll tick. */
+		bool m_lastNoticeShown { false };
 };
 
 /**

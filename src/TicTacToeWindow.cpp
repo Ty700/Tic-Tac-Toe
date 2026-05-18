@@ -895,6 +895,7 @@ void TicTacToeWindow::setupNetworkGameGUI()
 	m_netPlayer1Card->set_spacing(8);
 	auto p1Sym = Gtk::make_managed<Gtk::Label>("X");
 	p1Sym->add_css_class("player-symbol-label");
+	m_netPlayer1Symbol = p1Sym;
 	auto p1InfoBox = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
 	m_netPlayer1Label = Gtk::make_managed<Gtk::Label>(
 		state.player1Name.empty() ? "—" : state.player1Name);
@@ -924,6 +925,7 @@ void TicTacToeWindow::setupNetworkGameGUI()
 	p2InfoBox->append(*p2Sub);
 	auto p2Sym = Gtk::make_managed<Gtk::Label>("O");
 	p2Sym->add_css_class("player-symbol-label");
+	m_netPlayer2Symbol = p2Sym;
 	m_netPlayer2Card->append(*p2InfoBox);
 	m_netPlayer2Card->append(*p2Sym);
 
@@ -1000,8 +1002,13 @@ void TicTacToeWindow::onNetworkCellClick(int pos)
 	if (m_networkGameOver || !m_networkClient)
 		return;
 
-	/* Optimistic UI update */
-	std::string mySymbol = (m_networkClient->getPlayerNum() == 1) ? "X" : "O";
+	/* Optimistic UI update. Symbol comes from the last server snapshot keyed
+	 * by my slot — slot↔symbol assignment swaps each rematch, so the slot
+	 * number alone can't determine the symbol. */
+	const auto& last = m_networkClient->getLastState();
+	const int myNum = m_networkClient->getPlayerNum();
+	std::string mySymbol = (myNum == 1) ? last.player1Symbol : last.player2Symbol;
+	if (mySymbol.empty()) mySymbol = (myNum == 1) ? "X" : "O";
 	m_networkCells[pos]->set_label(mySymbol);
 	m_networkCells[pos]->add_css_class("placed");
 	m_networkCells[pos]->add_css_class(mySymbol == "X" ? "x-cell" : "o-cell");
@@ -1145,20 +1152,57 @@ void TicTacToeWindow::updateNetworkUI(const NetworkGameClient::GameState& state)
 		m_networkCells[state.nextEvictionPos]->add_css_class("fading");
 	}
 
-	/* Update active turn highlight */
+	/* Refresh per-slot symbol labels from server snapshot. Mandatory: after a
+	 * rematch the server swaps player1.symbol/player2.symbol and the UI must
+	 * follow, otherwise turn detection and the "you are X/O" affordance drift. */
+	const std::string p1Symbol = state.player1Symbol.empty() ? "X" : state.player1Symbol;
+	const std::string p2Symbol = state.player2Symbol.empty() ? "O" : state.player2Symbol;
+	if (m_netPlayer1Symbol) m_netPlayer1Symbol->set_text(p1Symbol);
+	if (m_netPlayer2Symbol) m_netPlayer2Symbol->set_text(p2Symbol);
+
+	/* Whose turn it is, derived from the current-turn index → symbol mapping
+	 * (0 → X, 1 → O), then matched against each slot's symbol. Slot-keyed
+	 * comparisons break after rematch swap. */
+	const std::string turnSymbol = (state.currentTurn == 0) ? "X" : "O";
+
+	/* Update active turn highlight by symbol match, not slot index. */
 	if (m_netPlayer1Card && m_netPlayer2Card)
 	{
 		m_netPlayer1Card->remove_css_class("active-turn");
 		m_netPlayer2Card->remove_css_class("active-turn");
 
-		if (state.currentTurn == 0)
+		if (p1Symbol == turnSymbol)
 			m_netPlayer1Card->add_css_class("active-turn");
-		else
+		else if (p2Symbol == turnSymbol)
 			m_netPlayer2Card->add_css_class("active-turn");
 	}
 
 	int myNum = m_networkClient->getPlayerNum();
-	bool isMyTurn = (state.currentTurn == myNum - 1);
+	const std::string mySymbol = (myNum == 1) ? p1Symbol : p2Symbol;
+	bool isMyTurn = (mySymbol == turnSymbol);
+
+	/* Snapshot diff for rematch lifecycle. Compute notice flags BEFORE any
+	 * branch that renders the action area, so the first paint of this tick
+	 * already reflects the transition. Mirrors web's updateUI() and iOS's
+	 * updateStateWithDeclineCheck() — pure state-derived flag, no
+	 * imperative re-render or dedup-gate poking. */
+	const bool stillTerminal = (state.gameStatus == "winner" ||
+	                            state.gameStatus == "tie" ||
+	                            state.gameStatus == "finished");
+	if (m_lastRematchState == NetworkGameClient::RematchState::PENDING &&
+	    state.rematchState == NetworkGameClient::RematchState::NONE &&
+	    stillTerminal &&
+	    m_lastRematchRequestedBy == myNum)
+	{
+		m_rematchDeclineNotice = true;
+	}
+	/* New round starting wipes the notice (and round-local UI cruft below). */
+	if (m_lastRematchState != NetworkGameClient::RematchState::NONE &&
+	    state.rematchState == NetworkGameClient::RematchState::NONE &&
+	    (state.gameStatus == "active" || state.gameStatus == "in_progress"))
+	{
+		m_rematchDeclineNotice = false;
+	}
 
 	/* Handle game status */
 	if (state.gameStatus == "waiting")
@@ -1199,7 +1243,11 @@ void TicTacToeWindow::updateNetworkUI(const NetworkGameClient::GameState& state)
 		for (int i = 0; i < 9; i++)
 			m_networkCells[i]->set_sensitive(false);
 
-		int winnerNum = state.currentTurn + 1;
+		/* Derive winner by symbol, not currentTurn+1. Slot↔symbol swaps each
+		 * rematch, so slot index doesn't track the player who made the
+		 * winning move. */
+		const std::string winnerSymbol = (state.currentTurn == 0) ? "X" : "O";
+		const int winnerNum = (p1Symbol == winnerSymbol) ? 1 : 2;
 		if (winnerNum == myNum)
 			m_netStatusLabel->set_text("You won!");
 		else
@@ -1255,48 +1303,22 @@ void TicTacToeWindow::updateNetworkUI(const NetworkGameClient::GameState& state)
 		m_netScoreLabel->set_text(ss.str());
 	}
 
-	/* Decline detection: pending → none while the round is still terminal
-	 * AND I was the requester means the opponent declined. Raise a notice
-	 * the next renderRematchActionArea() will surface. */
-	const bool stillTerminal = (state.gameStatus == "winner" ||
-	                            state.gameStatus == "tie" ||
-	                            state.gameStatus == "finished");
-	if (m_lastRematchState == NetworkGameClient::RematchState::PENDING &&
-	    state.rematchState == NetworkGameClient::RematchState::NONE &&
-	    stillTerminal &&
-	    m_lastRematchRequestedBy == myNum)
-	{
-		m_rematchDeclineNotice = true;
-		/* Force the action area to repaint even though
-		 * (terminalStatus, rematchState) hasn't actually moved relative
-		 * to the cached pair we'll write below — the notice itself is
-		 * new content. */
-		m_lastRematchState = NetworkGameClient::RematchState::READY;
-	}
-
-	/* Rematch-state transition: when the server reports the new round has
-	 * started (READY → ACTIVE), reset round-local UI cruft so the next round
-	 * paints clean. */
+	/* New-round transition (PENDING/READY → NONE while gameStatus playable):
+	 * clear round-local UI cruft so the fresh round paints clean. The notice
+	 * flag itself was already cleared in the snapshot-diff at the top. */
 	if (m_lastRematchState != NetworkGameClient::RematchState::NONE &&
 	    state.rematchState == NetworkGameClient::RematchState::NONE &&
 	    (state.gameStatus == "active" || state.gameStatus == "in_progress"))
 	{
 		m_networkGameOver = false;
-		m_rematchDeclineNotice = false;
 		if (m_netPlayer1Card) m_netPlayer1Card->remove_css_class("winner-highlight");
 		if (m_netPlayer2Card) m_netPlayer2Card->remove_css_class("winner-highlight");
-		/* Clear action area so the rematch buttons aren't stuck around. */
 		if (m_netActionArea)
 		{
 			auto c = m_netActionArea->get_first_child();
 			while (c) { m_netActionArea->remove(*c); c = m_netActionArea->get_first_child(); }
 		}
 	}
-	/* Re-render the action area if we raised the decline notice above; the
-	 * normal call sites only fire on terminal-status branches and may have
-	 * already run before the transition check. */
-	if (m_rematchDeclineNotice && stillTerminal)
-		renderRematchActionArea(state);
 
 	m_lastRematchState        = state.rematchState;
 	m_lastRematchRequestedBy  = state.rematchRequestedBy;
@@ -1317,7 +1339,8 @@ void TicTacToeWindow::renderRematchActionArea(const NetworkGameClient::GameState
 	        ? state.gameStatus : "";
 	if (thisTerminal == m_lastTerminalStatus &&
 	    state.rematchState == m_lastRematchState &&
-	    !m_rematchDeclineNotice)
+	    state.rematchRequestedBy == m_lastRematchRequestedBy &&
+	    m_rematchDeclineNotice == m_lastNoticeShown)
 		return;
 
 	/* Clear existing children. */
@@ -1418,6 +1441,10 @@ void TicTacToeWindow::renderRematchActionArea(const NetworkGameClient::GameState
 		starting->add_css_class("subtitle-label");
 		m_netActionArea->append(*starting);
 	}
+
+	/* Remember whether we just painted the notice; the dedup gate above
+	 * uses this so a notice toggle invalidates the cache exactly once. */
+	m_lastNoticeShown = m_rematchDeclineNotice;
 }
 
 /* ============================================================
