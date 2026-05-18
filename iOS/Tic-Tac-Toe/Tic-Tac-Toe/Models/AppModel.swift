@@ -21,6 +21,8 @@ final class AppModel {
     private var localConfig: LocalGameConfig?
     private var aiTask: Task<Void, Never>?
 
+    let postManiaPrompt = PostManiaPromptViewModel()
+
     let api: APIClient
 
     init(api: APIClient = APIClient()) {
@@ -106,11 +108,25 @@ final class AppModel {
         if !game.gameStatus.isOver, game.currentPlayer.isAI {
             scheduleAIMove()
         }
+
+        maybeTriggerPostManiaPrompt(game)
+    }
+
+    private func maybeTriggerPostManiaPrompt(_ game: LocalGame) {
+        if PostManiaPromptViewModel.shouldTrigger(
+            mode: game.mode,
+            playerOneIsAI: game.playerOne.isAI,
+            playerTwoIsAI: game.playerTwo.isAI,
+            isOver: game.gameStatus.isOver
+        ) {
+            postManiaPrompt.start()
+        }
     }
 
     func resetLocalGame() {
         aiTask?.cancel()
         aiTask = nil
+        postManiaPrompt.reset()
 
         guard let config = localConfig, let game = localGame else { return }
 
@@ -137,6 +153,7 @@ final class AppModel {
     func endLocalGame() {
         aiTask?.cancel()
         aiTask = nil
+        postManiaPrompt.reset()
         localGame = nil
         localConfig = nil
         screen = .home

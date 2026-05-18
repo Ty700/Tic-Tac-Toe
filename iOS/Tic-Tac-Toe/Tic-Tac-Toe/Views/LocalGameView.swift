@@ -37,6 +37,7 @@ struct LocalGameView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Theme.cream.ignoresSafeArea())
+            .postManiaPrompt(app.postManiaPrompt)
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Theme.cream, for: .navigationBar)
