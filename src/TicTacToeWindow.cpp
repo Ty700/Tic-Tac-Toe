@@ -1056,7 +1056,12 @@ void TicTacToeWindow::startNetworkPolling()
 	m_pollConnection = Glib::signal_timeout().connect(
 		[this]() -> bool
 	{
-		if (!m_networkPolling || !m_networkClient || m_networkGameOver)
+		/* Keep polling through terminal states so the rematch lifecycle
+		 * (none → pending → none/active) is observable on both peers.
+		 * Gating on m_networkGameOver here used to disconnect the timer
+		 * the tick after game-end, which made inbound rematch invisible
+		 * and made the requester's "Requesting…" label hang forever. */
+		if (!m_networkPolling || !m_networkClient)
 			return false;
 
 		pollNetworkState();
@@ -1250,6 +1255,25 @@ void TicTacToeWindow::updateNetworkUI(const NetworkGameClient::GameState& state)
 		m_netScoreLabel->set_text(ss.str());
 	}
 
+	/* Decline detection: pending → none while the round is still terminal
+	 * AND I was the requester means the opponent declined. Raise a notice
+	 * the next renderRematchActionArea() will surface. */
+	const bool stillTerminal = (state.gameStatus == "winner" ||
+	                            state.gameStatus == "tie" ||
+	                            state.gameStatus == "finished");
+	if (m_lastRematchState == NetworkGameClient::RematchState::PENDING &&
+	    state.rematchState == NetworkGameClient::RematchState::NONE &&
+	    stillTerminal &&
+	    m_lastRematchRequestedBy == myNum)
+	{
+		m_rematchDeclineNotice = true;
+		/* Force the action area to repaint even though
+		 * (terminalStatus, rematchState) hasn't actually moved relative
+		 * to the cached pair we'll write below — the notice itself is
+		 * new content. */
+		m_lastRematchState = NetworkGameClient::RematchState::READY;
+	}
+
 	/* Rematch-state transition: when the server reports the new round has
 	 * started (READY → ACTIVE), reset round-local UI cruft so the next round
 	 * paints clean. */
@@ -1258,6 +1282,7 @@ void TicTacToeWindow::updateNetworkUI(const NetworkGameClient::GameState& state)
 	    (state.gameStatus == "active" || state.gameStatus == "in_progress"))
 	{
 		m_networkGameOver = false;
+		m_rematchDeclineNotice = false;
 		if (m_netPlayer1Card) m_netPlayer1Card->remove_css_class("winner-highlight");
 		if (m_netPlayer2Card) m_netPlayer2Card->remove_css_class("winner-highlight");
 		/* Clear action area so the rematch buttons aren't stuck around. */
@@ -1267,9 +1292,15 @@ void TicTacToeWindow::updateNetworkUI(const NetworkGameClient::GameState& state)
 			while (c) { m_netActionArea->remove(*c); c = m_netActionArea->get_first_child(); }
 		}
 	}
-	m_lastRematchState   = state.rematchState;
-	m_lastTerminalStatus = (state.gameStatus == "winner" || state.gameStatus == "tie" ||
-	                        state.gameStatus == "finished") ? state.gameStatus : "";
+	/* Re-render the action area if we raised the decline notice above; the
+	 * normal call sites only fire on terminal-status branches and may have
+	 * already run before the transition check. */
+	if (m_rematchDeclineNotice && stillTerminal)
+		renderRematchActionArea(state);
+
+	m_lastRematchState        = state.rematchState;
+	m_lastRematchRequestedBy  = state.rematchRequestedBy;
+	m_lastTerminalStatus      = stillTerminal ? state.gameStatus : "";
 }
 
 /* Renders rematch + leave controls into m_netActionArea. Idempotent over
@@ -1285,7 +1316,8 @@ void TicTacToeWindow::renderRematchActionArea(const NetworkGameClient::GameState
 	    (state.gameStatus == "winner" || state.gameStatus == "tie" || state.gameStatus == "finished")
 	        ? state.gameStatus : "";
 	if (thisTerminal == m_lastTerminalStatus &&
-	    state.rematchState == m_lastRematchState)
+	    state.rematchState == m_lastRematchState &&
+	    !m_rematchDeclineNotice)
 		return;
 
 	/* Clear existing children. */
@@ -1296,10 +1328,17 @@ void TicTacToeWindow::renderRematchActionArea(const NetworkGameClient::GameState
 
 	if (state.rematchState == NetworkGameClient::RematchState::NONE)
 	{
+		if (m_rematchDeclineNotice)
+		{
+			auto notice = Gtk::make_managed<Gtk::Label>("Opponent declined the rematch.");
+			notice->add_css_class("subtitle-label");
+			m_netActionArea->append(*notice);
+		}
 		auto rematchBtn = Gtk::make_managed<Gtk::Button>("Rematch");
 		rematchBtn->add_css_class("btn-primary");
 		rematchBtn->signal_clicked().connect([this, rematchBtn]() {
 			if (!m_networkClient) return;
+			m_rematchDeclineNotice = false;
 			rematchBtn->set_sensitive(false);
 			rematchBtn->set_label("Requesting…");
 			Glib::signal_timeout().connect_once([this]() {

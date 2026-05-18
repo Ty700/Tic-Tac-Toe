@@ -33,6 +33,10 @@
     let lastRematchState = 'none';
     let lastRematchRequestedBy = null;
     let rematchClickPending = false;
+    /* Surfaces "Opponent declined" when the server transitions
+     * rematchState pending → none while I was the requester. Cleared on
+     * the next user action (new Rematch click, Leave). */
+    let rematchDeclineNotice = false;
 
     // ===== DOM REFS =====
     const board          = document.getElementById('board');
@@ -155,12 +159,26 @@
 
         if (transitionedToRound) {
             resetRoundVisuals();
+            rematchDeclineNotice = false;
         }
 
-        lastRematchState = (data.rematchState === 'pending' || data.rematchState === 'ready')
+        const newRematchState = (data.rematchState === 'pending' || data.rematchState === 'ready')
             ? data.rematchState : 'none';
-        lastRematchRequestedBy = (lastRematchState !== 'none' && typeof data.rematchRequestedBy === 'number')
+        const newRematchRequestedBy = (newRematchState !== 'none' && typeof data.rematchRequestedBy === 'number')
             ? data.rematchRequestedBy : null;
+        /* Detect opponent decline: I was the requester, server flipped
+         * pending → none while still in a terminal status. Raise a notice
+         * the next renderEndOfRoundActions can surface. */
+        if (lastRematchState === 'pending' &&
+            newRematchState === 'none' &&
+            lastRematchRequestedBy === playerNum &&
+            isTerminal)
+        {
+            rematchDeclineNotice = true;
+            rematchClickPending = false;
+        }
+        lastRematchState = newRematchState;
+        lastRematchRequestedBy = newRematchRequestedBy;
 
         updateModeBadge(data.mode);
 
@@ -413,6 +431,11 @@
             });
             if (res.ok) {
                 const data = await res.json().catch(() => null);
+                /* Clear before updateUI: the server snapshot is now
+                 * authoritative (rematchState reflects the action we
+                 * just took). Leaving rematchClickPending true would
+                 * keep painting "Sending…" over the real state. */
+                rematchClickPending = false;
                 if (data) updateUI(data);
             } else {
                 const errData = await res.json().catch(() => ({}));
@@ -463,10 +486,16 @@
             return;
         }
 
+        const prompt = rematchDeclineNotice
+            ? 'Opponent declined the rematch.'
+            : 'Game over.';
         actionArea.appendChild(buildRematchBox(
-            'Game over.',
+            prompt,
             [
-                { label: 'Rematch', primary: true,  onClick: () => postRematchAction('/rematch') },
+                { label: 'Rematch', primary: true,  onClick: () => {
+                    rematchDeclineNotice = false;
+                    postRematchAction('/rematch');
+                } },
                 { label: 'Leave',   primary: false, onClick: leaveGame },
             ]
         ));

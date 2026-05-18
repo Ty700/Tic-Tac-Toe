@@ -9,6 +9,10 @@ struct GameView: View {
     // Bumped on Retry to cancel and restart the .task-bound polling loop.
     @State private var pollAttempt: Int = 0
     @State private var rematchBusy: Bool = false
+    /* Surfaced when the server transitions rematchState pending → none
+     * while I was the requester (opponent declined). Cleared when the
+     * user takes another action (Rematch / Leave) or a new round starts. */
+    @State private var declineNotice: Bool = false
 
     var body: some View {
         NavigationStack {
@@ -243,8 +247,14 @@ struct GameView: View {
             VStack(spacing: 10) {
                 switch s.rematchState {
                 case .none:
+                    if declineNotice {
+                        Text("Opponent declined the rematch")
+                            .font(.subheadline)
+                            .foregroundStyle(Theme.brown)
+                    }
                     HStack(spacing: 12) {
                         Button {
+                            declineNotice = false
                             Task { await sendRematchRequest() }
                         } label: {
                             Text("Rematch").frame(minWidth: 120)
@@ -362,9 +372,29 @@ struct GameView: View {
         rematchBusy = true
         defer { rematchBusy = false }
         do {
-            state = try await op()
+            updateStateWithDeclineCheck(try await op())
         } catch {
             loadError = error.localizedDescription
+        }
+    }
+
+    /* Direct state replacement plus a transition check for the
+     * rematch-decline notice. Kept narrow and side-effect-free for
+     * non-rematch ticks so the move/poll hot path stays identical to
+     * `state = s`. */
+    private func updateStateWithDeclineCheck(_ s: GameState) {
+        let prev = state
+        state = s
+        guard let prev = prev else { return }
+        if prev.rematchState == .pending,
+           s.rematchState == .none,
+           prev.rematchRequestedBy == app.playerNumber,
+           s.isOver
+        {
+            declineNotice = true
+        }
+        if prev.isOver, s.isPlayable {
+            declineNotice = false
         }
     }
 
@@ -384,7 +414,7 @@ struct GameView: View {
         while !Task.isCancelled {
             do {
                 let s = try await app.api.fetchState(gameID: gameID)
-                state = s
+                updateStateWithDeclineCheck(s)
                 loadError = nil
 
                 /* Continue polling on terminal states so both devices can

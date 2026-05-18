@@ -79,7 +79,13 @@ class TicTacToeWindow : public Gtk::Window
 		 * area when something actually changed (polling hits every second). */
 		NetworkGameClient::RematchState m_lastRematchState
 		    { NetworkGameClient::RematchState::NONE };
+		int m_lastRematchRequestedBy { 0 }; // 1 or 2; 0 when state == NONE
 		std::string m_lastTerminalStatus; // "winner" | "tie" | "" while in_progress
+		/* Raised when the server flips rematchState pending → none while
+		 * I was the requester. Cleared on the next user action or when a
+		 * new round starts. Drives the "Opponent declined the rematch."
+		 * prompt above the Rematch/Leave buttons. */
+		bool m_rematchDeclineNotice { false };
 };
 
 /**
