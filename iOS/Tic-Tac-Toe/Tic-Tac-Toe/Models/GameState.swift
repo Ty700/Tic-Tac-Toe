@@ -139,7 +139,21 @@ extension GameState {
 
     func isMyTurn(playerNumber: Int) -> Bool {
         guard let turn = currentTurn, isPlayable else { return false }
-        return turn == playerNumber - 1
+        let turnSymbol = turn == 0 ? "X" : "O"
+        let mySymbol = playerNumber == 1 ? player1?.symbol : player2?.symbol
+        guard let mine = mySymbol else { return false }
+        return mine == turnSymbol
+    }
+
+    /* Which player slot owns the current turn — derived from symbol, not from
+     * `currentTurn` directly, because slot↔symbol assignment swaps each
+     * rematch. Returns nil if symbols aren't populated yet (waiting state). */
+    func activeSlot() -> Int? {
+        guard let turn = currentTurn else { return nil }
+        let turnSymbol = turn == 0 ? "X" : "O"
+        if player1?.symbol == turnSymbol { return 1 }
+        if player2?.symbol == turnSymbol { return 2 }
+        return nil
     }
 
     /* The cell that will be cleared on the NEXT move — surfaced so the board

@@ -149,14 +149,15 @@ struct GameView: View {
          * server hasn't filled the PlayerInfo yet (waiting state). */
         let p1Symbol = s.player1?.symbol ?? "X"
         let p2Symbol = s.player2?.symbol ?? "O"
+        let turnSymbol: String? = s.currentTurn.map { $0 == 0 ? "X" : "O" }
         HStack {
             playerCard(name: s.player1?.name ?? "Waiting…",
                        symbol: p1Symbol,
-                       active: s.currentTurn == 0 && s.isPlayable,
+                       active: s.isPlayable && turnSymbol == p1Symbol,
                        isMe: app.playerNumber == 1)
             playerCard(name: s.player2?.name ?? "Waiting…",
                        symbol: p2Symbol,
-                       active: s.currentTurn == 1 && s.isPlayable,
+                       active: s.isPlayable && turnSymbol == p2Symbol,
                        isMe: app.playerNumber == 2)
         }
         .frame(maxWidth: 640)
@@ -206,7 +207,9 @@ struct GameView: View {
                     .foregroundStyle(.secondary)
             }
         case .winner:
-            let winnerNum = (s.currentTurn ?? 0) + 1
+            let winnerSymbol = (s.currentTurn ?? 0) == 0 ? "X" : "O"
+            let winnerNum: Int = (s.player1?.symbol == winnerSymbol) ? 1
+                : (s.player2?.symbol == winnerSymbol) ? 2 : 0
             if winnerNum == app.playerNumber {
                 Text("You won!").font(.title.weight(.bold)).foregroundStyle(Theme.brown)
             } else {
