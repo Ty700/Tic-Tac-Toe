@@ -101,10 +101,10 @@ struct GameView: View {
     @ViewBuilder
     private func scoreStrip(_ s: GameState) -> some View {
         HStack(spacing: 12) {
-            scoreCell(name: s.player1?.name ?? "Player 1",
+            scoreCell(name: s.player1?.name ?? "Waiting…",
                       score: s.score.player1,
                       isMe: app.playerNumber == 1)
-            scoreCell(name: s.player2?.name ?? "Player 2",
+            scoreCell(name: s.player2?.name ?? "Waiting…",
                       score: s.score.player2,
                       isMe: app.playerNumber == 2)
         }
@@ -384,23 +384,22 @@ struct GameView: View {
                 state = s
                 loadError = nil
 
-                /* Keep polling on terminal states while a rematch is in flight
-                 * — gameStatus stays FINISHED while rematchState=pending per
-                 * wire-format contract, and we need to observe transitions
-                 * (pending → ready → active). Only fully-terminal sessions
-                 * with no rematch activity stop the loop. */
-                if s.isOver && !s.hasRematchActivity {
-                    return
-                }
-
+                /* Continue polling on terminal states so both devices can
+                 * observe rematch requests originated by the opponent.
+                 * gameStatus stays winner/tie/finished while rematchState
+                 * cycles through none, pending, and back; stopping the loop
+                 * here would freeze the UI on the requester's "Waiting…"
+                 * screen and prevent the opponent's device from ever
+                 * receiving the prompt. */
                 let myTurn = s.isMyTurn(playerNumber: app.playerNumber)
                 let interval: UInt64
                 switch s.gameStatus {
                 case .waiting:               interval = 1_500_000_000
                 case .active, .inProgress:   interval = myTurn ? 5_000_000_000 : 1_000_000_000
                 default:
-                    /* Terminal w/ rematch in flight: poll briskly to catch
-                     * the pending → ready → active transitions. */
+                    /* Terminal state (winner/tie/finished): poll briskly so
+                     * the rematch lifecycle (none, pending, active) is
+                     * observable on both devices. */
                     interval = 1_000_000_000
                 }
                 try await Task.sleep(nanoseconds: interval)
