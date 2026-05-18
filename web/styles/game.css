@@ -220,6 +220,14 @@ body.loaded .content {
     align-items: center;
 }
 
+/* The landing page (create/join/watch picker) needs more horizontal
+ * room than the 640px in-game layout. Widen the container only when it
+ * actually holds a .create-grid; flex `align-items: center` then
+ * centers the grid under the hero heading. */
+.game-container:has(.create-grid) {
+    max-width: 1440px;
+}
+
 /* ===== STATUS BANNER ===== */
 .status-banner {
     text-align: center;
